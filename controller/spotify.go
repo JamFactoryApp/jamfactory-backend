@@ -22,7 +22,30 @@ func RegisterSpotifyRoutes(router *mux.Router, mainEnv *models.Env) {
 }
 
 func (env *SpotifyEnv) devices(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, env.Text)
+
+	session, err := env.Store.Get(r, "user-session")
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if session.IsNew {
+		session.Values["visits"] = 0
+		err = session.Save(r, w)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
+	session.Values["visits"] = session.Values["visits"].(int) + 1
+	err = session.Save(r, w)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintf(w, "You visited this site %d times", session.Values["visits"].(int))
 }
 
 func (env *SpotifyEnv) pause(w http.ResponseWriter, r *http.Request) {
