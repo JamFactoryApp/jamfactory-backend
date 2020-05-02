@@ -23,7 +23,10 @@ func main() {
 		log.Panic(err)
 	}
 
-	env := &models.Env{DB: db, Text: "Env Test"}
+	env := &models.Env{
+		DB: models.DB{Database: db.Database("jamfactory")},
+		Store: models.NewSessionStore(db.Database("jamfactory").Collection("Sessions"), 420, []byte("keybordcat")),
+		Text: "Env Test"}
 
 	router := mux.NewRouter()
 

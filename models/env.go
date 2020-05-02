@@ -1,6 +1,7 @@
 package models
 
 type Env struct {
-	DB Database
+	DB DB
+	Store *Sessionstore
 	Text string
 }
