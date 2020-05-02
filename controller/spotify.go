@@ -1,34 +1,42 @@
 package controller
 
 import (
+	"fmt"
 	"github.com/gorilla/mux"
+	"jamfactory-backend/models"
 	"net/http"
 )
 
-func RegisterSpotifyRoutes(router *mux.Router) {
-	router.HandleFunc("/devices", devices)
-	router.HandleFunc("/pause", pause)
-	router.HandleFunc("/play", play).Methods("PUT")
-	router.HandleFunc("/playlist", playlist)
-	router.HandleFunc("/search", search).Methods("PUT")
+type SpotifyEnv struct {
+	*models.Env
 }
 
-func devices(w http.ResponseWriter, r *http.Request) {
+
+func RegisterSpotifyRoutes(router *mux.Router, mainEnv *models.Env) {
+	env := SpotifyEnv{mainEnv}
+	router.HandleFunc("/devices", env.devices)
+	router.HandleFunc("/pause", env.pause)
+	router.HandleFunc("/play", env.play).Methods("PUT")
+	router.HandleFunc("/playlist", env.playlist)
+	router.HandleFunc("/search", env.search).Methods("PUT")
+}
+
+func (env *SpotifyEnv) devices(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, env.Text)
+}
+
+func (env *SpotifyEnv) pause(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func pause(w http.ResponseWriter, r *http.Request) {
+func (env *SpotifyEnv) play(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func play(w http.ResponseWriter, r *http.Request) {
+func (env *SpotifyEnv) playlist(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func playlist(w http.ResponseWriter, r *http.Request) {
-
-}
-
-func search(w http.ResponseWriter, r *http.Request) {
+func (env *SpotifyEnv) search(w http.ResponseWriter, r *http.Request) {
 
 }

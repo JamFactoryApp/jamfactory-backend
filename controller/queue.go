@@ -1,7 +1,15 @@
 package controller
 
-import "github.com/gorilla/mux"
+import (
+	"github.com/gorilla/mux"
+	"jamfactory-backend/models"
+)
 
-func RegisterQueueRoutes(router *mux.Router) {
+type QueueEnv struct {
+	*models.Env
+}
+
+func RegisterQueueRoutes(router *mux.Router, mainEnv *models.Env) {
+	// env := QueueEnv{mainEnv}
 
 }
