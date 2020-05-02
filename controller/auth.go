@@ -2,28 +2,34 @@ package controller
 
 import (
 	"github.com/gorilla/mux"
+	"jamfactory-backend/models"
 	"net/http"
 )
 
-func RegisterAuthRoutes(router *mux.Router) {
-	router.HandleFunc("/callback", callback)
-	router.HandleFunc("/login", login)
-	router.HandleFunc("/refresh", refresh)
-	router.HandleFunc("/status", status)
+type AuthEnv struct {
+	*models.Env
 }
 
-func callback(w http.ResponseWriter, r *http.Request) {
-
+func RegisterAuthRoutes(router *mux.Router, mainEnv *models.Env) {
+	env := AuthEnv{mainEnv}
+	router.HandleFunc("/callback", env.callback)
+	router.HandleFunc("/login", env.login)
+	router.HandleFunc("/refresh", env.refresh)
+	router.HandleFunc("/status", env.status)
 }
 
-func login(w http.ResponseWriter, r *http.Request) {
-
-}
-
-func refresh(w http.ResponseWriter, r *http.Request) {
+func (env *AuthEnv) callback(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func status(w http.ResponseWriter, r *http.Request) {
+func (env *AuthEnv) login(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (env *AuthEnv) refresh(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (env *AuthEnv) status(w http.ResponseWriter, r *http.Request) {
 
 }
