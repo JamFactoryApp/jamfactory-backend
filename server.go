@@ -23,10 +23,14 @@ func main() {
 		log.Panic(err)
 	}
 
+	ctx, _ = context.WithTimeout(context.Background(), 30*time.Second)
+	db.Database("jamfactory").Collection("Sessions").Drop(ctx)
+
 	env := &models.Env{
 		DB: models.DB{Database: db.Database("jamfactory")},
-		Store: models.NewSessionStore(db.Database("jamfactory").Collection("Sessions"), 420, []byte("keybordcat")),
+		Store: models.NewSessionStore(db.Database("jamfactory").Collection("Sessions"), 3600, []byte("keybordcat")),
 		Text: "Env Test"}
+
 
 	router := mux.NewRouter()
 
