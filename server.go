@@ -2,14 +2,15 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"jamfactory-backend/controller"
 	"jamfactory-backend/models"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -17,11 +18,19 @@ import (
 
 func main() {
 
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	db, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
-	if err != nil {
-		log.Panic(err)
+	// Load ENV variables
+	enverr := godotenv.Load()
+	if enverr != nil {
+		log.Fatal("Error loading .env file")
 	}
+	log.Println("[INFO] Loaded environment...")
+
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	db, err := mongo.Connect(ctx, options.Client().ApplyURI(os.Getenv("MONGO_DB")))
+	if err != nil {
+		log.Panic("[ERROR] Error in connecting to database ", err)
+	}
+	log.Println("[INFO] Connected to database...")
 
 	ctx, _ = context.WithTimeout(context.Background(), 30*time.Second)
 	db.Database("jamfactory").Collection("Sessions").Drop(ctx)
@@ -46,7 +55,9 @@ func main() {
 
 	http.Handle("/", router)
 
-	fmt.Println("Listening on Port 3000....")
+	log.Println("[INFO] Registered routes...")
+
+	log.Println("[INFO] Listening on Port 3000...")
 	serverErr := http.ListenAndServe(":3000", nil)
 
 	if serverErr != nil {
