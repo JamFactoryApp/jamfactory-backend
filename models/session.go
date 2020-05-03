@@ -3,18 +3,21 @@ package models
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/http"
 	"time"
 )
 
 type Session struct {
 	ID primitive.ObjectID `bson:"_id, omitempty"`
-	Data string
+	//Data string
+	Data map[string]interface{}
 	Modified time.Time
 }
 
@@ -43,6 +46,19 @@ func NewSessionStore(c *mongo.Collection, maxAge int, keyPairs ...[]byte) *Sessi
 		coll:    c,
 	}
 	store.MaxAge(maxAge)
+
+	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
+
+	indexOptions := options.IndexOptions{}
+	indexOptions.SetName("TTL")
+	indexOptions.SetExpireAfterSeconds(int32(maxAge))
+
+	c.Indexes().CreateOne(ctx, mongo.IndexModel{
+		Keys: bson.M{
+			"modified": 1,
+		},
+		Options: &indexOptions,
+	})
 
 	return store
 }
@@ -126,10 +142,19 @@ func (m *Sessionstore) load(session *sessions.Session) error {
 		return err
 	}
 
-	if err := securecookie.DecodeMulti(session.Name(), s.Data, &session.Values,
-		m.Codecs...); err != nil {
-		return err
+	// Decode Data of session
+	//if err := securecookie.DecodeMulti(session.Name(), s.Data, &session.Values,	m.Codecs...); err != nil {
+	//	return err
+	//}
+
+	// Set session values
+	data := make(map[interface{}]interface{})
+
+	for key, value := range s.Data {
+		data[key] = value
 	}
+
+	session.Values = data
 
 	return nil
 }
@@ -146,15 +171,25 @@ func (m *Sessionstore) upsert(session *sessions.Session) error {
 		modified = time.Now()
 	}
 
-	encoded, err := securecookie.EncodeMulti(session.Name(), session.Values,
-		m.Codecs...)
-	if err != nil {
-		return err
+	// Encode Data of session before storing it in the DB
+	//data, err := securecookie.EncodeMulti(session.Name(), session.Values, m.Codecs...)
+	//if err != nil {
+	//	return err
+	//}
+
+	// Create Object containing the Session values. Use only for dev
+	data := make(map[string]interface{})
+
+	for key, value := range session.Values {
+		strKey := fmt.Sprintf("%v", key)
+
+		data[strKey] = value
 	}
+
 	id, _ := primitive.ObjectIDFromHex(session.ID)
 	s := Session{
 		ID:       id,
-		Data:     encoded,
+		Data:     data,
 		Modified: modified,
 	}
 
@@ -206,7 +241,6 @@ func (c *CookieToken) GetToken(req *http.Request, name string) (string, error) {
 	return cook.Value, nil
 }
 
-func (c *CookieToken) SetToken(rw http.ResponseWriter, name, value string,
-	options *sessions.Options) {
+func (c *CookieToken) SetToken(rw http.ResponseWriter, name, value string,	options *sessions.Options) {
 	http.SetCookie(rw, sessions.NewCookie(name, value, options))
 }
