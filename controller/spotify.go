@@ -31,21 +31,26 @@ func (env *SpotifyEnv) devices(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if session.IsNew {
-		session.Values["visits"] = 0
+
+		session.Values["visits"] = int32(0)
 		err = session.Save(r, w)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
 	}
 
-	session.Values["visits"] = session.Values["visits"].(int) + 1
+	session.Values["visits"] = session.Values["visits"].(int32) + 1
 	err = session.Save(r, w)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprintf(w, "You visited this site %d times", session.Values["visits"].(int))
+	if session.IsNew{
+		fmt.Fprintln(w, "This is the first time you visited this site! Welcome")
+	}
+	fmt.Fprintf(w, "You visited this site %d times ", session.Values["visits"].(int32))
 }
 
 func (env *SpotifyEnv) pause(w http.ResponseWriter, r *http.Request) {
