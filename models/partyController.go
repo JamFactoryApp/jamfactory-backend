@@ -10,7 +10,7 @@ import (
 type PartyController struct {
 	Partys []Party
 	Count int32
-	Socket socketio.Server
+	Socket *socketio.Server
 }
 
 func (partyController *PartyController) generateNewParty (client spotify.Client, user spotify.User) string {
@@ -19,7 +19,7 @@ func (partyController *PartyController) generateNewParty (client spotify.Client,
 		partyLabel:       "",
 		spotifyClient:    client,
 		queue:            Queue{},
-		socket:           &partyController.Socket,
+		socket:           partyController.Socket,
 		currentSong:      nil,
 		queueActive:      true,
 		selectedDeviceId: "",
@@ -28,14 +28,14 @@ func (partyController *PartyController) generateNewParty (client spotify.Client,
 		user:             nil,
 	}
 
-	party.partyLabel = partyController.generateRandomLabel()
+	party.partyLabel = partyController.GenerateRandomLabel()
 	party.setUser(user)
 	partyController.Partys = append(partyController.Partys, party)
 
 	return party.partyLabel
 }
 
-func (partyController *PartyController) generateRandomLabel() string {
+func (partyController *PartyController) GenerateRandomLabel() string {
 	labelArr := make([]string, 5)
 	possibleChars := "ABCDEFGHJKLMNOPQRSTUVWXYZ123456789"
 
@@ -53,13 +53,13 @@ func (partyController *PartyController) generateRandomLabel() string {
 	}
 
 	if exits {
-		return partyController.generateRandomLabel()
+		return partyController.GenerateRandomLabel()
 	} else {
 		return label
 	}
 }
 
-func (partyController *PartyController) getParty(label string) *Party {
+func (partyController *PartyController) GetParty(label string) *Party {
 	for _, party := range partyController.Partys {
 		if party.partyLabel == label{
 			return &party
@@ -68,15 +68,15 @@ func (partyController *PartyController) getParty(label string) *Party {
 	return nil
 }
 
-func (partyController *PartyController) setSocket(socket socketio.Server) {
+func (partyController *PartyController) SetSocket(socket *socketio.Server) {
 	partyController.Socket = socket
 }
 
-func (partyController *PartyController) queueWorker () {
+func (partyController *PartyController) QueueWorker () {
 	for _, party := range partyController.Partys {
 
 		state, _ := party.spotifyClient.PlayerState()
-		party.setPlaybackState(state)
+		party.setPlaybackState(*state)
 
 		if party.queueActive {
 			if state.Progress > state.Item.Duration - 1000 || !state.Playing {
@@ -90,3 +90,4 @@ func (partyController *PartyController) queueWorker () {
 		}
 	}
 }
+
