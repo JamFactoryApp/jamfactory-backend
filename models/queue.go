@@ -72,12 +72,15 @@ func (queue *Queue) SortQueue() {
 	sort.Sort(songs(queue.Songs))
 }
 
-func (queue *Queue) GetNextSong(removeSong bool) Song {
+func (queue *Queue) GetNextSong(removeSong bool) *Song {
+	if len(queue.Songs) == 0 {
+		// TODO
+	}
 	song := queue.Songs[0]
 	if removeSong {
 		queue.Songs = queue.Songs[1:]
 	}
-	return song
+	return &song
 }
 
 func (queue *Queue) GetObjectWithoutId(id string) []SongWithoutId {
