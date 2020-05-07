@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/googollee/go-socket.io"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -35,10 +36,14 @@ func main() {
 	ctx, _ = context.WithTimeout(context.Background(), 30*time.Second)
 	db.Database("jamfactory").Collection("Sessions").Drop(ctx)
 
+	socket, err := socketio.NewServer(nil)
+
+
 	env := &models.Env{
 		DB: models.DB{Database: db.Database("jamfactory")},
 		Store: models.NewSessionStore(db.Database("jamfactory").Collection("Sessions"), 3600, []byte("keybordcat")),
-		Text: "Env Test"}
+		PartyController: &models.PartyController{Socket: socket},
+		}
 
 
 	router := mux.NewRouter()
@@ -53,6 +58,12 @@ func main() {
 	controller.RegisterQueueRoutes(queueRouter, env)
 	controller.RegisterSpotifyRoutes(spotifyRouter, env)
 
+	controller.RegisterSocketRoutes(socket, env)
+
+	go socket.Serve()
+	defer socket.Close()
+
+	http.Handle("/socket.io/", socket)
 	http.Handle("/", router)
 
 	log.Println("[INFO] Registered routes...")
@@ -63,4 +74,5 @@ func main() {
 	if serverErr != nil {
 		log.Fatalln(serverErr)
 	}
+
 }
