@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"github.com/zmb3/spotify"
@@ -43,10 +44,10 @@ func main() {
 
 	router := mux.NewRouter()
 
-	authRouter := router.PathPrefix("/auth").Subrouter()
-	partyRouter := router.PathPrefix("/party").Subrouter()
-	queueRouter := router.PathPrefix("/queue").Subrouter()
-	spotifyRouter := router.PathPrefix("/spotify").Subrouter()
+	authRouter := router.PathPrefix("/api/auth").Subrouter()
+	partyRouter := router.PathPrefix("/api/party").Subrouter()
+	queueRouter := router.PathPrefix("/api/queue").Subrouter()
+	spotifyRouter := router.PathPrefix("/api/spotify").Subrouter()
 
 	controller.RegisterAuthRoutes(authRouter)
 	controller.RegisterPartyRoutes(partyRouter)
@@ -60,11 +61,12 @@ func main() {
 	controller.Socket = socket
 	log.Println("Initialized socketio server")
 
+
 	http.Handle("/", router)
 	http.Handle("/socket.io/", socket)
 
 	log.Printf("Listening on Port %v\n", PORT)
-	err := http.ListenAndServe(fmt.Sprintf(":%v", PORT), nil)
+	err := http.ListenAndServe(fmt.Sprintf(":%v", PORT), handlers.CORS()(router))
 
 	if err != nil {
 		log.Fatalln(err)
