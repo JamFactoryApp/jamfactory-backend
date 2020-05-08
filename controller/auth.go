@@ -15,8 +15,8 @@ func RegisterAuthRoutes(router *mux.Router) {
 	SpotifyAuthenticator.SetAuthInfo(os.Getenv("SPOTIFY_ID"), os.Getenv("SPOTIFY_SECRET"))
 
 	router.HandleFunc("/callback", callback)
-	router.HandleFunc("/login", login)
-	router.HandleFunc("/status", status)
+	router.HandleFunc("/login/", login)
+	router.HandleFunc("/status/", status)
 }
 
 func callback(w http.ResponseWriter, r *http.Request) {
@@ -67,7 +67,18 @@ func login(w http.ResponseWriter, r *http.Request) {
 	state := session.ID
 	url := SpotifyAuthenticator.AuthURL(state)
 
-	http.Redirect(w, r, url, http.StatusSeeOther)
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	res := make(map[string]interface{})
+	res["url"] = url
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	err = json.NewEncoder(w).Encode(res)
+
+	if err != nil {
+		log.Println("Couldn't encode json")
+	}
 }
 
 func status(w http.ResponseWriter, r *http.Request) {
