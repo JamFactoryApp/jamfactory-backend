@@ -4,38 +4,29 @@ import (
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"github.com/zmb3/spotify"
-	"jamfactory-backend/models"
+	"log"
 	"net/http"
 	"os"
 )
 
-type AuthEnv struct {
-	*models.Env
-	SpotifyAuthenticator *spotify.Authenticator
+var SpotifyAuthenticator spotify.Authenticator
+
+func RegisterAuthRoutes(router *mux.Router) {
+	SpotifyAuthenticator.SetAuthInfo(os.Getenv("SPOTIFY_ID"), os.Getenv("SPOTIFY_SECRET"))
+
+	router.HandleFunc("/callback", callback).Queries("code", ".*", "state", ".*")
+	router.HandleFunc("/login", login)
+	router.HandleFunc("/status", status)
 }
 
-func RegisterAuthRoutes(router *mux.Router, mainEnv *models.Env) {
-	spotifyAuthenticator := spotify.NewAuthenticator(os.Getenv("SPOTIFY_REDIRECT_URL"),
-		spotify.ScopeUserReadPrivate,
-		spotify.ScopeUserReadEmail,
-		spotify.ScopeUserModifyPlaybackState,
-		spotify.ScopeUserReadPlaybackState)
-
-	env := AuthEnv{
-		Env: mainEnv,
-		SpotifyAuthenticator: &spotifyAuthenticator}
-	router.HandleFunc("/callback", env.callback)
-	router.HandleFunc("/login", env.login)
-	router.HandleFunc("/status", env.status)
-}
-
-func (env *AuthEnv) callback(w http.ResponseWriter, r *http.Request) {
-
-	session, err := env.Store.Get(r, "user-session")
+func callback(w http.ResponseWriter, r *http.Request) {
+	session, err := Store.Get(r, "user-session")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-	token, err := env.SpotifyAuthenticator.Token(session.ID, r)
+
+	token, err := SpotifyAuthenticator.Token(session.ID, r)
 
 	if err != nil {
 		http.Error(w, "Couldn't get token", http.StatusForbidden)
@@ -49,27 +40,41 @@ func (env *AuthEnv) callback(w http.ResponseWriter, r *http.Request) {
 
 	session.Values["Token"] = token
 	session.Values["User"] = "Host"
-	session.Save(r, w)
+	err = session.Save(r, w)
+
+	if err != nil {
+		log.Println("Couldn't save session")
+	}
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-func (env *AuthEnv) login(w http.ResponseWriter, r *http.Request) {
-
-	session, err := env.Store.Get(r, "user-session")
+func login(w http.ResponseWriter, r *http.Request) {
+	session, err := Store.Get(r, "user-session")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
+
+	if session.IsNew {
+		err = session.Save(r, w)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
 	state := session.ID
-	url := env.SpotifyAuthenticator.AuthURL(state)
+	url := SpotifyAuthenticator.AuthURL(state)
 
 	http.Redirect(w, r, url, http.StatusSeeOther)
 }
 
-func (env *AuthEnv) status(w http.ResponseWriter, r *http.Request) {
-	session, err := env.Store.Get(r, "user-session")
+func status(w http.ResponseWriter, r *http.Request) {
+	session, err := Store.Get(r, "user-session")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	res := make(map[string]interface{})
@@ -85,13 +90,16 @@ func (env *AuthEnv) status(w http.ResponseWriter, r *http.Request) {
 			res["user"] = "Host"
 			res["label"] = session.Values["Label"].(string)
 		} else {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(res)
+	err = json.NewEncoder(w).Encode(res)
 
+	if err != nil {
+		log.Println("Couldn't encode json")
+	}
 }

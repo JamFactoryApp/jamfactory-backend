@@ -3,32 +3,38 @@ package controller
 import (
 	"errors"
 	socketio "github.com/googollee/go-socket.io"
-	"jamfactory-backend/models"
+	"log"
 	"net/http"
 )
 
-type SocketEnv struct {
-	*models.Env
+// Initialize socketio server
+func InitSocketIO() *socketio.Server {
+	socket, err := socketio.NewServer(nil)
+
+	if err != nil {
+		log.Fatalln("Error creating socketio server\n", err)
+	}
+
+	RegisterSocketRoutes(socket)
+
+	return socket
 }
 
-func RegisterSocketRoutes(socket *socketio.Server, mainEnv *models.Env) {
-	env := SocketEnv{mainEnv}
-
-	socket.OnConnect("/", env.SocketAuth)
-	socket.OnEvent("/", "connection", env.SocketConnect)
-
+func RegisterSocketRoutes(socket *socketio.Server) {
+	socket.OnConnect("/", SocketAuth)
+	socket.OnEvent("/", "connection", SocketConnect)
 }
 
-func (env *SocketEnv) SocketConnect(s socketio.Conn, msg string) {
-	session, err := env.Store.Get(&http.Request{Header: s.RemoteHeader()}, "user-session")
+func SocketConnect(s socketio.Conn, msg string) {
+	session, _ := Store.Get(&http.Request{Header: s.RemoteHeader()}, "user-session")
 
 	s.Join(session.Values["label"].(string))
 }
 
-func (env *SocketEnv) SocketAuth(s socketio.Conn) error {
-	session, err := env.Store.Get(&http.Request{Header: s.RemoteHeader()}, "user-session")
+func SocketAuth(s socketio.Conn) error {
+	session, _ := Store.Get(&http.Request{Header: s.RemoteHeader()}, "user-session")
 	if session.Values["user"] == "Host" || session.Values["user"] == "Guest" {
-		if env.PartyController.GetParty(session.Values["label"].(string)) != nil {
+		if PartyControl.GetParty(session.Values["label"].(string)) != nil {
 			return nil
 		} else {
 			return errors.New("label is invalid")
