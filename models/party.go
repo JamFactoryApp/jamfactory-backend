@@ -15,7 +15,7 @@ type Party struct {
 	DeviceID      spotify.ID
 	CurrentSong   *spotify.FullTrack
 	PlaybackState spotify.PlayerState
-	User          spotify.User
+	User          *spotify.PrivateUser
 	Socket        *socketio.Server
 }
 
@@ -37,7 +37,7 @@ func (party *Party) StartNextSong() {
 	}
 }
 
-func (party *Party) setUser(user spotify.User) {
+func (party *Party) setUser(user *spotify.PrivateUser) {
 	party.User = user
 	party.User.DisplayName = strings.Join([]string{party.User.DisplayName, "'s Jam Session"}, "")
 }

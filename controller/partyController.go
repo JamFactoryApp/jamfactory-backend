@@ -14,7 +14,7 @@ type PartyController struct {
 	Socket *socketio.Server
 }
 
-func (pc *PartyController) generateNewParty(client spotify.Client, user spotify.User) string {
+func (pc *PartyController) generateNewParty(client spotify.Client, user *spotify.PrivateUser) string {
 
 	party := models.Party{
 		Label:         "",
@@ -25,7 +25,7 @@ func (pc *PartyController) generateNewParty(client spotify.Client, user spotify.
 		DeviceID:      "",
 		IpVoteEnabled: false,
 		PlaybackState: spotify.PlayerState{},
-		User:          spotify.User{},
+		User:          nil,
 	}
 
 	party.Label = pc.GenerateRandomLabel()
