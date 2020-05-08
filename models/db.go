@@ -11,6 +11,7 @@ import (
 
 const ConnectTimeout = 3 * time.Second
 const DropTimeout = 3 * time.Second
+const MongoSessions = "Sessions"
 
 var MongoClient *mongo.Client
 
@@ -37,7 +38,7 @@ func DropOldSessions() {
 	ctx, cancel := context.WithTimeout(context.Background(), DropTimeout)
 	defer cancel()
 
-	sessions := MongoClient.Database(os.Getenv("MONGO_DB_NAME"), nil).Collection(os.Getenv("MONGO_DB_SESSIONS"), nil)
+	sessions := MongoClient.Database(os.Getenv("MONGO_DB_NAME"), nil).Collection(MongoSessions, nil)
 	err := sessions.Drop(ctx)
 
 	if err != nil {

@@ -12,7 +12,7 @@ var PartyControl PartyController
 
 func Setup() {
 	db := models.MongoClient.Database(os.Getenv("MONGO_DB_NAME"))
-	collection := db.Collection(os.Getenv("MONGO_DB_SESSIONS"))
+	collection := db.Collection(models.MongoSessions)
 	Store = NewSessionStore(collection, 3600, []byte("keybordcat"))
 
 	PartyControl = PartyController{
