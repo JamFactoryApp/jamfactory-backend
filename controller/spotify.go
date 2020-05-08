@@ -3,27 +3,20 @@ package controller
 import (
 	"fmt"
 	"github.com/gorilla/mux"
-	"jamfactory-backend/models"
+	"log"
 	"net/http"
 )
 
-type SpotifyEnv struct {
-	*models.Env
+func RegisterSpotifyRoutes(router *mux.Router) {
+	router.HandleFunc("/devices", devices)
+	router.HandleFunc("/pause", pause)
+	router.HandleFunc("/play", play).Methods("PUT")
+	router.HandleFunc("/playlist", playlist)
+	router.HandleFunc("/search", search).Methods("PUT")
 }
 
-
-func RegisterSpotifyRoutes(router *mux.Router, mainEnv *models.Env) {
-	env := SpotifyEnv{mainEnv}
-	router.HandleFunc("/devices", env.devices)
-	router.HandleFunc("/pause", env.pause)
-	router.HandleFunc("/play", env.play).Methods("PUT")
-	router.HandleFunc("/playlist", env.playlist)
-	router.HandleFunc("/search", env.search).Methods("PUT")
-}
-
-func (env *SpotifyEnv) devices(w http.ResponseWriter, r *http.Request) {
-
-	session, err := env.Store.Get(r, "user-session")
+func devices(w http.ResponseWriter, r *http.Request) {
+	session, err := Store.Get(r, "user-session")
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -31,14 +24,12 @@ func (env *SpotifyEnv) devices(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if session.IsNew {
-
 		session.Values["visits"] = int32(0)
 		err = session.Save(r, w)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
 	}
 
 	session.Values["visits"] = session.Values["visits"].(int32) + 1
@@ -47,24 +38,31 @@ func (env *SpotifyEnv) devices(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if session.IsNew{
-		fmt.Fprintln(w, "This is the first time you visited this site! Welcome")
+	if session.IsNew {
+		_, err := fmt.Fprintf(w, "This is the first time you visited this site! Welcome")
+		if err != nil {
+			log.Println("Error printing to http.ResponseWriter")
+		}
 	}
-	fmt.Fprintf(w, "You visited this site %d times ", session.Values["visits"].(int32))
+
+	_, err = fmt.Fprintf(w, "You visited this site %d times ", session.Values["visits"].(int32))
+	if err != nil {
+		log.Println("Error printing to http.ResponseWriter")
+	}
 }
 
-func (env *SpotifyEnv) pause(w http.ResponseWriter, r *http.Request) {
-
-}
-
-func (env *SpotifyEnv) play(w http.ResponseWriter, r *http.Request) {
-
-}
-
-func (env *SpotifyEnv) playlist(w http.ResponseWriter, r *http.Request) {
+func pause(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (env *SpotifyEnv) search(w http.ResponseWriter, r *http.Request) {
+func play(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func playlist(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func search(w http.ResponseWriter, r *http.Request) {
 
 }

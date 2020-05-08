@@ -3,108 +3,78 @@ package models
 import (
 	"github.com/googollee/go-socket.io"
 	"github.com/zmb3/spotify"
+	"log"
 	"strings"
 )
 
 type Party struct {
-	partyLabel string
-	spotifyClient spotify.Client
-	queue Queue
-	socket *socketio.Server
-	currentSong *spotify.FullTrack
-	queueActive bool
-	selectedDeviceId spotify.ID
-	ipVoting bool
-	playbackState spotify.PlayerState
-	user spotify.User
+	Label         string
+	Queue         PartyQueue
+	IpVoteEnabled bool
+	Client        spotify.Client
+	DeviceID      spotify.ID
+	CurrentSong   *spotify.FullTrack
+	PlaybackState spotify.PlayerState
+	User          spotify.User
+	Socket        *socketio.Server
 }
 
 type PartySettings struct {
 	DeviceId spotify.ID `json:"device"`
-	IpVoting bool `json:"ip"`
+	IpVoting bool       `json:"ip"`
 }
 
-func (party *Party) setUser (user spotify.User) {
-	party.user = user
-	party.user.DisplayName = strings.Join([]string{party.user.DisplayName, "'s Jam Session"}, "")
+func (party *Party) StartNextSong() {
+	party.CurrentSong = &party.Queue.GetNextSong(true).Song //Will fail if queue is empty
+
+	playOptions := spotify.PlayOptions{
+		URIs: []spotify.URI{party.CurrentSong.URI},
+	}
+
+	err := party.Client.PlayOpt(&playOptions)
+	if err != nil {
+		log.Println("Error starting next song")
+	}
 }
 
-func (party *Party) getUser () spotify.User {
-	return party.user
+func (party *Party) setUser(user spotify.User) {
+	party.User = user
+	party.User.DisplayName = strings.Join([]string{party.User.DisplayName, "'s Jam Session"}, "")
 }
 
-func (party *Party) getLabel () string {
-	return party.partyLabel
-}
-
-func (party *Party) getSpotifyClient () *spotify.Client {
-	return &party.spotifyClient
-}
-
-func (party *Party) getSelectedDeviceId () spotify.ID {
-	return party.selectedDeviceId
-}
-
-func (party *Party) getQueue () *Queue {
-	return &party.queue
-}
-
-func (party *Party) setSetting (setting PartySettings) {
-	if party.selectedDeviceId != setting.DeviceId {
+func (party *Party) setSetting(setting PartySettings) {
+	if party.DeviceID != setting.DeviceId {
 		playOptions := spotify.PlayOptions{
-			DeviceID:        &setting.DeviceId,
+			DeviceID: &setting.DeviceId,
 		}
-		err := party.spotifyClient.PlayOpt(&playOptions)
+		err := party.Client.PlayOpt(&playOptions)
 		if err != nil {
 
 		} else {
-			party.selectedDeviceId = setting.DeviceId
+			party.DeviceID = setting.DeviceId
 		}
 	}
-	party.ipVoting = setting.IpVoting
-}
-
-func (party *Party) getCurrentSong() *spotify.FullTrack{
-	return party.currentSong
-}
-
-func (party *Party) getPlaybackState() *spotify.PlayerState{
-	return &party.playbackState
-}
-
-func (party *Party) setPlaybackState(playbackState spotify.PlayerState) {
-	party.playbackState = playbackState
-}
-
-func (party *Party) getQueueActive() bool{
-	return party.queueActive
+	party.IpVoteEnabled = setting.IpVoting
 }
 
 func (party *Party) setQueueActive(state bool) {
 	if state {
-		party.spotifyClient.Play()
+		err := party.Client.Play()
+		if err != nil {
+			log.Println("Error setting client to play")
+		}
 	} else {
-		party.spotifyClient.Pause()
+		err := party.Client.Pause()
+		if err != nil {
+			log.Println("Error setting client to pause")
+		}
 	}
 
-	party.queueActive = state //Old Backend has set the value with a delay of 2.5 seconds
-	party.getPlaybackState().Playing = state
+	party.Queue.Active = state //Old Backend has set the value with a delay of 2.5 seconds
+	party.PlaybackState.Playing = state
 	res := make(map[string]interface{})
-	res["currentSong"] = party.getCurrentSong()
-	res["state"] = party.getPlaybackState()
-	party.socket.BroadcastToRoom("sessions", party.partyLabel, "playback", res)
+	res["currentSong"] = party.CurrentSong
+	res["state"] = party.PlaybackState
+	party.Socket.BroadcastToRoom("sessions", party.Label, "playback", res)
 
 }
-
-func (party *Party) startNextSong() {
-	party.currentSong = &party.queue.GetNextSong(true).Song //Will fail if queue is empty
-
-	playOptions := spotify.PlayOptions{
-		URIs:            []spotify.URI{party.getCurrentSong().URI},
-	}
-
-	party.spotifyClient.PlayOpt(&playOptions)
-
-}
-
-

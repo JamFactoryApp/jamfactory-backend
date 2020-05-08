@@ -6,37 +6,12 @@ import (
 	"time"
 )
 
-type songs []Song
-
-func (song songs) Len() int {
-	return len(song)
+type PartyQueue struct {
+	Songs  Songs
+	Active bool
 }
 
-func (song songs) Swap(i, j int) {
-	song[i], song[j] = song[j], song[i]
-}
-
-func (song songs) Less(i, j int) bool {
-	if song[i].GetVoteCount() > song[j].GetVoteCount() {
-		return true
-	}
-	if song[i].GetVoteCount() < song[j].GetVoteCount() {
-		return false
-	}
-	if song[j].Date.After(song[i].Date) {
-		return true
-	}
-	if song[i].Date.After(song[j].Date) {
-		return false
-	}
-	return true
-}
-
-type Queue struct {
-	Songs songs
-}
-
-func (queue *Queue) Vote(id string, song spotify.FullTrack) {
+func (queue *PartyQueue) Vote(id string, song spotify.FullTrack) {
 	notInQueueFlag := true
 
 	for _, a := range queue.Songs {
@@ -47,7 +22,7 @@ func (queue *Queue) Vote(id string, song spotify.FullTrack) {
 	}
 
 	if notInQueueFlag {
-		song := Song{Song:  song}
+		song := Song{Song: song}
 		song.Vote(id)
 		song.Date = time.Now()
 		if id == "Host" {
@@ -60,19 +35,19 @@ func (queue *Queue) Vote(id string, song spotify.FullTrack) {
 	queue.SortQueue()
 }
 
-func (queue *Queue) CheckForEmptySongs() {
+func (queue *PartyQueue) CheckForEmptySongs() {
 	for i, a := range queue.Songs {
-		if a.GetVoteCount() <= 0 {
+		if a.VoteCount() <= 0 {
 			queue.Songs = append(queue.Songs[:i], queue.Songs[i+1:]...)
 		}
 	}
 }
 
-func (queue *Queue) SortQueue() {
-	sort.Sort(songs(queue.Songs))
+func (queue *PartyQueue) SortQueue() {
+	sort.Sort(queue.Songs)
 }
 
-func (queue *Queue) GetNextSong(removeSong bool) *Song {
+func (queue *PartyQueue) GetNextSong(removeSong bool) *Song {
 	if len(queue.Songs) == 0 {
 		// TODO
 	}
@@ -83,11 +58,11 @@ func (queue *Queue) GetNextSong(removeSong bool) *Song {
 	return &song
 }
 
-func (queue *Queue) GetObjectWithoutId(id string) []SongWithoutId {
+func (queue *PartyQueue) GetObjectWithoutId(id string) []SongWithoutId {
 	res := make([]SongWithoutId, len(queue.Songs))
 
 	for i, song := range queue.Songs {
-		res[i] = song.GetObjectWithoutId(id)
+		res[i] = song.WithoutId(id)
 	}
 
 	return res

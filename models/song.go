@@ -6,25 +6,21 @@ import (
 )
 
 type Song struct {
-	Song spotify.FullTrack
+	Song  spotify.FullTrack
 	Votes []Vote
-	Date time.Time
+	Date  time.Time
 }
 
 type SongWithoutId struct {
-	Song spotify.FullTrack
+	Song  spotify.FullTrack
 	Votes int
 	Voted bool
 }
 
-func (song *Song) GetVoteCount() int{
-	return len(song.Votes)
-}
-
-func (song *Song) Vote (id string) bool {
-	if containsVote(song.Votes, id) {
+func (song *Song) Vote(id string) bool {
+	if song.containsVote(id) {
 		// The id has already voted for the song. Another vote will remove the current vote
-		i := getIndexOfVote(song.Votes, id)
+		i := song.indexOfVote(id)
 		song.Votes = append(song.Votes[:i], song.Votes[i+1:]...)
 		return false
 	}
@@ -35,23 +31,20 @@ func (song *Song) Vote (id string) bool {
 	return true
 }
 
-func (song *Song) CheckForVote (id string) bool {
-	if getIndexOfVote(song.Votes, id) != -1 {
-		return true
-	}
-	return false
+func (song Song) VoteCount() int {
+	return len(song.Votes)
 }
 
-func (song *Song) GetObjectWithoutId(id string) SongWithoutId {
+func (song Song) WithoutId(voteID string) SongWithoutId {
 	return SongWithoutId{
 		Song:  song.Song,
-		Votes: song.GetVoteCount(),
-		Voted: song.CheckForVote(id),
+		Votes: song.VoteCount(),
+		Voted: song.containsVote(voteID),
 	}
 }
 
-func containsVote(arr []Vote, id string) bool {
-	for _, a := range arr {
+func (song Song) containsVote(id string) bool {
+	for _, a := range song.Votes {
 		if a.id == id {
 			return true
 		}
@@ -59,8 +52,8 @@ func containsVote(arr []Vote, id string) bool {
 	return false
 }
 
-func getIndexOfVote(arr []Vote, id string) int {
-	for i, a := range arr {
+func (song Song) indexOfVote(id string) int {
+	for i, a := range song.Votes {
 		if a.id == id {
 			return i
 		}

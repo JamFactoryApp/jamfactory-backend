@@ -1,50 +1,45 @@
 package main
 
 import (
-	"context"
-	"github.com/googollee/go-socket.io"
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/zmb3/spotify"
 	"jamfactory-backend/controller"
 	"jamfactory-backend/models"
 	"log"
 	"net/http"
 	"os"
-	"time"
 )
 
+var PORT = 3000
 
+// Load ENV variables
+func loadEnvironment() {
+	err := godotenv.Load()
+
+	if err != nil {
+		log.Fatalln("Error loading environment from .env\n", err)
+	}
+}
 
 func main() {
+	loadEnvironment()
+	log.Println("Loaded environment from .env")
 
-	// Load ENV variables
-	enverr := godotenv.Load()
-	if enverr != nil {
-		log.Fatal("Error loading .env file")
-	}
-	log.Println("[INFO] Loaded environment...")
+	models.InitDB()
+	log.Println("Initialized database")
 
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	db, err := mongo.Connect(ctx, options.Client().ApplyURI(os.Getenv("MONGO_DB")))
-	if err != nil {
-		log.Panic("[ERROR] Error in connecting to database ", err)
-	}
-	log.Println("[INFO] Connected to database...")
+	controller.Setup()
+	log.Println("Initialized controllers")
 
-	ctx, _ = context.WithTimeout(context.Background(), 30*time.Second)
-	db.Database("jamfactory").Collection("Sessions").Drop(ctx)
-
-	socket, err := socketio.NewServer(nil)
-
-
-	env := &models.Env{
-		DB: models.DB{Database: db.Database("jamfactory")},
-		Store: models.NewSessionStore(db.Database("jamfactory").Collection("Sessions"), 3600, []byte("keybordcat")),
-		PartyController: &models.PartyController{Socket: socket},
-		}
-
+	controller.SpotifyAuthenticator = spotify.NewAuthenticator(
+		os.Getenv("SPOTIFY_REDIRECT_URL"),
+		spotify.ScopeUserReadPrivate,
+		spotify.ScopeUserReadEmail,
+		spotify.ScopeUserModifyPlaybackState,
+		spotify.ScopeUserReadPlaybackState,
+	)
 
 	router := mux.NewRouter()
 
@@ -53,26 +48,25 @@ func main() {
 	queueRouter := router.PathPrefix("/queue").Subrouter()
 	spotifyRouter := router.PathPrefix("/spotify").Subrouter()
 
-	controller.RegisterAuthRoutes(authRouter, env)
-	controller.RegisterPartyRoutes(partyRouter, env)
-	controller.RegisterQueueRoutes(queueRouter, env)
-	controller.RegisterSpotifyRoutes(spotifyRouter, env)
+	controller.RegisterAuthRoutes(authRouter)
+	controller.RegisterPartyRoutes(partyRouter)
+	controller.RegisterQueueRoutes(queueRouter)
+	controller.RegisterSpotifyRoutes(spotifyRouter)
+	log.Println("Initialized routes")
 
-	controller.RegisterSocketRoutes(socket, env)
-
+	socket := controller.InitSocketIO()
 	go socket.Serve()
 	defer socket.Close()
+	controller.Socket = socket
+	log.Println("Initialized socketio server")
 
-	http.Handle("/socket.io/", socket)
 	http.Handle("/", router)
+	http.Handle("/socket.io/", socket)
 
-	log.Println("[INFO] Registered routes...")
+	log.Printf("Listening on Port %v\n", PORT)
+	err := http.ListenAndServe(fmt.Sprintf(":%v", PORT), nil)
 
-	log.Println("[INFO] Listening on Port 3000...")
-	serverErr := http.ListenAndServe(":3000", nil)
-
-	if serverErr != nil {
-		log.Fatalln(serverErr)
+	if err != nil {
+		log.Fatalln(err)
 	}
-
 }
