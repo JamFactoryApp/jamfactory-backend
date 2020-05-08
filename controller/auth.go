@@ -14,7 +14,7 @@ var SpotifyAuthenticator spotify.Authenticator
 func RegisterAuthRoutes(router *mux.Router) {
 	SpotifyAuthenticator.SetAuthInfo(os.Getenv("SPOTIFY_ID"), os.Getenv("SPOTIFY_SECRET"))
 
-	router.HandleFunc("/callback", callback).Queries("code", ".*", "state", ".*")
+	router.HandleFunc("/callback", callback)
 	router.HandleFunc("/login", login)
 	router.HandleFunc("/status", status)
 }
@@ -79,16 +79,24 @@ func status(w http.ResponseWriter, r *http.Request) {
 
 	res := make(map[string]interface{})
 
-	if session.Values["User"] != nil {
+	if session.Values["User"] == nil {
 		res["user"] = "New"
 		res["label"] = ""
 	} else {
 		if session.Values["User"] == "Guest" {
 			res["user"] = "Guest"
-			res["label"] = session.Values["Label"].(string)
+			if session.Values["Label"] == nil {
+				res["label"] = ""
+			} else {
+				res["label"] = session.Values["Label"].(string)
+			}
 		} else if session.Values["User"] == "Host" {
 			res["user"] = "Host"
-			res["label"] = session.Values["Label"].(string)
+			if session.Values["Label"] == nil {
+				res["label"] = ""
+			} else {
+				res["label"] = session.Values["Label"].(string)
+			}
 		} else {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
