@@ -9,7 +9,7 @@ import (
 
 type Party struct {
 	Label         string
-	Queue         PartyQueue
+	Queue         *PartyQueue
 	IpVoteEnabled bool
 	Client        spotify.Client
 	DeviceID      spotify.ID
@@ -25,13 +25,19 @@ type PartySettings struct {
 }
 
 func (party *Party) StartNextSong() {
-	party.CurrentSong = &party.Queue.GetNextSong(true).Song //Will fail if queue is empty
+	song, err := party.Queue.GetNextSong(true)
+
+	if err != nil {
+		return
+	}
+
+	party.CurrentSong = &song.Song //Will fail if queue is empty
 
 	playOptions := spotify.PlayOptions{
 		URIs: []spotify.URI{party.CurrentSong.URI},
 	}
 
-	err := party.Client.PlayOpt(&playOptions)
+	err = party.Client.PlayOpt(&playOptions)
 	if err != nil {
 		log.Println("Error starting next song")
 	}
