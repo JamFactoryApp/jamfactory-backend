@@ -3,8 +3,10 @@ package controller
 import (
 	"encoding/json"
 	"github.com/gorilla/mux"
+	"github.com/zmb3/spotify"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/oauth2"
+	"jamfactory-backend/models"
 	"log"
 	"net/http"
 	"strings"
@@ -184,7 +186,7 @@ func leaveParty(w http.ResponseWriter, r *http.Request) {
 	if session.Values["User"] != nil && session.Values["Label"] != nil && session.Values["User"] == "Host" {
 		party := PartyControl.GetParty(session.Values["Label"].(string))
 		if party != nil {
-			party.Queue.Active = false
+			party.SetQueueActive(false)
 		}
 	}
 
@@ -265,7 +267,54 @@ func setPartyName(w http.ResponseWriter, r *http.Request) {
 }
 
 func setPlayback(w http.ResponseWriter, r *http.Request) {
+	session, err := Store.Get(r, "user-session")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println("Couldn't get session")
+		return
+	}
 
+	decoder := json.NewDecoder(r.Body)
+
+	var body struct{
+		Playback bool `json:"playback"`
+	}
+
+	err = decoder.Decode(&body)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("@%s Couldn't decode json from body: %s", session.ID, err.Error())
+		return
+	}
+
+	if !(session.Values["Label"] != nil) {
+		http.Error(w, "User Error: Not joined a party", http.StatusUnauthorized)
+		log.Printf("@%s User Error: Not joined a party", session.ID)
+		return
+	}
+
+	party := PartyControl.GetParty(session.Values["Label"].(string))
+
+	if party == nil {
+		http.Error(w, "Party Error: Could not find a party with the submitted label", http.StatusNotFound)
+		log.Printf("@%s Party Error: Could not find a party with the submitted label", session.ID)
+		return
+	}
+
+	party.SetQueueActive(body.Playback)
+
+	res := make(map[string]interface{})
+	res["Settings"] = "Saved"
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	err = json.NewEncoder(w).Encode(res)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("@%s Couldn't encode json: %s", session.ID, err.Error())
+	}
 }
 
 func addPlaylist(w http.ResponseWriter, r *http.Request) {
@@ -277,7 +326,60 @@ func getQueue(w http.ResponseWriter, r *http.Request) {
 }
 
 func setSettings(w http.ResponseWriter, r *http.Request) {
+	session, err := Store.Get(r, "user-session")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println("Couldn't get session")
+		return
+	}
 
+	decoder := json.NewDecoder(r.Body)
+
+	var body struct{
+		DeviceID spotify.ID `json:"device"`
+		IpVoting bool `json:"ip"`
+	}
+
+	err = decoder.Decode(&body)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("@%s Couldn't decode json from body: %s", session.ID, err.Error())
+		return
+	}
+
+	if !(session.Values["Label"] != nil) {
+		http.Error(w, "User Error: Not joined a party", http.StatusUnauthorized)
+		log.Printf("@%s User Error: Not joined a party", session.ID)
+		return
+	}
+
+	party := PartyControl.GetParty(session.Values["Label"].(string))
+
+	if party == nil {
+		http.Error(w, "Party Error: Could not find a party with the submitted label", http.StatusNotFound)
+		log.Printf("@%s Party Error: Could not find a party with the submitted label", session.ID)
+		return
+	}
+
+	settings := models.PartySettings{
+		DeviceId: body.DeviceID,
+		IpVoting: body.IpVoting,
+	}
+
+	party.SetSetting(settings)
+
+	res := make(map[string]interface{})
+	res["Settings"] = "Saved"
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	err = json.NewEncoder(w).Encode(res)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("@%s Couldn't encode json: %s", session.ID, err.Error())
+	}
 }
 
 func getPartyState(w http.ResponseWriter, r *http.Request) {
