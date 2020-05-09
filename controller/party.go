@@ -174,6 +174,41 @@ func joinParty(w http.ResponseWriter, r *http.Request) {
 }
 
 func leaveParty(w http.ResponseWriter, r *http.Request) {
+	session, err := Store.Get(r, "user-session")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println("Couldn't get session")
+		return
+	}
+
+	if session.Values["User"] != nil && session.Values["Label"] != nil && session.Values["User"] == "Host" {
+		party := PartyControl.GetParty(session.Values["Label"].(string))
+		if party != nil {
+			party.Queue.Active = false
+		}
+	}
+
+	session.Values["User"] = "New"
+	session.Values["Label"] = nil
+
+	err = session.Save(r, w)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("@%s Could not save session: %s", session.ID, err.Error())
+		return
+	}
+
+	res := make(map[string]interface{})
+	res["Success"] = true
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	err = json.NewEncoder(w).Encode(res)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("@%s Couldn't encode json: %s", session.ID, err.Error())
+	}
 
 }
 
