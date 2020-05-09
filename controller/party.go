@@ -7,6 +7,7 @@ import (
 	"golang.org/x/oauth2"
 	"log"
 	"net/http"
+	"strings"
 )
 
 func RegisterPartyRoutes(router *mux.Router) {
@@ -120,7 +121,56 @@ func getPartyInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func joinParty(w http.ResponseWriter, r *http.Request) {
-	
+	session, err := Store.Get(r, "user-session")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println("Couldn't get session")
+		return
+	}
+
+	decoder := json.NewDecoder(r.Body)
+
+	var body struct{
+		Label string `json:"label"`
+	}
+
+	err = decoder.Decode(&body)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("@%s Couldn't decode json from body: %s", session.ID, err.Error())
+		return
+	}
+
+	party := PartyControl.GetParty(strings.ToUpper(body.Label))
+
+	if party == nil {
+		http.Error(w, "Party Error: Could not find a party with the submitted label", http.StatusNotFound)
+		log.Printf("@%s Party Error: Could not find a party with the submitted label", session.ID)
+		return
+	}
+
+	session.Values["User"] = "Guest"
+	session.Values["Label"] = strings.ToUpper(body.Label)
+
+	err = session.Save(r, w)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("@%s Could not save session: %s", session.ID, err.Error())
+		return
+	}
+
+	res := make(map[string]interface{})
+	res["label"] = strings.ToUpper(body.Label)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	err = json.NewEncoder(w).Encode(res)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("@%s Couldn't encode json: %s", session.ID, err.Error())
+	}
 }
 
 func leaveParty(w http.ResponseWriter, r *http.Request) {
