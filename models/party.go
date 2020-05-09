@@ -37,12 +37,12 @@ func (party *Party) StartNextSong() {
 	}
 }
 
-func (party *Party) setUser(user *spotify.PrivateUser) {
+func (party *Party) SetUser(user *spotify.PrivateUser) {
 	party.User = user
 	party.User.DisplayName = strings.Join([]string{party.User.DisplayName, "'s Jam Session"}, "")
 }
 
-func (party *Party) setSetting(setting PartySettings) {
+func (party *Party) SetSetting(setting PartySettings) {
 	if party.DeviceID != setting.DeviceId {
 		playOptions := spotify.PlayOptions{
 			DeviceID: &setting.DeviceId,
@@ -57,7 +57,7 @@ func (party *Party) setSetting(setting PartySettings) {
 	party.IpVoteEnabled = setting.IpVoting
 }
 
-func (party *Party) setQueueActive(state bool) {
+func (party *Party) SetQueueActive(state bool) {
 	if state {
 		err := party.Client.Play()
 		if err != nil {
