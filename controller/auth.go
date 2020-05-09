@@ -16,6 +16,7 @@ func RegisterAuthRoutes(router *mux.Router) {
 
 	router.HandleFunc("/callback", callback)
 	router.HandleFunc("/login/", login)
+	router.HandleFunc("/logout", logout)
 	router.HandleFunc("/status/", status)
 }
 
@@ -79,6 +80,24 @@ func login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("Couldn't encode json")
 	}
+}
+
+func logout(w http.ResponseWriter, r *http.Request) {
+	session, err := Store.Get(r, "user-session")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	session.Options.MaxAge = -1
+	err = Store.Save(r, w, session)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func status(w http.ResponseWriter, r *http.Request) {
