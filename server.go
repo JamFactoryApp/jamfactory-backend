@@ -20,13 +20,13 @@ func loadEnvironment() {
 	err := godotenv.Load()
 
 	if err != nil {
-		log.Fatalln("Error loading environment from .env\n", err)
+		log.Println("No .env file found\n", err)
 	}
 }
 
 func main() {
 	loadEnvironment()
-	log.Println("Loaded environment from .env")
+	log.Println("Loaded environment")
 
 	models.InitDB()
 	log.Println("Initialized database")
@@ -60,7 +60,6 @@ func main() {
 	defer socket.Close()
 	controller.Socket = socket
 	log.Println("Initialized socketio server")
-
 
 	http.Handle("/", router)
 	http.Handle("/socket.io/", socket)
