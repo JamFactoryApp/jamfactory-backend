@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 var PORT = 3000
@@ -64,10 +65,20 @@ func main() {
 	http.Handle("/", router)
 	http.Handle("/socket.io/", socket)
 
+	go queueWorker(&controller.PartyControl)
+
 	log.Printf("Listening on Port %v\n", PORT)
 	err := http.ListenAndServe(fmt.Sprintf(":%v", PORT), handlers.CORS()(router))
 
 	if err != nil {
 		log.Fatalln(err)
+	}
+
+}
+
+func queueWorker(partyController *controller.PartyController) {
+	for {
+		time.Sleep(1 * time.Second)
+		go controller.QueueWorker(partyController)
 	}
 }
