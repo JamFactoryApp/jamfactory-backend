@@ -83,11 +83,44 @@ func createParty(w http.ResponseWriter, r *http.Request) {
 }
 
 func getPartyInfo(w http.ResponseWriter, r *http.Request) {
+	session, err := Store.Get(r, "user-session")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println("Couldn't get session")
+		return
+	}
+
+	if !(session.Values["Label"] != nil) {
+		http.Error(w, "User Error: Not joined a party", http.StatusUnauthorized)
+		log.Printf("@%s User Error: Not joined a party", session.ID)
+		return
+	}
+
+	party := PartyControl.GetParty(session.Values["Label"].(string))
+
+	if party == nil {
+		http.Error(w, "Party Error: Could not find a party with the submitted label", http.StatusNotFound)
+		log.Printf("@%s Party Error: Could not find a party with the submitted label", session.ID)
+		return
+	}
+
+	res := make(map[string]interface{})
+	res["id"] = party.User.ID
+	res["display_name"] = party.User.DisplayName
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	err = json.NewEncoder(w).Encode(res)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("@%s Couldn't encode json: %s", session.ID, err.Error())
+	}
 
 }
 
 func joinParty(w http.ResponseWriter, r *http.Request) {
-
+	
 }
 
 func leaveParty(w http.ResponseWriter, r *http.Request) {
