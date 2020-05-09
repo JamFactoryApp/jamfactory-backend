@@ -1,7 +1,9 @@
 package models
 
 import (
+	"errors"
 	"github.com/zmb3/spotify"
+	"log"
 	"sort"
 	"time"
 )
@@ -22,6 +24,7 @@ func (queue *PartyQueue) Vote(id string, song spotify.FullTrack) {
 	}
 
 	if notInQueueFlag {
+		log.Print("Added Song")
 		song := Song{Song: song}
 		song.Vote(id)
 		song.Date = time.Now()
@@ -47,21 +50,22 @@ func (queue *PartyQueue) SortQueue() {
 	sort.Sort(queue.Songs)
 }
 
-func (queue *PartyQueue) GetNextSong(removeSong bool) *Song {
+func (queue *PartyQueue) GetNextSong(removeSong bool) (*Song, error) {
 	if len(queue.Songs) == 0 {
-		// TODO
+		return nil, errors.New("No song")
 	}
 	song := queue.Songs[0]
 	if removeSong {
 		queue.Songs = queue.Songs[1:]
 	}
-	return &song
+	return &song, nil
 }
 
 func (queue *PartyQueue) GetObjectWithoutId(id string) []SongWithoutId {
 	res := make([]SongWithoutId, len(queue.Songs))
-
+	log.Print(len(queue.Songs))
 	for i, song := range queue.Songs {
+		log.Print(song.WithoutId(id))
 		res[i] = song.WithoutId(id)
 	}
 
