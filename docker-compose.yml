@@ -10,9 +10,8 @@ services:
       SPOTIFY_ID: ""
       SPOTIFY_SECRET: ""
       SPOTIFY_REDIRECT_URL: "http://localhost:3000/auth/callback"
-      MONGO_DB: "mongodb://admin:password@127.0.0.1:27017"
+      MONGO_DB: "mongodb://mongo:27017"
       MONGO_DB_NAME: "jamfactory"
-      MONGO_DB_SESSIONS: "Sessions"
     depends_on:
       - mongo
 
@@ -20,4 +19,4 @@ services:
     image: mongo
     restart: always
     ports:
-    - 27017:27017
+      - 27017:27017
