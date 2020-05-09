@@ -318,7 +318,82 @@ func setPlayback(w http.ResponseWriter, r *http.Request) {
 }
 
 func addPlaylist(w http.ResponseWriter, r *http.Request) {
+	session, err := Store.Get(r, "user-session")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println("Couldn't get session")
+		return
+	}
 
+	decoder := json.NewDecoder(r.Body)
+
+	var body struct{
+		URI spotify.ID `json:"uri"`
+	}
+
+	err = decoder.Decode(&body)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("@%s Couldn't decode json from body: %s", session.ID, err.Error())
+		return
+	}
+
+	if !(session.Values["Label"] != nil) {
+		http.Error(w, "User Error: Not joined a party", http.StatusUnauthorized)
+		log.Printf("@%s User Error: Not joined a party", session.ID)
+		return
+	}
+
+	if !(session.Values["User"] != "Host") {
+		http.Error(w, "User Error: Not the host", http.StatusUnauthorized)
+		log.Printf("@%s User Error: Not the host", session.ID)
+		return
+	}
+
+	party := PartyControl.GetParty(session.Values["Label"].(string))
+
+	if party == nil {
+		http.Error(w, "Party Error: Could not find a party with the submitted label", http.StatusNotFound)
+		log.Printf("@%s Party Error: Could not find a party with the submitted label", session.ID)
+		return
+	}
+
+	playlist, err := party.Client.GetPlaylistTracks(body.URI)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("@%s Couldn't get playlist: %s", session.ID, err.Error())
+		return
+	}
+
+	for i := 0; i < len(playlist.Tracks); i++ {
+		party.Queue.Vote("Host", playlist.Tracks[i].Track)
+	}
+
+	queue := party.Queue.GetObjectWithoutId("")
+
+	bytes, err := json.Marshal(queue)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("@%s Couldn't encode json: %s", session.ID, err.Error())
+	}
+
+	party.Socket.BroadcastToRoom("/", party.Label, string(bytes))
+
+
+	res := make(map[string]interface{})
+	res["Status"] = "Playlist Added"
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	err = json.NewEncoder(w).Encode(res)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("@%s Couldn't encode json: %s", session.ID, err.Error())
+	}
 }
 
 func getQueue(w http.ResponseWriter, r *http.Request) {
@@ -418,7 +493,39 @@ func setSettings(w http.ResponseWriter, r *http.Request) {
 }
 
 func getPartyState(w http.ResponseWriter, r *http.Request) {
+	session, err := Store.Get(r, "user-session")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println("Couldn't get session")
+		return
+	}
 
+	if !(session.Values["Label"] != nil) {
+		http.Error(w, "User Error: Not joined a party", http.StatusUnauthorized)
+		log.Printf("@%s User Error: Not joined a party", session.ID)
+		return
+	}
+
+	party := PartyControl.GetParty(session.Values["Label"].(string))
+
+	if party == nil {
+		http.Error(w, "Party Error: Could not find a party with the submitted label", http.StatusNotFound)
+		log.Printf("@%s Party Error: Could not find a party with the submitted label", session.ID)
+		return
+	}
+
+	res := make(map[string]interface{})
+	res["currentSong"] = party.CurrentSong
+	res["state"] = party.PlaybackState
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	err = json.NewEncoder(w).Encode(res)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("@%s Couldn't encode json: %s", session.ID, err.Error())
+	}
 }
 
 func vote(w http.ResponseWriter, r *http.Request) {
