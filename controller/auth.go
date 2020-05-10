@@ -68,8 +68,6 @@ func login(w http.ResponseWriter, r *http.Request) {
 	state := session.ID
 	url := SpotifyAuthenticator.AuthURL(state)
 
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-
 	res := make(map[string]interface{})
 	res["url"] = url
 
