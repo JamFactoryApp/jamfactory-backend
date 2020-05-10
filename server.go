@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
+	"github.com/rs/cors"
 	"github.com/zmb3/spotify"
 	"jamfactory-backend/controller"
 	"jamfactory-backend/models"
@@ -50,6 +50,7 @@ func main() {
 	queueRouter := router.PathPrefix("/api/queue").Subrouter()
 	spotifyRouter := router.PathPrefix("/api/spotify").Subrouter()
 
+
 	controller.RegisterAuthRoutes(authRouter)
 	controller.RegisterPartyRoutes(partyRouter)
 	controller.RegisterQueueRoutes(queueRouter)
@@ -57,18 +58,22 @@ func main() {
 	log.Println("Initialized routes")
 
 	socket := controller.InitSocketIO()
+
 	go socket.Serve()
 	defer socket.Close()
 	controller.Socket = socket
+	controller.PartyControl.SetSocket(socket)
 	log.Println("Initialized socketio server")
+	socketRouter := router.PathPrefix("/socket.io/").Subrouter()
+	socketRouter.Handle("/", socket)
 
 	http.Handle("/", router)
-	http.Handle("/socket.io/", socket)
 
 	go queueWorker(&controller.PartyControl)
 
 	log.Printf("Listening on Port %v\n", PORT)
-	err := http.ListenAndServe(fmt.Sprintf(":%v", PORT), handlers.CORS()(router))
+
+	err := http.ListenAndServe(fmt.Sprintf(":%v", PORT), nil)
 
 	if err != nil {
 		log.Fatalln(err)
@@ -82,3 +87,4 @@ func queueWorker(partyController *controller.PartyController) {
 		go controller.QueueWorker(partyController)
 	}
 }
+
