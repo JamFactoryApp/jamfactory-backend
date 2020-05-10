@@ -73,7 +73,18 @@ func main() {
 
 	log.Printf("Listening on Port %v\n", PORT)
 
-	err := http.ListenAndServe(fmt.Sprintf(":%v", PORT), nil)
+	corsOptions := cors.Options{
+		AllowedOrigins: []string{"http://localhost:3000", "http://localhost:4200"},
+		AllowCredentials: true,
+		Debug: false,
+	}
+
+	corsHandler := cors.New(corsOptions).Handler(router)
+	//corsAll := cors.Default().Handler(router)
+
+
+
+	err := http.ListenAndServe(fmt.Sprintf(":%v", PORT), corsHandler)
 
 	if err != nil {
 		log.Fatalln(err)
