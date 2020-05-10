@@ -14,7 +14,7 @@ type Party struct {
 	Client        spotify.Client
 	DeviceID      spotify.ID
 	CurrentSong   *spotify.FullTrack
-	PlaybackState spotify.PlayerState
+	PlaybackState *spotify.PlayerState
 	User          *spotify.PrivateUser
 	Socket        *socketio.Server
 }
