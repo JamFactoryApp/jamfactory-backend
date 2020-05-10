@@ -92,11 +92,11 @@ func QueueWorker(controller *PartyController) {
 			if !state.Playing || state.Progress > state.Item.Duration-1000 {
 				log.Printf("Start next song for %s", controller.Partys[i].Label)
 				controller.Partys[i].StartNextSong()
-				//party.Socket.BroadcastToRoom("/", party.Label, "queue", party.Queue.GetObjectWithoutId(""))
-				//res := make(map[string]interface{})
-				//res["currentSong"] = party.CurrentSong
-				//res["state"] = party.PlaybackState
-				//party.Socket.BroadcastToRoom("/", party.Label, "playback", res)
+				controller.Partys[i].Socket.BroadcastToRoom("/", controller.Partys[i].Label, "queue", controller.Partys[i].Queue.GetObjectWithoutId(""))
+				res := make(map[string]interface{})
+				res["currentSong"] = controller.Partys[i].CurrentSong
+				res["state"] = controller.Partys[i].PlaybackState
+				controller.Partys[i].Socket.BroadcastToRoom("/", controller.Partys[i].Label, "playback", res)
 			}
 		}
 	}
