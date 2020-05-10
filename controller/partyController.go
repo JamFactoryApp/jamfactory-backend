@@ -15,26 +15,34 @@ type PartyController struct {
 	Socket *socketio.Server
 }
 
-func (pc *PartyController) generateNewParty(client spotify.Client, user *spotify.PrivateUser) string {
+func (pc *PartyController) generateNewParty(client spotify.Client) (string, error) {
 
 	queue := models.PartyQueue{Active: true}
+	user, err := client.CurrentUser()
+	playback, err := client.PlayerState()
+
+	if err != nil {
+		return "", err
+	}
+
 	party := models.Party{
 		Label:         "",
 		Client:        client,
 		Queue:         &queue,
 		Socket:        pc.Socket,
-		CurrentSong:   nil,
-		DeviceID:      "",
+		CurrentSong:   playback.Item,
+		DeviceID:      playback.Device.ID,
 		IpVoteEnabled: false,
-		PlaybackState: spotify.PlayerState{},
-		User:          nil,
+		PlaybackState: playback,
+		User:          user,
 	}
+
 
 	party.Label = pc.GenerateRandomLabel()
 	party.User = user
 	pc.Partys = append(pc.Partys, party)
 
-	return party.Label
+	return party.Label, nil
 }
 
 func (pc *PartyController) GenerateRandomLabel() string {
@@ -84,7 +92,7 @@ func QueueWorker(controller *PartyController) {
 			continue
 		}
 
-		controller.Partys[i].PlaybackState = *state
+		controller.Partys[i].PlaybackState = state
 		controller.Partys[i].CurrentSong = state.Item
 
 		if controller.Partys[i].Queue.Active {
