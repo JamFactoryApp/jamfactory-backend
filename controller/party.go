@@ -422,7 +422,7 @@ func getQueue(w http.ResponseWriter, r *http.Request) {
 	if party.IpVoteEnabled{
 		voteID = r.RemoteAddr
 	}
-
+	log.Printf("Get Queue")
 	queue := party.Queue.GetObjectWithoutId(voteID)
 
 	w.Header().Set("Content-Type", "application/json")
@@ -570,14 +570,7 @@ func vote(w http.ResponseWriter, r *http.Request) {
 	party.Queue.Vote(voteID, song)
 	queue := party.Queue.GetObjectWithoutId(voteID)
 
-	bytes, err := json.Marshal(queue)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Printf("@%s Couldn't encode json: %s", session.ID, err.Error())
-	}
-
-	party.Socket.BroadcastToRoom("/", party.Label, string(bytes))
+	party.Socket.BroadcastToRoom("/", party.Label, "queue", party.Queue.GetObjectWithoutId(""))
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
