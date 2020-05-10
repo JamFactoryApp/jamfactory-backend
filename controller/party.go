@@ -54,15 +54,12 @@ func createParty(w http.ResponseWriter, r *http.Request) {
 	}
 
 	client := SpotifyAuthenticator.NewClient(&token)
-	user, err := client.CurrentUser()
 
-	if err != nil {
+	label, err := PartyControl.generateNewParty(client)
+	if err != nil{
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Printf("@%s Could not create get current user: %s", session.ID, err.Error())
-		return
+		log.Printf("@%s Couldn't create party: %s", session.ID, err.Error())
 	}
-
-	label := PartyControl.generateNewParty(client, user)
 
 	session.Values["Label"] = label
 
@@ -514,13 +511,17 @@ func getPartyState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := make(map[string]interface{})
-	res["currentSong"] = party.CurrentSong
-	res["state"] = party.PlaybackState
+	state := struct{
+		CurrentSong *spotify.FullTrack `json:"currentSong,omitempty"`
+		State *spotify.PlayerState `json:"state,omitempty"`
+	}{
+		party.CurrentSong,
+		party.PlaybackState,
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	err = json.NewEncoder(w).Encode(res)
+	err = json.NewEncoder(w).Encode(state)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
