@@ -26,6 +26,8 @@ type PartySettings struct {
 }
 
 func (party *Party) StartNextSong() {
+	log.WithField("Party", party.Label).Trace("Model event: Start next song for party")
+
 	song, err := party.Queue.GetNextSong(true)
 
 	if err != nil {
@@ -40,16 +42,20 @@ func (party *Party) StartNextSong() {
 
 	err = party.Client.PlayOpt(&playOptions)
 	if err != nil {
-		log.Println("Error starting next song")
+		log.WithField("Party", party.Label).Error("Error starting next song")
 	}
 }
 
 func (party *Party) SetUser(user *spotify.PrivateUser) {
+	log.WithField("Party", party.Label).Trace("Model event: Set party user")
+
 	party.User = user
 	party.User.DisplayName = strings.Join([]string{party.User.DisplayName, "'s Jam Session"}, "")
 }
 
 func (party *Party) SetSetting(setting PartySettings) {
+	log.WithField("Party", party.Label).Trace("Model event: Set party settings")
+
 	if party.DeviceID != setting.DeviceId {
 		playOptions := spotify.PlayOptions{
 			DeviceID: &setting.DeviceId,
@@ -65,15 +71,17 @@ func (party *Party) SetSetting(setting PartySettings) {
 }
 
 func (party *Party) SetPartyState(state bool) {
+	log.WithField("Party", party.Label).Trace("Model event: Set party state")
+
 	if state {
 		err := party.Client.Play()
 		if err != nil {
-			log.Println("Error setting client to play")
+			log.WithField("Party", party.Label).Warn("Error setting client to play")
 		}
 	} else {
 		err := party.Client.Pause()
 		if err != nil {
-			log.Println("Error setting client to pause")
+			log.WithField("Party", party.Label).Println("Error setting client to pause")
 		}
 	}
 

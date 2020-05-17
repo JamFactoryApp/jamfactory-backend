@@ -2,7 +2,6 @@ package models
 
 import (
 	"errors"
-	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
 	"sort"
 	"time"
@@ -39,7 +38,6 @@ func (queue *PartyQueue) Vote(id string, song spotify.FullTrack) {
 	}
 
 	if notInQueueFlag {
-		log.Print("Added Song")
 		song := Song{Song: song}
 		song.Vote(id)
 		song.Date = time.Now()
@@ -67,7 +65,7 @@ func (queue *PartyQueue) SortQueue() {
 
 func (queue *PartyQueue) GetNextSong(removeSong bool) (*Song, error) {
 	if len(queue.Songs) == 0 {
-		return nil, errors.New("No song")
+		return nil, errors.New("no song")
 	}
 	song := queue.Songs[0]
 	if removeSong {
@@ -78,9 +76,7 @@ func (queue *PartyQueue) GetNextSong(removeSong bool) (*Song, error) {
 
 func (queue *PartyQueue) GetObjectWithoutId(id string) []SongWithoutId {
 	res := make([]SongWithoutId, len(queue.Songs))
-	log.Print(len(queue.Songs))
 	for i, song := range queue.Songs {
-		log.Print(song.WithoutId(id))
 		res[i] = song.WithoutId(id)
 	}
 

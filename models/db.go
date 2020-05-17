@@ -26,11 +26,10 @@ func InitDB() {
 	MongoClient, err = mongo.Connect(ctx, opts)
 
 	if err != nil {
-		log.Fatalln("Error connecting to database\n", err)
+		log.WithContext(ctx).Panic("Error connecting to database: ", err.Error())
 	}
 
 	DropOldSessions()
-	log.Println("Dropped old session data")
 }
 
 // Try dropping old session data from database
@@ -42,6 +41,9 @@ func DropOldSessions() {
 	err := sessions.Drop(ctx)
 
 	if err != nil {
-		log.Fatalln("Error dropping old session data\n", err)
+		log.WithContext(ctx).Panic("Error dropping old session data: ", err.Error())
+	} else {
+		log.Warn("Dropped old session data")
 	}
+
 }
