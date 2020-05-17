@@ -21,9 +21,12 @@ func RegisterAuthRoutes(router *mux.Router) {
 }
 
 func callback(w http.ResponseWriter, r *http.Request) {
+	log.Trace("Controller call: auth.callback")
+
 	session, err := Store.Get(r, "user-session")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Error("Could not get session: ", err.Error())
 		return
 	}
 
@@ -31,11 +34,16 @@ func callback(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		http.Error(w, "Couldn't get token", http.StatusForbidden)
+		log.WithField("Session", session.ID).Error("Couldn't get token: ", err.Error())
 		return
 	}
 
 	if st := r.FormValue("state"); st != session.ID {
 		http.NotFound(w, r)
+		log.WithFields(log.Fields{
+			"Session": session.ID,
+			"State": st,
+		}).Error("State mismatch")
 		return
 	}
 
@@ -44,16 +52,19 @@ func callback(w http.ResponseWriter, r *http.Request) {
 	err = session.Save(r, w)
 
 	if err != nil {
-		log.Println("Couldn't save session")
+		log.WithField("Session", session.ID).Error("Couldn't save session: ", err.Error())
 	}
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
+	log.Trace("Controller call: auth.login")
+
 	session, err := Store.Get(r, "user-session")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Error("Could not get session", err.Error())
 		return
 	}
 
@@ -61,6 +72,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 		err = session.Save(r, w)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			log.WithField("Session", session.ID).Error("Could not save session", err.Error())
 			return
 		}
 	}
@@ -76,14 +88,17 @@ func login(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(res)
 
 	if err != nil {
-		log.Println("Couldn't encode json")
+		log.Error("Couldn't encode json: ", err.Error())
 	}
 }
 
 func logout(w http.ResponseWriter, r *http.Request) {
+	log.Trace("Controller call: auth.logout")
+
 	session, err := Store.Get(r, "user-session")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Error("Could not get session: ", err.Error())
 		return
 	}
 
@@ -92,6 +107,7 @@ func logout(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.WithField("Session", session.ID).Error("Could not save session", err.Error())
 		return
 	}
 
@@ -99,9 +115,12 @@ func logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func status(w http.ResponseWriter, r *http.Request) {
+	log.Trace("Controller call: auth.status")
+
 	session, err := Store.Get(r, "user-session")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Error("Could not get session: ", err.Error())
 		return
 	}
 
@@ -136,6 +155,6 @@ func status(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(res)
 
 	if err != nil {
-		log.Println("Couldn't encode json")
+		log.Error("Couldn't encode json: ", err.Error())
 	}
 }
