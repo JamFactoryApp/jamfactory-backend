@@ -9,8 +9,24 @@ import (
 )
 
 type PartyQueue struct {
-	Songs  Songs
+	Songs  []Song
 	Active bool
+}
+
+func (queue *PartyQueue) Len() int {
+	return len(queue.Songs)
+}
+
+func (queue *PartyQueue) Swap(i, j int) {
+	queue.Songs[i], queue.Songs[j] = queue.Songs[j], queue.Songs[i]
+}
+
+func (queue *PartyQueue) Less(i, j int) bool {
+	if queue.Songs[i].VoteCount() != queue.Songs[j].VoteCount() {
+		return queue.Songs[i].VoteCount() < queue.Songs[j].VoteCount()
+	} else {
+		return queue.Songs[i].Date.Before(queue.Songs[j].Date)
+	}
 }
 
 func (queue *PartyQueue) Vote(id string, song spotify.FullTrack) {
@@ -47,7 +63,7 @@ func (queue *PartyQueue) CheckForEmptySongs() {
 }
 
 func (queue *PartyQueue) SortQueue() {
-	sort.Sort(queue.Songs)
+	sort.Sort(queue)
 }
 
 func (queue *PartyQueue) GetNextSong(removeSong bool) (*Song, error) {
