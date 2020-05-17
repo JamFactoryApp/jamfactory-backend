@@ -2,9 +2,9 @@ package controller
 
 import (
 	socketio "github.com/googollee/go-socket.io"
+	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
 	"jamfactory-backend/models"
-	"log"
 	"math/rand"
 	"strings"
 )
@@ -36,7 +36,6 @@ func (pc *PartyController) generateNewParty(client spotify.Client) (string, erro
 		PlaybackState: playback,
 		User:          user,
 	}
-
 
 	party.Label = pc.GenerateRandomLabel()
 	party.User = user
@@ -83,7 +82,7 @@ func (pc *PartyController) SetSocket(socket *socketio.Server) {
 }
 
 func QueueWorker(controller *PartyController) {
-	for i := 0; i< len(controller.Partys); i++ {
+	for i := 0; i < len(controller.Partys); i++ {
 
 		state, err := controller.Partys[i].Client.PlayerState()
 

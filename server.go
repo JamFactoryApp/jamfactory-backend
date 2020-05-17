@@ -5,10 +5,10 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
+	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
 	"jamfactory-backend/controller"
 	"jamfactory-backend/models"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -26,6 +26,13 @@ func loadEnvironment() {
 }
 
 func main() {
+
+	log.SetOutput(os.Stdout)
+	log.SetFormatter(&log.TextFormatter{
+		ForceColors: true,
+		FullTimestamp: false,
+	})
+
 	loadEnvironment()
 	log.Println("Loaded environment")
 

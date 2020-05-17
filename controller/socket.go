@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	socketio "github.com/googollee/go-socket.io"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 )
 

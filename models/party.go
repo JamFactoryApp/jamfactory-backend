@@ -2,8 +2,8 @@ package models
 
 import (
 	"github.com/googollee/go-socket.io"
+	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
-	"log"
 	"strings"
 )
 

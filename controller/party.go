@@ -3,11 +3,11 @@ package controller
 import (
 	"encoding/json"
 	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/oauth2"
 	"jamfactory-backend/models"
-	"log"
 	"net/http"
 	"strings"
 )
@@ -40,7 +40,7 @@ func createParty(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tokenMap := session.Values["Token"].(map[string]interface{})
-	token  := oauth2.Token{
+	token := oauth2.Token{
 		AccessToken:  tokenMap["accesstoken"].(string),
 		TokenType:    tokenMap["tokentype"].(string),
 		RefreshToken: tokenMap["refreshtoken"].(string),
@@ -56,7 +56,7 @@ func createParty(w http.ResponseWriter, r *http.Request) {
 	client := SpotifyAuthenticator.NewClient(&token)
 
 	label, err := PartyControl.generateNewParty(client)
-	if err != nil{
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Printf("@%s Couldn't create party: %s", session.ID, err.Error())
 	}
@@ -129,7 +129,7 @@ func joinParty(w http.ResponseWriter, r *http.Request) {
 
 	decoder := json.NewDecoder(r.Body)
 
-	var body struct{
+	var body struct {
 		Label string `json:"label"`
 	}
 
@@ -221,7 +221,7 @@ func setPartyName(w http.ResponseWriter, r *http.Request) {
 
 	decoder := json.NewDecoder(r.Body)
 
-	var body struct{
+	var body struct {
 		Name string `json:"name"`
 	}
 
@@ -273,7 +273,7 @@ func setPlayback(w http.ResponseWriter, r *http.Request) {
 
 	decoder := json.NewDecoder(r.Body)
 
-	var body struct{
+	var body struct {
 		Playback bool `json:"playback"`
 	}
 
@@ -324,7 +324,7 @@ func addPlaylist(w http.ResponseWriter, r *http.Request) {
 
 	decoder := json.NewDecoder(r.Body)
 
-	var body struct{
+	var body struct {
 		URI spotify.ID `json:"uri"`
 	}
 
@@ -379,7 +379,6 @@ func addPlaylist(w http.ResponseWriter, r *http.Request) {
 
 	party.Socket.BroadcastToRoom("/", party.Label, string(bytes))
 
-
 	res := make(map[string]interface{})
 	res["Status"] = "Playlist Added"
 
@@ -416,7 +415,7 @@ func getQueue(w http.ResponseWriter, r *http.Request) {
 	}
 
 	voteID := session.ID
-	if party.IpVoteEnabled{
+	if party.IpVoteEnabled {
 		voteID = r.RemoteAddr
 	}
 	log.Printf("Get Queue")
@@ -442,9 +441,9 @@ func setSettings(w http.ResponseWriter, r *http.Request) {
 
 	decoder := json.NewDecoder(r.Body)
 
-	var body struct{
+	var body struct {
 		DeviceID spotify.ID `json:"device"`
-		IpVoting bool `json:"ip"`
+		IpVoting bool       `json:"ip"`
 	}
 
 	err = decoder.Decode(&body)
@@ -511,9 +510,9 @@ func getPartyState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	state := struct{
-		CurrentSong *spotify.FullTrack `json:"currentSong,omitempty"`
-		State *spotify.PlayerState `json:"state,omitempty"`
+	state := struct {
+		CurrentSong *spotify.FullTrack   `json:"currentSong,omitempty"`
+		State       *spotify.PlayerState `json:"state,omitempty"`
 	}{
 		party.CurrentSong,
 		party.PlaybackState,
@@ -564,7 +563,7 @@ func vote(w http.ResponseWriter, r *http.Request) {
 	}
 
 	voteID := session.ID
-	if party.IpVoteEnabled{
+	if party.IpVoteEnabled {
 		voteID = r.RemoteAddr
 	}
 

@@ -2,8 +2,8 @@ package models
 
 import (
 	"errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
-	"log"
 	"sort"
 	"time"
 )

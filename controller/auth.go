@@ -3,8 +3,8 @@ package controller
 import (
 	"encoding/json"
 	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
-	"log"
 	"net/http"
 	"os"
 )
