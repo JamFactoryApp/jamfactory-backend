@@ -32,6 +32,7 @@ func main() {
 		ForceColors: true,
 		FullTimestamp: false,
 	})
+	log.SetLevel(log.TraceLevel)
 
 	loadEnvironment()
 	log.Info("Loaded environment")
