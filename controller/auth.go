@@ -88,7 +88,7 @@ func logout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	session.Options.MaxAge = -1
-	err = Store.Save(r, w, session)
+	err = session.Save(r, w)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
