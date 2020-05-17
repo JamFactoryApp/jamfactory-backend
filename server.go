@@ -21,7 +21,7 @@ func loadEnvironment() {
 	err := godotenv.Load()
 
 	if err != nil {
-		log.Println("No .env file found\n", err)
+		log.Error("No .env file found", err)
 	}
 }
 
@@ -34,13 +34,13 @@ func main() {
 	})
 
 	loadEnvironment()
-	log.Println("Loaded environment")
+	log.Info("Loaded environment")
 
 	models.InitDB()
-	log.Println("Initialized database")
+	log.Info("Initialized database")
 
 	controller.Setup()
-	log.Println("Initialized controllers")
+	log.Info("Initialized controllers")
 
 	controller.SpotifyAuthenticator = spotify.NewAuthenticator(
 		os.Getenv("SPOTIFY_REDIRECT_URL"),
@@ -62,7 +62,7 @@ func main() {
 	controller.RegisterPartyRoutes(partyRouter)
 	controller.RegisterQueueRoutes(queueRouter)
 	controller.RegisterSpotifyRoutes(spotifyRouter)
-	log.Println("Initialized routes")
+	log.Info("Initialized routes")
 
 	socket := controller.InitSocketIO()
 
@@ -70,7 +70,7 @@ func main() {
 	defer socket.Close()
 	controller.Socket = socket
 	controller.PartyControl.SetSocket(socket)
-	log.Println("Initialized socketio server")
+	log.Info("Initialized socketio server")
 	socketRouter := router.PathPrefix("/socket.io/").Subrouter()
 	socketRouter.Handle("/", socket)
 
@@ -78,7 +78,7 @@ func main() {
 
 	go queueWorker(&controller.PartyControl)
 
-	log.Printf("Listening on Port %v\n", PORT)
+	log.Infof("Listening on Port %v", PORT)
 
 	corsOptions := cors.Options{
 		AllowedOrigins: []string{"http://localhost:3000", "http://localhost:4200"},
@@ -94,7 +94,7 @@ func main() {
 	err := http.ListenAndServe(fmt.Sprintf(":%v", PORT), corsHandler)
 
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatal(err)
 	}
 
 }
