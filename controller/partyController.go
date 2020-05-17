@@ -17,7 +17,7 @@ type PartyController struct {
 
 func (pc *PartyController) generateNewParty(client spotify.Client) (string, error) {
 
-	queue := models.PartyQueue{Active: true}
+	queue := models.PartyQueue{}
 	user, err := client.CurrentUser()
 	playback, err := client.PlayerState()
 
@@ -95,7 +95,7 @@ func QueueWorker(controller *PartyController) {
 		controller.Partys[i].PlaybackState = state
 		controller.Partys[i].CurrentSong = state.Item
 
-		if controller.Partys[i].Queue.Active {
+		if controller.Partys[i].Active {
 
 			if !state.Playing || state.Progress > state.Item.Duration-1000 {
 				log.Printf("Start next song for %s", controller.Partys[i].Label)

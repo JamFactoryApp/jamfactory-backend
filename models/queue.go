@@ -10,7 +10,6 @@ import (
 
 type PartyQueue struct {
 	Songs  []Song
-	Active bool
 }
 
 func (queue *PartyQueue) Len() int {

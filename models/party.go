@@ -17,6 +17,7 @@ type Party struct {
 	PlaybackState *spotify.PlayerState
 	User          *spotify.PrivateUser
 	Socket        *socketio.Server
+	Active        bool
 }
 
 type PartySettings struct {
@@ -63,7 +64,7 @@ func (party *Party) SetSetting(setting PartySettings) {
 	party.IpVoteEnabled = setting.IpVoting
 }
 
-func (party *Party) SetQueueActive(state bool) {
+func (party *Party) SetPartyState(state bool) {
 	if state {
 		err := party.Client.Play()
 		if err != nil {
@@ -76,7 +77,7 @@ func (party *Party) SetQueueActive(state bool) {
 		}
 	}
 
-	party.Queue.Active = state //Old Backend has set the value with a delay of 2.5 seconds
+	party.Active = state //Old Backend has set the value with a delay of 2.5 seconds
 	party.PlaybackState.Playing = state
 	res := make(map[string]interface{})
 	res["currentSong"] = party.CurrentSong

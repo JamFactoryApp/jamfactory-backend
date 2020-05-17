@@ -183,7 +183,7 @@ func leaveParty(w http.ResponseWriter, r *http.Request) {
 	if session.Values["User"] != nil && session.Values["Label"] != nil && session.Values["User"] == "Host" {
 		party := PartyControl.GetParty(session.Values["Label"].(string))
 		if party != nil {
-			party.SetQueueActive(false)
+			party.SetPartyState(false)
 		}
 	}
 
@@ -299,7 +299,7 @@ func setPlayback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	party.SetQueueActive(body.Playback)
+	party.SetPartyState(body.Playback)
 
 	res := make(map[string]interface{})
 	res["Settings"] = "Saved"
