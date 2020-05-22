@@ -2,7 +2,6 @@ package controller
 
 import (
 	"errors"
-	"fmt"
 	socketio "github.com/googollee/go-socket.io"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -23,53 +22,47 @@ func InitSocketIO() *socketio.Server {
 
 func RegisterSocketRoutes(socket *socketio.Server) {
 	socket.OnConnect("/", SocketAuth)
-	socket.OnEvent("/", "connection", SocketConnect)
 	socket.OnError("/", SocketError)
 	socket.OnDisconnect("/", SocketDisconnect)
 }
 
-func SocketConnect(s socketio.Conn, msg string) {
-	session, _ := Store.Get(&http.Request{Header: s.RemoteHeader()}, "user-session")
-	log.Printf("Socket.Io connection from %s", session.ID)
-
-	log.Printf(msg)
-	//s.Join(session.Values["label"].(string))
-	s.Join(msg)
-}
-
 func SocketAuth(s socketio.Conn) error {
-
-	log.Printf("Start Socket.Io auth")
-
 	session, err := Store.Get(&http.Request{Header: s.RemoteHeader()}, "user-session")
 
 	if err != nil {
-		s.Close()
-		log.Printf("Could not get session")
+		_ = s.Close()
+		log.WithField("Socket", s.ID()).Warn("Could not get session")
 		return err
 	}
 
 	s.LeaveAll()
-	log.Printf("Socket.Io auth from %s", session.ID)
+	var logger = log.WithFields(log.Fields{
+		"Socket": s.ID(),
+		"Session": session.ID,
+	})
+	logger.Trace("starting Socket.IO auth")
+
 	if (session.Values["User"] == "Host" || session.Values["User"] == "Guest") && session.Values["Label"] != nil {
 		if PartyControl.GetParty(session.Values["Label"].(string)) != nil {
-			log.Printf("allowed")
 			s.Join(session.Values["Label"].(string))
 			s.SetContext(s.Context())
+			logger.Trace("allowed connection")
 			return nil
 		} else {
-			s.Close()
-			return errors.New("label is invalid")
+			_ = s.Close()
+			logger.Trace("disallowed connection: label invalid")
+			return errors.New("label invalid")
 		}
 	}
-	s.Close()
+	_ = s.Close()
+	logger.Trace("disallowed connection: wrong user type")
 	return errors.New("wrong user type")
 }
 
 func SocketError(s socketio.Conn, e error) {
-	fmt.Println("meet error:", e)
+	log.Error("Socket.IO Error ", e.Error())
 }
 
 func SocketDisconnect(s socketio.Conn, reason string) {
-	fmt.Println("closed", reason)
+	log.Trace("closed Socket.IO connection: ", reason)
 }
