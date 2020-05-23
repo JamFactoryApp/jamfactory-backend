@@ -8,6 +8,7 @@ require (
 	github.com/gorilla/securecookie v1.1.1
 	github.com/gorilla/sessions v1.2.0
 	github.com/joho/godotenv v1.3.0
+	github.com/justinas/alice v1.2.0
 	github.com/rs/cors v1.7.0
 	github.com/sirupsen/logrus v1.4.2
 	github.com/zmb3/spotify v0.0.0-20200422222148-5fe5f9535a2c
