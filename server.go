@@ -54,14 +54,15 @@ func main() {
 	router := mux.NewRouter()
 
 	authRouter := router.PathPrefix("/api/auth").Subrouter()
+	factoryRouter := router.PathPrefix("/api/factory").Subrouter()
 	partyRouter := router.PathPrefix("/api/party").Subrouter()
 	queueRouter := router.PathPrefix("/api/queue").Subrouter()
 	spotifyRouter := router.PathPrefix("/api/spotify").Subrouter()
 
-
 	controller.RegisterAuthRoutes(authRouter)
-	controller.RegisterPartyRoutes(partyRouter)
+	controller.RegisterFactoryRoutes(factoryRouter)
 	controller.RegisterQueueRoutes(queueRouter)
+	controller.RegisterPartyRoutes(partyRouter)
 	controller.RegisterSpotifyRoutes(spotifyRouter)
 	log.Info("Initialized routes")
 
@@ -90,8 +91,6 @@ func main() {
 	corsHandler := cors.New(corsOptions).Handler(router)
 	//corsAll := cors.Default().Handler(router)
 
-
-
 	err := http.ListenAndServe(fmt.Sprintf(":%v", PORT), corsHandler)
 
 	if err != nil {
@@ -106,4 +105,3 @@ func queueWorker(partyController *models.Factory) {
 		go models.QueueWorker(partyController)
 	}
 }
-
