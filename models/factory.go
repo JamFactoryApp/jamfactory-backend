@@ -33,11 +33,11 @@ func (pc *Factory) GenerateNewParty(client spotify.Client) (string, error) {
 		DeviceID:      playback.Device.ID,
 		IpVoteEnabled: false,
 		PlaybackState: playback,
-		User:          user,
+		Active: true,
 	}
 
 	party.Label = pc.GenerateRandomLabel()
-	party.User = user
+	party.SetUser(user)
 	pc.Partys = append(pc.Partys, party)
 
 	return party.Label, nil
@@ -89,6 +89,8 @@ func QueueWorker(controller *Factory) {
 			log.Printf("Couldn't get state for %s", controller.Partys[i].Label)
 			continue
 		}
+
+		log.Trace(state.Playing, state.Item.Name, state.Progress)
 
 		controller.Partys[i].PlaybackState = state
 		controller.Partys[i].CurrentSong = state.Item
