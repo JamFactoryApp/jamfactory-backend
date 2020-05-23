@@ -32,10 +32,11 @@ func (party *Party) StartNextSong() {
 	song, err := party.Queue.GetNextSong(true)
 
 	if err != nil {
+		log.WithField("Party", party.Label).Trace("Model event: Queue is empty")
 		return
 	}
 
-	party.CurrentSong = &song.Song //Will fail if queue is empty
+	party.CurrentSong = &song.Song
 
 	playOptions := spotify.PlayOptions{
 		URIs: []spotify.URI{party.CurrentSong.URI},
@@ -43,7 +44,7 @@ func (party *Party) StartNextSong() {
 
 	err = party.Client.PlayOpt(&playOptions)
 	if err != nil {
-		log.WithField("Party", party.Label).Error("Error starting next song")
+		log.WithField("Party", party.Label).Error("Error starting next song: ", err.Error())
 	}
 }
 
