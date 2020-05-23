@@ -1,155 +1,80 @@
 package controller
 
 import (
-	"encoding/json"
 	"github.com/gorilla/mux"
+	"github.com/justinas/alice"
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
+	"jamfactory-backend/helpers"
+	"jamfactory-backend/middelwares"
+	"jamfactory-backend/models"
 	"net/http"
 	"strings"
 )
 
 func RegisterSpotifyRoutes(router *mux.Router) {
-	router.HandleFunc("/devices", devices)
-	router.HandleFunc("/playlist", playlist)
-	router.HandleFunc("/search", search).Methods("PUT")
+	getSessionMiddleware := middelwares.GetSessionFromRequest{Store: Store}
+	getPartyMiddleware := middelwares.GetPartyFromSession{PartyControl: &Factory}
+	parseSearchBodyMiddleware := middelwares.BodyParser{Body: new(searchBody)}
+
+	stdChain := alice.New(getSessionMiddleware.Handler, getPartyMiddleware.Handler)
+
+	router.Handle("/devices", stdChain.ThenFunc(devices)).Methods("GET")
+	router.Handle("/playlist", stdChain.ThenFunc(playlist)).Methods("GET")
+	router.Handle("/search", stdChain.Append(parseSearchBodyMiddleware.Handler).ThenFunc(search)).Methods("PUT")
+}
+
+type searchBody struct {
+	SearchText string `json:"text"`
 }
 
 func devices(w http.ResponseWriter, r *http.Request) {
-	session, err := Store.Get(r, "user-session")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Println("Couldn't get session")
-		return
-	}
-
-	if !(session.Values["Label"] != nil) {
-		http.Error(w, "User Error: Not joined a party", http.StatusUnauthorized)
-		log.Printf("@%s User Error: Not joined a party", session.ID)
-		return
-	}
-
-	party := PartyControl.GetParty(session.Values["Label"].(string))
-
-	if party == nil {
-		http.Error(w, "Party Error: Could not find a party with the submitted label", http.StatusNotFound)
-		log.Printf("@%s Party Error: Could not find a party with the submitted label", session.ID)
-		return
-	}
+	party := r.Context().Value("Party").(*models.Party)
 
 	result, err := party.Client.PlayerDevices()
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Printf("@%s Couldn't get devices: %s", session.ID, err.Error())
+		log.WithField("Party", party.Label).Debug("Could not get devices for party: ", err.Error())
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	err = json.NewEncoder(w).Encode(result)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Printf("@%s Couldn't encode json: %s", session.ID, err.Error())
-	}
+	helpers.RespondWithJSON(w, result)
 }
 
 func playlist(w http.ResponseWriter, r *http.Request) {
-	session, err := Store.Get(r, "user-session")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Println("Couldn't get session")
-		return
-	}
-
-	if !(session.Values["Label"] != nil) {
-		http.Error(w, "User Error: Not joined a party", http.StatusUnauthorized)
-		log.Printf("@%s User Error: Not joined a party", session.ID)
-		return
-	}
-
-	party := PartyControl.GetParty(session.Values["Label"].(string))
-
-	if party == nil {
-		http.Error(w, "Party Error: Could not find a party with the submitted label", http.StatusNotFound)
-		log.Printf("@%s Party Error: Could not find a party with the submitted label", session.ID)
-		return
-	}
+	party := r.Context().Value("Party").(*models.Party)
 
 	result, err := party.Client.CurrentUsersPlaylists()
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Printf("@%s Couldn't get devices: %s", session.ID, err.Error())
+		log.WithField("Party", party.Label).Debug("Could not get playlists for party: ", err.Error())
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	err = json.NewEncoder(w).Encode(result)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Printf("@%s Couldn't encode json: %s", session.ID, err.Error())
-	}
+	helpers.RespondWithJSON(w, result)
 }
 
 func search(w http.ResponseWriter, r *http.Request) {
-	session, err := Store.Get(r, "user-session")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Println("Couldn't get session")
-		return
-	}
+	party := r.Context().Value("Party").(*models.Party)
+	body := r.Context().Value("Body").(*searchBody)
 
-	decoder := json.NewDecoder(r.Body)
-
-	var body struct{
-		Text string `json:"text"`
-	}
-
-	err = decoder.Decode(&body)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Printf("@%s Couldn't decode json from body: %s", session.ID, err.Error())
-		return
-	}
-
-	if !(session.Values["Label"] != nil) {
-		http.Error(w, "User Error: Not joined a party", http.StatusUnauthorized)
-		log.Printf("@%s User Error: Not joined a party", session.ID)
-		return
-	}
-
-	party := PartyControl.GetParty(session.Values["Label"].(string))
-
-	if party == nil {
-		http.Error(w, "Party Error: Could not find a party with the submitted label", http.StatusNotFound)
-		log.Printf("@%s Party Error: Could not find a party with the submitted label", session.ID)
-		return
-	}
 
 	country := spotify.CountryGermany
 	opts := spotify.Options{
 		Country: &country,
 	}
-	searchString := []string{body.Text, "*"}
+	searchString := []string{body.SearchText, "*"}
 	result, err := party.Client.SearchOpt(strings.Join(searchString, ""), spotify.SearchTypeTrack, &opts)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Printf("@%s Couldn't get search result: %s", session.ID, err.Error())
+		log.WithFields(log.Fields{
+			"Party": party.Label,
+			"Text": body.SearchText}).Debug("Could not get search results: ", err.Error())
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	err = json.NewEncoder(w).Encode(result)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Printf("@%s Couldn't encode json: %s", session.ID, err.Error())
-	}
+	helpers.RespondWithJSON(w, result)
 }
