@@ -6,14 +6,14 @@ import (
 	"os"
 )
 
-var Store *SessionStore
+var Store *models.SessionStore
 var Socket *socketio.Server
 var Factory models.Factory
 
 func Setup() {
 	db := models.MongoClient.Database(os.Getenv("MONGO_DB_NAME"))
 	collection := db.Collection(models.MongoSessions)
-	Store = NewSessionStore(collection, 3600, []byte("keybordcat"))
+	Store = models.NewSessionStore(collection, 3600, []byte("keybordcat"))
 
 	Factory = models.Factory{
 		Partys: nil,
