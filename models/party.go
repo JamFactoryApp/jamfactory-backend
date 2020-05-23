@@ -21,8 +21,9 @@ type Party struct {
 }
 
 type PartySettings struct {
-	DeviceId spotify.ID `json:"device"`
-	IpVoting bool       `json:"ip"`
+	DeviceId spotify.ID
+	IpVoting bool
+	PartyName string
 }
 
 func (party *Party) StartNextSong() {
@@ -68,6 +69,7 @@ func (party *Party) SetSetting(setting PartySettings) {
 		}
 	}
 	party.IpVoteEnabled = setting.IpVoting
+	party.User.DisplayName = setting.PartyName
 }
 
 func (party *Party) SetPartyState(state bool) {
