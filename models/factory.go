@@ -1,23 +1,22 @@
-package controller
+package models
 
 import (
 	socketio "github.com/googollee/go-socket.io"
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
-	"jamfactory-backend/models"
 	"math/rand"
 	"strings"
 )
 
-type PartyController struct {
-	Partys []models.Party
+type Factory struct {
+	Partys []Party
 	Count  int32
 	Socket *socketio.Server
 }
 
-func (pc *PartyController) generateNewParty(client spotify.Client) (string, error) {
+func (pc *Factory) GenerateNewParty(client spotify.Client) (string, error) {
 
-	queue := models.PartyQueue{}
+	queue := PartyQueue{}
 	user, err := client.CurrentUser()
 	playback, err := client.PlayerState()
 
@@ -25,7 +24,7 @@ func (pc *PartyController) generateNewParty(client spotify.Client) (string, erro
 		return "", err
 	}
 
-	party := models.Party{
+	party := Party{
 		Label:         "",
 		Client:        client,
 		Queue:         &queue,
@@ -44,7 +43,7 @@ func (pc *PartyController) generateNewParty(client spotify.Client) (string, erro
 	return party.Label, nil
 }
 
-func (pc *PartyController) GenerateRandomLabel() string {
+func (pc *Factory) GenerateRandomLabel() string {
 	labelArr := make([]string, 5)
 	possibleChars := "ABCDEFGHJKLMNOPQRSTUVWXYZ123456789"
 
@@ -68,7 +67,7 @@ func (pc *PartyController) GenerateRandomLabel() string {
 	}
 }
 
-func (pc *PartyController) GetParty(label string) *models.Party {
+func (pc *Factory) GetParty(label string) *Party {
 	for _, party := range pc.Partys {
 		if party.Label == label {
 			return &party
@@ -77,11 +76,11 @@ func (pc *PartyController) GetParty(label string) *models.Party {
 	return nil
 }
 
-func (pc *PartyController) SetSocket(socket *socketio.Server) {
+func (pc *Factory) SetSocket(socket *socketio.Server) {
 	pc.Socket = socket
 }
 
-func QueueWorker(controller *PartyController) {
+func QueueWorker(controller *Factory) {
 	for i := 0; i < len(controller.Partys); i++ {
 
 		state, err := controller.Partys[i].Client.PlayerState()
