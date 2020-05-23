@@ -1,4 +1,4 @@
-package controller
+package models
 
 import (
 	"context"
@@ -42,6 +42,7 @@ func NewSessionStore(collection *mongo.Collection, maxAge int, keyPairs ...[]byt
 		Options: &sessions.Options{
 			Path:   "/",
 			MaxAge: maxAge,
+			SameSite: http.SameSiteLaxMode,
 		},
 		Token:      &CookieToken{},
 		collection: collection,
