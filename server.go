@@ -29,7 +29,7 @@ func main() {
 
 	log.SetOutput(os.Stdout)
 	log.SetFormatter(&log.TextFormatter{
-		ForceColors: true,
+		ForceColors:   true,
 		FullTimestamp: false,
 	})
 	log.SetLevel(log.TraceLevel)
@@ -70,21 +70,21 @@ func main() {
 	go socket.Serve()
 	defer socket.Close()
 	controller.Socket = socket
-	controller.PartyControl.SetSocket(socket)
+	controller.Factory.SetSocket(socket)
 	log.Info("Initialized socketio server")
 	socketRouter := router.PathPrefix("/socket.io/").Subrouter()
 	socketRouter.Handle("/", socket)
 
 	http.Handle("/", router)
 
-	go queueWorker(&controller.PartyControl)
+	go queueWorker(&controller.Factory)
 
 	log.Infof("Listening on Port %v", PORT)
 
 	corsOptions := cors.Options{
-		AllowedOrigins: []string{"http://localhost:3000", "http://localhost:4200"},
+		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost:4200"},
 		AllowCredentials: true,
-		Debug: false,
+		Debug:            false,
 	}
 
 	corsHandler := cors.New(corsOptions).Handler(router)
@@ -100,10 +100,10 @@ func main() {
 
 }
 
-func queueWorker(partyController *controller.PartyController) {
+func queueWorker(partyController *models.Factory) {
 	for {
 		time.Sleep(1 * time.Second)
-		go controller.QueueWorker(partyController)
+		go models.QueueWorker(partyController)
 	}
 }
 

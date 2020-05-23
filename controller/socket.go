@@ -43,7 +43,7 @@ func SocketAuth(s socketio.Conn) error {
 	logger.Trace("starting Socket.IO auth")
 
 	if (session.Values["User"] == "Host" || session.Values["User"] == "Guest") && session.Values["Label"] != nil {
-		if PartyControl.GetParty(session.Values["Label"].(string)) != nil {
+		if Factory.GetParty(session.Values["Label"].(string)) != nil {
 			s.Join(session.Values["Label"].(string))
 			s.SetContext(s.Context())
 			logger.Trace("allowed connection")
