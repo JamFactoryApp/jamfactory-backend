@@ -8,14 +8,12 @@ import (
 	"net/http"
 )
 
-
-
 type GetPartyFromSession struct {
 	PartyControl *models.Factory
 }
 
 func (middleware *GetPartyFromSession) Handler(next http.Handler) http.Handler {
-	return http.HandlerFunc(func (w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		session := r.Context().Value("Session").(*sessions.Session)
 		if session == nil {

@@ -42,7 +42,7 @@ func callback(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		log.WithFields(log.Fields{
 			"Session": session.ID,
-			"State": st,
+			"State":   st,
 		}).Error("State mismatch")
 		return
 	}

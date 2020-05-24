@@ -57,8 +57,8 @@ func setParty(w http.ResponseWriter, r *http.Request) {
 	party.User.DisplayName = body.Name
 
 	settings := models.PartySettings{
-		DeviceId: body.DeviceID,
-		IpVoting: body.IpVoting,
+		DeviceId:  body.DeviceID,
+		IpVoting:  body.IpVoting,
 		PartyName: body.Name,
 	}
 

@@ -60,7 +60,6 @@ func search(w http.ResponseWriter, r *http.Request) {
 	party := r.Context().Value("Party").(*models.Party)
 	body := r.Context().Value("Body").(*searchBody)
 
-
 	country := spotify.CountryGermany
 	opts := spotify.Options{
 		Country: &country,
@@ -72,7 +71,7 @@ func search(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.WithFields(log.Fields{
 			"Party": party.Label,
-			"Text": body.SearchText}).Debug("Could not get search results: ", err.Error())
+			"Text":  body.SearchText}).Debug("Could not get search results: ", err.Error())
 		return
 	}
 

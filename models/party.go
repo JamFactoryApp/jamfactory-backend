@@ -21,8 +21,8 @@ type Party struct {
 }
 
 type PartySettings struct {
-	DeviceId spotify.ID
-	IpVoting bool
+	DeviceId  spotify.ID
+	IpVoting  bool
 	PartyName string
 }
 
@@ -84,7 +84,7 @@ func (party *Party) SetPartyState(state bool) {
 	} else {
 		err := party.Client.Pause()
 		if err != nil {
-			log.WithField("Party", party.Label).Println("Error setting client to pause")
+			log.WithField("Party", party.Label).Warn("Error setting client to pause")
 		}
 	}
 

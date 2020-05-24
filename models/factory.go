@@ -33,7 +33,7 @@ func (pc *Factory) GenerateNewParty(client spotify.Client) (string, error) {
 		DeviceID:      playback.Device.ID,
 		IpVoteEnabled: false,
 		PlaybackState: playback,
-		Active: true,
+		Active:        true,
 	}
 
 	party.Label = pc.GenerateRandomLabel()

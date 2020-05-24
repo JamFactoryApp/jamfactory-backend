@@ -40,8 +40,8 @@ func NewSessionStore(collection *mongo.Collection, maxAge int, keyPairs ...[]byt
 	store := &SessionStore{
 		Codecs: securecookie.CodecsFromPairs(keyPairs...),
 		Options: &sessions.Options{
-			Path:   "/",
-			MaxAge: maxAge,
+			Path:     "/",
+			MaxAge:   maxAge,
 			SameSite: http.SameSiteLaxMode,
 		},
 		Token:      &CookieToken{},

@@ -37,7 +37,7 @@ func SocketAuth(s socketio.Conn) error {
 
 	s.LeaveAll()
 	var logger = log.WithFields(log.Fields{
-		"Socket": s.ID(),
+		"Socket":  s.ID(),
 		"Session": session.ID,
 	})
 	logger.Trace("starting Socket.IO auth")

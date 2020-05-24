@@ -7,14 +7,12 @@ import (
 	"net/http"
 )
 
-
-
 type GetSessionFromRequest struct {
 	Store *models.SessionStore
 }
 
 func (middleware *GetSessionFromRequest) Handler(next http.Handler) http.Handler {
-	return http.HandlerFunc(func (w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session, err := middleware.Store.Get(r, "user-session")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
