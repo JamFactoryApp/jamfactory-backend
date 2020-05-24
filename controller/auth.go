@@ -48,7 +48,7 @@ func callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session.Values[models.SessionUserKey] = token
+	session.Values[models.SessionTokenKey] = token
 	session.Values[models.SessionUserKey] = models.UserTypeHost
 
 	helpers.SaveSession(w, r, session)
