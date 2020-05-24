@@ -48,7 +48,7 @@ func addPlaylist(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for i := 0; i < len(playlist.Tracks); i++ {
-		party.Queue.Vote("Host", playlist.Tracks[i].Track)
+		party.Queue.Vote(models.UserTypeHost, playlist.Tracks[i].Track)
 	}
 
 	queue := party.Queue.GetObjectWithoutId("")

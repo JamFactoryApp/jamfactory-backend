@@ -19,6 +19,10 @@ const SessionUserKey = "User"
 const SessionLabelKey = "Label"
 const SessionTokenKey = "Token"
 
+const UserTypeNew = "New"
+const UserTypeGuest = "Guest"
+const UserTypeHost = "Host"
+
 type Session struct {
 	ID primitive.ObjectID `bson:"_id, omitempty"`
 	//Data string

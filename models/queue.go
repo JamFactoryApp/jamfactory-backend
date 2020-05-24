@@ -45,7 +45,7 @@ func (queue *PartyQueue) Vote(id string, song spotify.FullTrack) {
 		song := Song{Song: song}
 		song.Vote(id)
 		song.Date = time.Now()
-		if id == "Host" {
+		if id == UserTypeHost {
 			song.Date.Add(time.Hour * 24 * 365)
 		}
 		queue.Songs = append(queue.Songs, song)

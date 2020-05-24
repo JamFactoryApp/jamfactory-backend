@@ -49,7 +49,7 @@ func callback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	session.Values[models.SessionUserKey] = token
-	session.Values[models.SessionUserKey] = "Host"
+	session.Values[models.SessionUserKey] = models.UserTypeHost
 
 	helpers.SaveSession(w, r, session)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -91,7 +91,7 @@ func status(w http.ResponseWriter, r *http.Request) {
 	res := make(map[string]interface{})
 
 	if session.Values[models.SessionUserKey] == nil {
-		res["user"] = "New"
+		res["user"] = models.UserTypeNew
 	} else {
 		res["user"] = session.Values[models.SessionUserKey]
 	}

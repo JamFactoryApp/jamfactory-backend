@@ -13,7 +13,7 @@ import (
 func RegisterPartyRoutes(router *mux.Router) {
 	getSessionMiddleware := middelwares.GetSessionFromRequest{Store: Store}
 	getPartyMiddleware := middelwares.GetPartyFromSession{PartyControl: &Factory}
-	validateHostUserMiddleware := middelwares.ValidateUserType{User: "Host"}
+	validateHostUserMiddleware := middelwares.ValidateUserType{User: models.UserTypeHost}
 
 	stdChain := chain.New(getSessionMiddleware.Handler, getPartyMiddleware.Handler)
 	stdHostChain := stdChain.Append(validateHostUserMiddleware.Handler)

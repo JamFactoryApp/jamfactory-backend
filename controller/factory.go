@@ -30,7 +30,7 @@ func RegisterFactoryRoutes(router *mux.Router) {
 func createParty(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value("Session").(*sessions.Session)
 
-	if !(session.Values[models.SessionUserKey] != nil && session.Values[models.SessionTokenKey] != nil && session.Values[models.SessionUserKey] == "Host") {
+	if !(session.Values[models.SessionUserKey] != nil && session.Values[models.SessionTokenKey] != nil && session.Values[models.SessionUserKey] == models.UserTypeHost) {
 		http.Error(w, "User Error: Not logged in to spotify", http.StatusUnauthorized)
 		log.Printf("@%s User Error: Not logged in to spotify ", session.ID)
 		return
@@ -82,7 +82,7 @@ func joinParty(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session.Values[models.SessionUserKey] = "Guest"
+	session.Values[models.SessionUserKey] = models.UserTypeGuest
 	session.Values[models.SessionLabelKey] = strings.ToUpper(body.Label)
 	helpers.SaveSession(w, r, session)
 
@@ -94,14 +94,14 @@ func joinParty(w http.ResponseWriter, r *http.Request) {
 func leaveParty(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value("Session").(*sessions.Session)
 
-	if session.Values[models.SessionUserKey] != nil && session.Values[models.SessionLabelKey] != nil && session.Values[models.SessionUserKey] == "Host" {
+	if session.Values[models.SessionUserKey] != nil && session.Values[models.SessionLabelKey] != nil && session.Values[models.SessionUserKey] == models.UserTypeHost {
 		party := Factory.GetParty(session.Values[models.SessionLabelKey].(string))
 		if party != nil {
 			party.SetPartyState(false)
 		}
 	}
 
-	session.Values[models.SessionUserKey] = "New"
+	session.Values[models.SessionUserKey] = models.UserTypeNew
 	session.Values[models.SessionLabelKey] = nil
 	helpers.SaveSession(w, r, session)
 
