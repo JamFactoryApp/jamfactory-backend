@@ -89,9 +89,6 @@ func QueueWorker(controller *Factory) {
 			log.Printf("Couldn't get state for %s", controller.Partys[i].Label)
 			continue
 		}
-
-		log.Trace(state.Playing, state.Item.Name, state.Progress)
-
 		controller.Partys[i].PlaybackState = state
 		controller.Partys[i].CurrentSong = state.Item
 
