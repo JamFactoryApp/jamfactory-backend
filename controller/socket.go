@@ -4,6 +4,7 @@ import (
 	"errors"
 	socketio "github.com/googollee/go-socket.io"
 	log "github.com/sirupsen/logrus"
+	"jamfactory-backend/models"
 	"net/http"
 )
 
@@ -42,9 +43,9 @@ func SocketAuth(s socketio.Conn) error {
 	})
 	logger.Trace("starting Socket.IO auth")
 
-	if (session.Values["User"] == "Host" || session.Values["User"] == "Guest") && session.Values["Label"] != nil {
-		if Factory.GetParty(session.Values["Label"].(string)) != nil {
-			s.Join(session.Values["Label"].(string))
+	if (session.Values[models.SessionUserKey] == "Host" || session.Values[models.SessionUserKey] == "Guest") && session.Values[models.SessionLabelKey] != nil {
+		if Factory.GetParty(session.Values[models.SessionLabelKey].(string)) != nil {
+			s.Join(session.Values[models.SessionLabelKey].(string))
 			s.SetContext(s.Context())
 			logger.Trace("allowed connection")
 			return nil

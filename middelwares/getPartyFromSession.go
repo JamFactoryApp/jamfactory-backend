@@ -24,17 +24,17 @@ func (middleware *GetPartyFromSession) Handler(next http.Handler) http.Handler {
 
 		logger := log.WithField("Session", session.ID)
 
-		if !(session.Values["Label"] != nil) {
+		if !(session.Values[models.SessionLabelKey] != nil) {
 			http.Error(w, "User Error: Not joined a party", http.StatusUnauthorized)
 			logger.Trace("Could not get party: User not joined a party")
 			return
 		}
 
-		party := middleware.PartyControl.GetParty(session.Values["Label"].(string))
+		party := middleware.PartyControl.GetParty(session.Values[models.SessionLabelKey].(string))
 
 		if party == nil {
 			http.Error(w, "Party Error: Could not find a party with the submitted label", http.StatusNotFound)
-			logger.WithField("Label", session.Values["Label"].(string)).Trace("Could not get party: Party not found")
+			logger.WithField("Label", session.Values[models.SessionLabelKey].(string)).Trace("Could not get party: Party not found")
 			return
 		}
 

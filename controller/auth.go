@@ -8,6 +8,7 @@ import (
 	"github.com/zmb3/spotify"
 	"jamfactory-backend/helpers"
 	"jamfactory-backend/middelwares"
+	"jamfactory-backend/models"
 	"net/http"
 	"os"
 )
@@ -47,8 +48,8 @@ func callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session.Values["Token"] = token
-	session.Values["User"] = "Host"
+	session.Values[models.SessionUserKey] = token
+	session.Values[models.SessionUserKey] = "Host"
 
 	helpers.SaveSession(w, r, session)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -89,16 +90,16 @@ func status(w http.ResponseWriter, r *http.Request) {
 
 	res := make(map[string]interface{})
 
-	if session.Values["User"] == nil {
+	if session.Values[models.SessionUserKey] == nil {
 		res["user"] = "New"
 	} else {
-		res["user"] = session.Values["User"]
+		res["user"] = session.Values[models.SessionUserKey]
 	}
 
-	if session.Values["Label"] == nil {
+	if session.Values[models.SessionLabelKey] == nil {
 		res["label"] = ""
 	} else {
-		res["label"] = session.Values["Label"]
+		res["label"] = session.Values[models.SessionLabelKey]
 	}
 
 	helpers.RespondWithJSON(w, res)

@@ -9,6 +9,7 @@ import (
 	"golang.org/x/oauth2"
 	"jamfactory-backend/helpers"
 	"jamfactory-backend/middelwares"
+	"jamfactory-backend/models"
 	"net/http"
 	"strings"
 )
@@ -29,13 +30,13 @@ func RegisterFactoryRoutes(router *mux.Router) {
 func createParty(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value("Session").(*sessions.Session)
 
-	if !(session.Values["User"] != nil && session.Values["Token"] != nil && session.Values["User"] == "Host") {
+	if !(session.Values[models.SessionUserKey] != nil && session.Values[models.SessionTokenKey] != nil && session.Values[models.SessionUserKey] == "Host") {
 		http.Error(w, "User Error: Not logged in to spotify", http.StatusUnauthorized)
 		log.Printf("@%s User Error: Not logged in to spotify ", session.ID)
 		return
 	}
 
-	tokenMap := session.Values["Token"].(map[string]interface{})
+	tokenMap := session.Values[models.SessionTokenKey].(map[string]interface{})
 	token := oauth2.Token{
 		AccessToken:  tokenMap["accesstoken"].(string),
 		TokenType:    tokenMap["tokentype"].(string),
@@ -57,7 +58,7 @@ func createParty(w http.ResponseWriter, r *http.Request) {
 		log.Printf("@%s Couldn't create party: %s", session.ID, err.Error())
 	}
 
-	session.Values["Label"] = label
+	session.Values[models.SessionLabelKey] = label
 	helpers.SaveSession(w, r, session)
 
 	res := make(map[string]interface{})
@@ -81,8 +82,8 @@ func joinParty(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session.Values["User"] = "Guest"
-	session.Values["Label"] = strings.ToUpper(body.Label)
+	session.Values[models.SessionUserKey] = "Guest"
+	session.Values[models.SessionLabelKey] = strings.ToUpper(body.Label)
 	helpers.SaveSession(w, r, session)
 
 	res := make(map[string]interface{})
@@ -93,15 +94,15 @@ func joinParty(w http.ResponseWriter, r *http.Request) {
 func leaveParty(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value("Session").(*sessions.Session)
 
-	if session.Values["User"] != nil && session.Values["Label"] != nil && session.Values["User"] == "Host" {
-		party := Factory.GetParty(session.Values["Label"].(string))
+	if session.Values[models.SessionUserKey] != nil && session.Values[models.SessionLabelKey] != nil && session.Values[models.SessionUserKey] == "Host" {
+		party := Factory.GetParty(session.Values[models.SessionLabelKey].(string))
 		if party != nil {
 			party.SetPartyState(false)
 		}
 	}
 
-	session.Values["User"] = "New"
-	session.Values["Label"] = nil
+	session.Values[models.SessionUserKey] = "New"
+	session.Values[models.SessionLabelKey] = nil
 	helpers.SaveSession(w, r, session)
 
 	res := make(map[string]interface{})

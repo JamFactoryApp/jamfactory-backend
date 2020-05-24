@@ -15,6 +15,10 @@ import (
 	"time"
 )
 
+const SessionUserKey = "User"
+const SessionLabelKey = "Label"
+const SessionTokenKey = "Token"
+
 type Session struct {
 	ID primitive.ObjectID `bson:"_id, omitempty"`
 	//Data string
