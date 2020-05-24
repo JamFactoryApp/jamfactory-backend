@@ -43,6 +43,7 @@ func NewSessionStore(collection *mongo.Collection, maxAge int, keyPairs ...[]byt
 			Path:     "/",
 			MaxAge:   maxAge,
 			SameSite: http.SameSiteLaxMode,
+			Secure:   true,
 		},
 		Token:      &CookieToken{},
 		collection: collection,
