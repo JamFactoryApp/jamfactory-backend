@@ -21,9 +21,9 @@ func (queue *PartyQueue) Swap(i, j int) {
 
 func (queue *PartyQueue) Less(i, j int) bool {
 	if queue.Songs[i].VoteCount() != queue.Songs[j].VoteCount() {
-		return queue.Songs[i].VoteCount() < queue.Songs[j].VoteCount()
+		return queue.Songs[i].VoteCount() > queue.Songs[j].VoteCount()
 	} else {
-		return queue.Songs[i].Date.Before(queue.Songs[j].Date)
+		return queue.Songs[j].Date.Before(queue.Songs[i].Date)
 	}
 }
 
