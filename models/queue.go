@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
 	"sort"
 	"time"
@@ -30,10 +31,13 @@ func (queue *PartyQueue) Less(i, j int) bool {
 func (queue *PartyQueue) Vote(id string, song spotify.FullTrack) {
 	notInQueueFlag := true
 
-	for _, a := range queue.Songs {
-		if a.Song.URI == song.URI {
-			a.Vote(id)
+	for i, _ := range queue.Songs {
+		if queue.Songs[i].Song.URI == song.URI {
+			var added = queue.Songs[i].Vote(id)
 			notInQueueFlag = false
+			log.WithFields(log.Fields{
+				"Song": queue.Songs[i].Song.Name,
+				"Added": added}).Trace("Added Vote ", id)
 		}
 	}
 
@@ -45,6 +49,7 @@ func (queue *PartyQueue) Vote(id string, song spotify.FullTrack) {
 			song.Date.Add(time.Hour * 24 * 365)
 		}
 		queue.Songs = append(queue.Songs, song)
+		log.WithField("Song", song.Song.Name).Trace("Added Song ", id)
 	}
 
 	queue.CheckForEmptySongs()
