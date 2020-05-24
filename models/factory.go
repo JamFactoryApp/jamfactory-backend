@@ -68,9 +68,9 @@ func (pc *Factory) GenerateRandomLabel() string {
 }
 
 func (pc *Factory) GetParty(label string) *Party {
-	for _, party := range pc.Partys {
-		if party.Label == label {
-			return &party
+	for i, _ := range pc.Partys {
+		if pc.Partys[i].Label == label {
+			return &pc.Partys[i]
 		}
 	}
 	return nil
