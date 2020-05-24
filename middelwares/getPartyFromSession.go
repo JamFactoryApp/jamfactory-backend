@@ -15,7 +15,7 @@ type GetPartyFromSession struct {
 func (middleware *GetPartyFromSession) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		session := r.Context().Value("Session").(*sessions.Session)
+		session := r.Context().Value(models.SessionContextKey).(*sessions.Session)
 		if session == nil {
 			http.Error(w, "", http.StatusInternalServerError)
 			log.Panic("Could not get Session From Context")

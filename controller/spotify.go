@@ -28,7 +28,7 @@ type searchBody struct {
 }
 
 func devices(w http.ResponseWriter, r *http.Request) {
-	party := r.Context().Value("Party").(*models.Party)
+	party := r.Context().Value(models.PartyContextKey).(*models.Party)
 
 	result, err := party.Client.PlayerDevices()
 
@@ -42,7 +42,7 @@ func devices(w http.ResponseWriter, r *http.Request) {
 }
 
 func playlist(w http.ResponseWriter, r *http.Request) {
-	party := r.Context().Value("Party").(*models.Party)
+	party := r.Context().Value(models.PartyContextKey).(*models.Party)
 
 	result, err := party.Client.CurrentUsersPlaylists()
 
@@ -56,7 +56,7 @@ func playlist(w http.ResponseWriter, r *http.Request) {
 }
 
 func search(w http.ResponseWriter, r *http.Request) {
-	party := r.Context().Value("Party").(*models.Party)
+	party := r.Context().Value(models.PartyContextKey).(*models.Party)
 
 	var body searchBody
 	if err := helpers.DecodeJSONBody(w, r, &body); err != nil {

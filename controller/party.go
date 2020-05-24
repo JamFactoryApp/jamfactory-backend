@@ -37,7 +37,7 @@ type playbackBody struct {
 
 func getParty(w http.ResponseWriter, r *http.Request) {
 
-	party := r.Context().Value("Party").(*models.Party)
+	party := r.Context().Value(models.PartyContextKey).(*models.Party)
 
 	res := partyBody{
 		Name:     party.User.DisplayName,
@@ -49,7 +49,7 @@ func getParty(w http.ResponseWriter, r *http.Request) {
 }
 
 func setParty(w http.ResponseWriter, r *http.Request) {
-	party := r.Context().Value("Party").(*models.Party)
+	party := r.Context().Value(models.PartyContextKey).(*models.Party)
 
 	var body partyBody
 	if err := helpers.DecodeJSONBody(w, r, &body); err != nil {
@@ -76,7 +76,7 @@ func setParty(w http.ResponseWriter, r *http.Request) {
 }
 
 func getPlayback(w http.ResponseWriter, r *http.Request) {
-	party := r.Context().Value("Party").(*models.Party)
+	party := r.Context().Value(models.PartyContextKey).(*models.Party)
 
 	res := playbackBody{
 		CurrentSong: party.CurrentSong,
@@ -87,7 +87,7 @@ func getPlayback(w http.ResponseWriter, r *http.Request) {
 }
 
 func setPlayback(w http.ResponseWriter, r *http.Request) {
-	party := r.Context().Value("Party").(*models.Party)
+	party := r.Context().Value(models.PartyContextKey).(*models.Party)
 
 	var body playbackBody
 	if err := helpers.DecodeJSONBody(w, r, &body); err != nil {

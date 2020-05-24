@@ -29,7 +29,7 @@ func RegisterAuthRoutes(router *mux.Router) {
 func callback(w http.ResponseWriter, r *http.Request) {
 	log.Trace("Controller call: auth.callback")
 
-	session := r.Context().Value("Session").(*sessions.Session)
+	session := r.Context().Value(models.SessionContextKey).(*sessions.Session)
 
 	token, err := SpotifyAuthenticator.Token(session.ID, r)
 
@@ -58,7 +58,7 @@ func callback(w http.ResponseWriter, r *http.Request) {
 func login(w http.ResponseWriter, r *http.Request) {
 	log.Trace("Controller call: auth.login")
 
-	session := r.Context().Value("Session").(*sessions.Session)
+	session := r.Context().Value(models.SessionContextKey).(*sessions.Session)
 
 	if session.IsNew {
 		helpers.SaveSession(w, r, session)
@@ -76,7 +76,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 func logout(w http.ResponseWriter, r *http.Request) {
 	log.Trace("Controller call: auth.logout")
 
-	session := r.Context().Value("Session").(*sessions.Session)
+	session := r.Context().Value(models.SessionContextKey).(*sessions.Session)
 
 	session.Options.MaxAge = -1
 	helpers.SaveSession(w, r, session)
@@ -86,7 +86,7 @@ func logout(w http.ResponseWriter, r *http.Request) {
 func status(w http.ResponseWriter, r *http.Request) {
 	log.Trace("Controller call: auth.status")
 
-	session := r.Context().Value("Session").(*sessions.Session)
+	session := r.Context().Value(models.SessionContextKey).(*sessions.Session)
 
 	res := make(map[string]interface{})
 

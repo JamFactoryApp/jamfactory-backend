@@ -32,7 +32,7 @@ type playlistBody struct {
 }
 
 func addPlaylist(w http.ResponseWriter, r *http.Request) {
-	party := r.Context().Value("Party").(*models.Party)
+	party := r.Context().Value(models.PartyContextKey).(*models.Party)
 
 	var body playlistBody
 	if err := helpers.DecodeJSONBody(w, r, &body); err != nil {
@@ -57,8 +57,8 @@ func addPlaylist(w http.ResponseWriter, r *http.Request) {
 }
 
 func getQueue(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value("Session").(*sessions.Session)
-	party := r.Context().Value("Party").(*models.Party)
+	session := r.Context().Value(models.SessionContextKey).(*sessions.Session)
+	party := r.Context().Value(models.PartyContextKey).(*models.Party)
 
 	voteID := session.ID
 	if party.IpVoteEnabled {
@@ -70,8 +70,8 @@ func getQueue(w http.ResponseWriter, r *http.Request) {
 }
 
 func vote(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value("Session").(*sessions.Session)
-	party := r.Context().Value("Party").(*models.Party)
+	session := r.Context().Value(models.SessionContextKey).(*sessions.Session)
+	party := r.Context().Value(models.PartyContextKey).(*models.Party)
 
 	var body voteBody
 	if err := helpers.DecodeJSONBody(w, r, &body); err != nil {

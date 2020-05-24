@@ -23,6 +23,8 @@ const UserTypeNew = "New"
 const UserTypeGuest = "Guest"
 const UserTypeHost = "Host"
 
+const SessionContextKey = "Session"
+
 type Session struct {
 	ID primitive.ObjectID `bson:"_id, omitempty"`
 	//Data string

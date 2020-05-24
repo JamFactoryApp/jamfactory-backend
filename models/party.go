@@ -20,6 +20,8 @@ type Party struct {
 	Active        bool
 }
 
+const PartyContextKey = "Session"
+
 type PartySettings struct {
 	DeviceId  spotify.ID
 	IpVoting  bool
