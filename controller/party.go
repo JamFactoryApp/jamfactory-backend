@@ -14,16 +14,14 @@ func RegisterPartyRoutes(router *mux.Router) {
 	getSessionMiddleware := middelwares.GetSessionFromRequest{Store: Store}
 	getPartyMiddleware := middelwares.GetPartyFromSession{PartyControl: &Factory}
 	validateHostUserMiddleware := middelwares.ValidateUserType{User: "Host"}
-	parsePartyBodyMiddleware := middelwares.BodyParser{Body: new(partyBody)}
-	parsePlaybackBodyMiddleware := middelwares.BodyParser{Body: new(playbackBody)}
 
 	stdChain := chain.New(getSessionMiddleware.Handler, getPartyMiddleware.Handler)
 	stdHostChain := stdChain.Append(validateHostUserMiddleware.Handler)
 
 	router.Handle("/", stdChain.ThenFunc(getParty)).Methods("GET")
-	router.Handle("/", stdHostChain.Append(parsePartyBodyMiddleware.Handler).ThenFunc(setParty)).Methods("PUT")
+	router.Handle("/", stdHostChain.ThenFunc(setParty)).Methods("PUT")
 	router.Handle("/playback", stdChain.ThenFunc(getPlayback)).Methods("GET")
-	router.Handle("/playback", stdHostChain.Append(parsePlaybackBodyMiddleware.Handler).ThenFunc(setPlayback)).Methods("PUT")
+	router.Handle("/playback", stdHostChain.ThenFunc(setPlayback)).Methods("PUT")
 }
 
 type partyBody struct {
@@ -52,7 +50,11 @@ func getParty(w http.ResponseWriter, r *http.Request) {
 
 func setParty(w http.ResponseWriter, r *http.Request) {
 	party := r.Context().Value("Party").(*models.Party)
-	body := r.Context().Value("Body").(*partyBody)
+
+	var body partyBody
+	if err := helpers.DecodeJSONBody(w, r, &body); err != nil {
+		return
+	}
 
 	party.User.DisplayName = body.Name
 
@@ -86,7 +88,11 @@ func getPlayback(w http.ResponseWriter, r *http.Request) {
 
 func setPlayback(w http.ResponseWriter, r *http.Request) {
 	party := r.Context().Value("Party").(*models.Party)
-	body := r.Context().Value("Body").(*playbackBody)
+
+	var body playbackBody
+	if err := helpers.DecodeJSONBody(w, r, &body); err != nil {
+		return
+	}
 
 	party.SetPartyState(body.Playback.Playing)
 

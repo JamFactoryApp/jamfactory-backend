@@ -15,14 +15,12 @@ import (
 func RegisterQueueRoutes(router *mux.Router) {
 	getSessionMiddleware := middelwares.GetSessionFromRequest{Store: Store}
 	getPartyMiddleware := middelwares.GetPartyFromSession{PartyControl: &Factory}
-	parsePlaylistBodyMiddleware := middelwares.BodyParser{Body: new(playlistBody)}
-	parseVoteBodyMiddleware := middelwares.BodyParser{Body: new(voteBody)}
 
 	stdChain := chain.New(getSessionMiddleware.Handler, getPartyMiddleware.Handler)
 
 	router.Handle("/", stdChain.ThenFunc(getQueue)).Methods("GET")
-	router.Handle("/playlist", stdChain.Append(parsePlaylistBodyMiddleware.Handler).ThenFunc(addPlaylist)).Methods("PUT")
-	router.Handle("/vote", stdChain.Append(parseVoteBodyMiddleware.Handler).ThenFunc(vote)).Methods("PUT")
+	router.Handle("/playlist", stdChain.ThenFunc(addPlaylist)).Methods("PUT")
+	router.Handle("/vote", stdChain.ThenFunc(vote)).Methods("PUT")
 }
 
 type voteBody struct {
@@ -35,7 +33,11 @@ type playlistBody struct {
 
 func addPlaylist(w http.ResponseWriter, r *http.Request) {
 	party := r.Context().Value("Party").(*models.Party)
-	body := r.Context().Value("Body").(*playlistBody)
+
+	var body playlistBody
+	if err := helpers.DecodeJSONBody(w, r, &body); err != nil {
+		return
+	}
 
 	playlist, err := party.Client.GetPlaylistTracks(body.PlaylistURI)
 
@@ -70,7 +72,11 @@ func getQueue(w http.ResponseWriter, r *http.Request) {
 func vote(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value("Session").(*sessions.Session)
 	party := r.Context().Value("Party").(*models.Party)
-	body := r.Context().Value("Body").(*voteBody)
+
+	var body voteBody
+	if err := helpers.DecodeJSONBody(w, r, &body); err != nil {
+		return
+	}
 
 	voteID := session.ID
 	if party.IpVoteEnabled {

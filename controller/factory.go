@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
+	chain "github.com/justinas/alice"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/oauth2"
@@ -18,14 +19,11 @@ type joinBody struct {
 
 func RegisterFactoryRoutes(router *mux.Router) {
 	getSessionMiddleware := middelwares.GetSessionFromRequest{Store: Store}
-	router.Use(getSessionMiddleware.Handler)
+	stdChain := chain.New(getSessionMiddleware.Handler)
 
-	router.HandleFunc("/create", createParty)
-
-	joinBodyParser := middelwares.BodyParser{Body: new(joinBody)}
-	router.Handle("/join", joinBodyParser.Handler(http.HandlerFunc(joinParty))).Methods("PUT")
-
-	router.HandleFunc("/leave", leaveParty)
+	router.Handle("/create", stdChain.ThenFunc(createParty)).Methods("GET")
+	router.Handle("/join", stdChain.ThenFunc(joinParty)).Methods("PUT")
+	router.Handle("/leave", stdChain.ThenFunc(leaveParty)).Methods("GET")
 }
 
 func createParty(w http.ResponseWriter, r *http.Request) {
@@ -69,7 +67,11 @@ func createParty(w http.ResponseWriter, r *http.Request) {
 
 func joinParty(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value("Session").(*sessions.Session)
-	body := r.Context().Value("Body").(*joinBody)
+
+	var body joinBody
+	if err := helpers.DecodeJSONBody(w, r, &body); err != nil {
+		return
+	}
 
 	party := Factory.GetParty(strings.ToUpper(body.Label))
 

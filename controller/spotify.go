@@ -15,13 +15,12 @@ import (
 func RegisterSpotifyRoutes(router *mux.Router) {
 	getSessionMiddleware := middelwares.GetSessionFromRequest{Store: Store}
 	getPartyMiddleware := middelwares.GetPartyFromSession{PartyControl: &Factory}
-	parseSearchBodyMiddleware := middelwares.BodyParser{Body: new(searchBody)}
 
 	stdChain := alice.New(getSessionMiddleware.Handler, getPartyMiddleware.Handler)
 
 	router.Handle("/devices", stdChain.ThenFunc(devices)).Methods("GET")
 	router.Handle("/playlist", stdChain.ThenFunc(playlist)).Methods("GET")
-	router.Handle("/search", stdChain.Append(parseSearchBodyMiddleware.Handler).ThenFunc(search)).Methods("PUT")
+	router.Handle("/search", stdChain.ThenFunc(search)).Methods("PUT")
 }
 
 type searchBody struct {
@@ -58,12 +57,17 @@ func playlist(w http.ResponseWriter, r *http.Request) {
 
 func search(w http.ResponseWriter, r *http.Request) {
 	party := r.Context().Value("Party").(*models.Party)
-	body := r.Context().Value("Body").(*searchBody)
+
+	var body searchBody
+	if err := helpers.DecodeJSONBody(w, r, &body); err != nil {
+		return
+	}
 
 	country := spotify.CountryGermany
 	opts := spotify.Options{
 		Country: &country,
 	}
+
 	searchString := []string{body.SearchText, "*"}
 	result, err := party.Client.SearchOpt(strings.Join(searchString, ""), spotify.SearchTypeTrack, &opts)
 
