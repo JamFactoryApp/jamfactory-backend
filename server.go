@@ -2,106 +2,86 @@ package main
 
 import (
 	"fmt"
-	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
 	log "github.com/sirupsen/logrus"
-	"github.com/zmb3/spotify"
 	"jamfactory-backend/controller"
 	"jamfactory-backend/models"
+	"math/rand"
 	"net/http"
 	"os"
 	"time"
 )
 
-var PORT = 3000
+const (
+	port         = 3000
+	readTimeout  = time.Second
+	writeTimeout = time.Second
+	idleTimeout  = time.Second
+)
 
-// Load ENV variables
-func loadEnvironment() {
-	err := godotenv.Load()
-
-	if err != nil {
-		log.Error("No .env file found", err)
+var (
+	server      *http.Server
+	corsOptions = cors.Options{
+		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost:4200"},
+		AllowCredentials: true,
+		Debug:            false,
 	}
+	//corsAll := cors.Default().Handler(controllers.Router)
+)
+
+func setup() {
+	rand.Seed(time.Now().UTC().UnixNano())
+
+	initLogging()
+
+	initEnvironment()
+	log.Info("Initialized environment")
+
+	models.Setup()
+	log.Info("Initialized models")
+
+	controller.Setup()
+	log.Info("Initialized controllers")
+
+	initHttpServer()
+	log.Info("Initialized HTTP server")
 }
 
-func main() {
-
+func initLogging() {
 	log.SetOutput(os.Stdout)
 	log.SetFormatter(&log.TextFormatter{
 		ForceColors:   true,
 		FullTimestamp: false,
 	})
 	log.SetLevel(log.TraceLevel)
-
-	loadEnvironment()
-	log.Info("Loaded environment")
-
-	models.InitDB()
-	log.Info("Initialized database")
-
-	controller.Setup()
-	log.Info("Initialized controllers")
-
-	controller.SpotifyAuthenticator = spotify.NewAuthenticator(
-		os.Getenv("SPOTIFY_REDIRECT_URL"),
-		spotify.ScopeUserReadPrivate,
-		spotify.ScopeUserReadEmail,
-		spotify.ScopeUserModifyPlaybackState,
-		spotify.ScopeUserReadPlaybackState,
-	)
-
-	router := mux.NewRouter()
-
-	authRouter := router.PathPrefix("/api/auth").Subrouter()
-	factoryRouter := router.PathPrefix("/api/factory").Subrouter()
-	partyRouter := router.PathPrefix("/api/party").Subrouter()
-	queueRouter := router.PathPrefix("/api/queue").Subrouter()
-	spotifyRouter := router.PathPrefix("/api/spotify").Subrouter()
-
-	controller.RegisterAuthRoutes(authRouter)
-	controller.RegisterFactoryRoutes(factoryRouter)
-	controller.RegisterQueueRoutes(queueRouter)
-	controller.RegisterPartyRoutes(partyRouter)
-	controller.RegisterSpotifyRoutes(spotifyRouter)
-	log.Info("Initialized routes")
-
-	socket := controller.InitSocketIO()
-
-	go socket.Serve()
-	defer socket.Close()
-	controller.Socket = socket
-	controller.Factory.SetSocket(socket)
-	log.Info("Initialized socketio server")
-	socketRouter := router.PathPrefix("/socket.io/").Subrouter()
-	socketRouter.Handle("/", socket)
-
-	http.Handle("/", router)
-
-	go queueWorker(&controller.Factory)
-
-	log.Infof("Listening on Port %v", PORT)
-
-	corsOptions := cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost:4200"},
-		AllowCredentials: true,
-		Debug:            false,
-	}
-
-	corsHandler := cors.New(corsOptions).Handler(router)
-	//corsAll := cors.Default().Handler(router)
-
-	err := http.ListenAndServe(fmt.Sprintf(":%v", PORT), corsHandler)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
 }
 
-func queueWorker(partyController *models.Factory) {
-	for {
-		time.Sleep(1 * time.Second)
-		go models.QueueWorker(partyController)
+func initEnvironment() {
+	if err := godotenv.Load(); err != nil {
+		log.Warnf("No .env file found:\n%s\n", err)
+	}
+}
+
+func initHttpServer() {
+	corsHandler := cors.New(corsOptions).Handler(controller.Router)
+	server = &http.Server{
+		Addr:         fmt.Sprintf(":%d", port),
+		ReadTimeout:  readTimeout,
+		WriteTimeout: writeTimeout,
+		IdleTimeout:  idleTimeout,
+		Handler:      corsHandler,
+	}
+	http.Handle("/", controller.Router)
+}
+
+func main() {
+	setup()
+	log.Info("Setup complete")
+
+	log.Infof("HTTP server is listening on port %v\n", port)
+
+	if err := server.ListenAndServe(); err != nil {
+		log.Fatalf("Error while listening and serving:\n%s\n", err)
 	}
 }
