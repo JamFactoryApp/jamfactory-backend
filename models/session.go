@@ -15,15 +15,12 @@ import (
 	"time"
 )
 
-const SessionUserKey = "User"
-const SessionLabelKey = "Label"
-const SessionTokenKey = "Token"
+const (
+	mongoSessions = "Sessions"
+	dropTimeout   = 3 * time.Second
+)
 
-const UserTypeNew = "New"
-const UserTypeGuest = "Guest"
-const UserTypeHost = "Host"
-
-const SessionContextKey = "Session"
+var sessionsCollection *mongo.Collection
 
 type Session struct {
 	ID primitive.ObjectID `bson:"_id, omitempty"`
@@ -46,7 +43,22 @@ type TokenGetterSetter interface {
 	SetToken(w http.ResponseWriter, name string, value string, options *sessions.Options)
 }
 
-func NewSessionStore(collection *mongo.Collection, maxAge int, keyPairs ...[]byte) *SessionStore {
+func initSessionsCollection() {
+	sessionsCollection = db.Collection(mongoSessions)
+}
+
+func dropOldSessions() {
+	ctx, cancel := context.WithTimeout(context.Background(), dropTimeout)
+	defer cancel()
+
+	err := sessionsCollection.Drop(ctx)
+
+	if err != nil {
+		log.WithContext(ctx).Panic("Error dropping old session data: ", err.Error())
+	}
+}
+
+func NewSessionStore(maxAge int, keyPairs ...[]byte) *SessionStore {
 	store := &SessionStore{
 		Codecs: securecookie.CodecsFromPairs(keyPairs...),
 		Options: &sessions.Options{
@@ -56,7 +68,7 @@ func NewSessionStore(collection *mongo.Collection, maxAge int, keyPairs ...[]byt
 			Secure:   true,
 		},
 		Token:      &CookieToken{},
-		collection: collection,
+		collection: sessionsCollection,
 	}
 	store.MaxAge(maxAge)
 
@@ -67,7 +79,7 @@ func NewSessionStore(collection *mongo.Collection, maxAge int, keyPairs ...[]byt
 	indexOptions.SetName("TTL")
 	indexOptions.SetExpireAfterSeconds(int32(maxAge))
 
-	_, err := collection.Indexes().CreateOne(ctx, mongo.IndexModel{
+	_, err := sessionsCollection.Indexes().CreateOne(ctx, mongo.IndexModel{
 		Keys: bson.M{
 			"modified": 1,
 		},
