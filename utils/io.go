@@ -8,6 +8,6 @@ import (
 func CloseProperly(closeable io.Closer) {
 	err := closeable.Close()
 	if err != nil {
-		log.Panic("Error colsing socket.io server")
+		log.Panic("Error closing socket.io server")
 	}
 }
