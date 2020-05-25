@@ -1,111 +1,112 @@
 package controller
 
 import (
-	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
-	chain "github.com/justinas/alice"
 	log "github.com/sirupsen/logrus"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"golang.org/x/oauth2"
-	"jamfactory-backend/helpers"
-	"jamfactory-backend/middelwares"
+	"github.com/zmb3/spotify"
 	"jamfactory-backend/models"
-	"net/http"
+	"math/rand"
 	"strings"
+	"time"
 )
 
-type joinBody struct {
-	Label string `json:"label"`
+var parties models.Parties
+
+func initFactory() {
+	parties = make(models.Parties, 0)
+	go QueueWorker()
 }
 
-func RegisterFactoryRoutes(router *mux.Router) {
-	getSessionMiddleware := middelwares.GetSessionFromRequest{Store: Store}
-	stdChain := chain.New(getSessionMiddleware.Handler)
+func GenerateNewParty(client spotify.Client) (string, error) {
+	queue := models.PartyQueue{}
+	user, err := client.CurrentUser()
+	playback, err := client.PlayerState()
 
-	router.Handle("/create", stdChain.ThenFunc(createParty)).Methods("GET")
-	router.Handle("/join", stdChain.ThenFunc(joinParty)).Methods("PUT")
-	router.Handle("/leave", stdChain.ThenFunc(leaveParty)).Methods("GET")
-}
-
-func createParty(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value(models.SessionContextKey).(*sessions.Session)
-
-	if !(session.Values[models.SessionUserKey] != nil && session.Values[models.SessionTokenKey] != nil && session.Values[models.SessionUserKey] == models.UserTypeHost) {
-		http.Error(w, "User Error: Not logged in to spotify", http.StatusUnauthorized)
-		log.Printf("@%s User Error: Not logged in to spotify ", session.ID)
-		return
-	}
-
-	tokenMap := session.Values[models.SessionTokenKey].(map[string]interface{})
-	token := oauth2.Token{
-		AccessToken:  tokenMap["accesstoken"].(string),
-		TokenType:    tokenMap["tokentype"].(string),
-		RefreshToken: tokenMap["refreshtoken"].(string),
-		Expiry:       tokenMap["expiry"].(primitive.DateTime).Time(),
-	}
-
-	if !(token.Valid() == true) {
-		http.Error(w, "User Error: Token not valid", http.StatusUnauthorized)
-		log.Printf("@%s User Error: Token not valid", session.ID)
-		return
-	}
-
-	client := SpotifyAuthenticator.NewClient(&token)
-
-	label, err := Factory.GenerateNewParty(client)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Printf("@%s Couldn't create party: %s", session.ID, err.Error())
+		return "", err
 	}
 
-	session.Values[models.SessionLabelKey] = label
-	helpers.SaveSession(w, r, session)
+	party := models.Party{
+		Label:         "",
+		Queue:         &queue,
+		IpVoteEnabled: false,
+		Client:        client,
+		DeviceID:      playback.Device.ID,
+		CurrentSong:   playback.Item,
+		PlaybackState: playback,
+		User:          user,
+		Active:        true,
+	}
 
-	res := make(map[string]interface{})
-	res["label"] = label
-	helpers.RespondWithJSON(w, res)
+	party.Label = GenerateRandomLabel()
+	party.SetPartyName()
+	parties = append(parties, party)
+
+	return party.Label, nil
 }
 
-func joinParty(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value(models.SessionContextKey).(*sessions.Session)
+func GenerateRandomLabel() string {
+	labelSlice := make([]string, 5)
+	possibleChars := "ABCDEFGHJKLMNOPQRSTUVWXYZ123456789"
 
-	var body joinBody
-	if err := helpers.DecodeJSONBody(w, r, &body); err != nil {
-		return
+	for i := 0; i < 5; i++ {
+		labelSlice[i] = string(possibleChars[rand.Intn(len(possibleChars))])
 	}
 
-	party := Factory.GetParty(strings.ToUpper(body.Label))
+	label := strings.Join(labelSlice, "")
 
-	if party == nil {
-		http.Error(w, "Party Error: Could not find a party with the submitted label", http.StatusNotFound)
-		log.Printf("@%s Party Error: Could not find a party with the submitted label", session.ID)
-		return
-	}
-
-	session.Values[models.SessionUserKey] = models.UserTypeGuest
-	session.Values[models.SessionLabelKey] = strings.ToUpper(body.Label)
-	helpers.SaveSession(w, r, session)
-
-	res := make(map[string]interface{})
-	res["label"] = strings.ToUpper(body.Label)
-	helpers.RespondWithJSON(w, res)
-}
-
-func leaveParty(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value(models.SessionContextKey).(*sessions.Session)
-
-	if session.Values[models.SessionUserKey] != nil && session.Values[models.SessionLabelKey] != nil && session.Values[models.SessionUserKey] == models.UserTypeHost {
-		party := Factory.GetParty(session.Values[models.SessionLabelKey].(string))
-		if party != nil {
-			party.SetPartyState(false)
+	exits := false
+	for _, party := range parties {
+		if party.Label == label {
+			exits = true
+			break
 		}
 	}
 
-	session.Values[models.SessionUserKey] = models.UserTypeNew
-	session.Values[models.SessionLabelKey] = nil
-	helpers.SaveSession(w, r, session)
+	if exits {
+		return GenerateRandomLabel()
+	}
 
-	res := make(map[string]interface{})
-	res["Success"] = true
-	helpers.RespondWithJSON(w, res)
+	return label
+}
+
+func GetParty(label string) *models.Party {
+	for i := range parties {
+		if parties[i].Label == label {
+			return &parties[i]
+		}
+	}
+	return nil
+}
+
+func QueueWorker() {
+	for {
+		time.Sleep(time.Second)
+
+		for i := range parties {
+			state, err := parties[i].Client.PlayerState()
+
+			if err != nil {
+				log.Printf("Couldn't get state for %s", parties[i].Label)
+				continue
+			}
+
+			parties[i].PlaybackState = state
+			parties[i].CurrentSong = state.Item
+
+			if parties[i].Active {
+				if !state.Playing || state.Progress > state.Item.Duration-1000 {
+					log.Printf("Start next song for %s", parties[i].Label)
+					parties[i].StartNextSong()
+					Socket.BroadcastToRoom("/", parties[i].Label, SocketEventQueue, parties[i].Queue.GetObjectWithoutId(""))
+
+					res := playbackBody{
+						CurrentSong: parties[i].CurrentSong,
+						Playback:    parties[i].PlaybackState,
+					}
+
+					Socket.BroadcastToRoom("/", parties[i].Label, SocketEventPlayback, res)
+				}
+			}
+		}
+	}
 }
