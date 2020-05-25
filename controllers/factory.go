@@ -54,15 +54,15 @@ func GenerateRandomLabel() string {
 
 	label := strings.Join(labelSlice, "")
 
-	exits := false
+	exists := false
 	for _, party := range parties {
 		if party.Label == label {
-			exits = true
+			exists = true
 			break
 		}
 	}
 
-	if exits {
+	if exists {
 		return GenerateRandomLabel()
 	}
 
