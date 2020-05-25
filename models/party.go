@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/googollee/go-socket.io"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
 	"strings"
@@ -16,17 +16,10 @@ type Party struct {
 	CurrentSong   *spotify.FullTrack
 	PlaybackState *spotify.PlayerState
 	User          *spotify.PrivateUser
-	Socket        *socketio.Server
 	Active        bool
 }
 
-const PartyContextKey = "Session"
-
-type PartySettings struct {
-	DeviceId  spotify.ID
-	IpVoting  bool
-	PartyName string
-}
+type Parties []Party
 
 func (party *Party) StartNextSong() {
 	log.WithField("Party", party.Label).Trace("Model event: Start next song for party")
@@ -50,51 +43,41 @@ func (party *Party) StartNextSong() {
 	}
 }
 
-func (party *Party) SetUser(user *spotify.PrivateUser) {
-	log.WithField("Party", party.Label).Trace("Model event: Set party user")
-
-	party.User = user
-	party.User.DisplayName = strings.Join([]string{party.User.DisplayName, "'s Jam Session"}, "")
-}
-
-func (party *Party) SetSetting(setting PartySettings) {
-	log.WithField("Party", party.Label).Trace("Model event: Set party settings")
-
-	if party.DeviceID != setting.DeviceId {
-		playOptions := spotify.PlayOptions{
-			DeviceID: &setting.DeviceId,
-		}
-		err := party.Client.PlayOpt(&playOptions)
-		if err != nil {
-
-		} else {
-			party.DeviceID = setting.DeviceId
-		}
-	}
-	party.IpVoteEnabled = setting.IpVoting
-	party.User.DisplayName = setting.PartyName
-}
-
 func (party *Party) SetPartyState(state bool) {
-	log.WithField("Party", party.Label).Trace("Model event: Set party state")
+	log.WithField("Party", party.Label).Trace("Model event: Set party enabled")
+
+	var fragment string
+	var err error
 
 	if state {
-		err := party.Client.Play()
-		if err != nil {
-			log.WithField("Party", party.Label).Warn("Error setting client to play")
-		}
+		err = party.Client.Play()
+		fragment = "play"
 	} else {
-		err := party.Client.Pause()
-		if err != nil {
-			log.WithField("Party", party.Label).Warn("Error setting client to pause")
-		}
+		err = party.Client.Pause()
+		fragment = "pause"
+	}
+
+	if err != nil {
+		log.WithField("Party", party.Label).Warn(fmt.Sprintf("Error setting client to %s\n", fragment))
 	}
 
 	party.Active = state //Old Backend has set the value with a delay of 2.5 seconds
 	party.PlaybackState.Playing = state
-	res := make(map[string]interface{})
-	res["currentSong"] = party.CurrentSong
-	res["state"] = party.PlaybackState
-	party.Socket.BroadcastToRoom("sessions", party.Label, "playback", res)
+}
 
+func (party *Party) SetClientID(id spotify.ID) {
+	if party.DeviceID != id {
+		playOptions := spotify.PlayOptions{DeviceID: &id}
+		err := party.Client.PlayOpt(&playOptions)
+
+		if err != nil {
+
+		} else {
+			party.DeviceID = id
+		}
+	}
+}
+
+func (party *Party) SetPartyName() {
+	party.User.DisplayName = strings.Join([]string{party.User.DisplayName, "'s Jam Session"}, "")
 }
