@@ -64,8 +64,8 @@ func NewSessionStore(maxAge int, keyPairs ...[]byte) *SessionStore {
 		Options: &sessions.Options{
 			Path:     "/",
 			MaxAge:   maxAge,
-			SameSite: http.SameSiteLaxMode,
-			Secure:   true,
+			SameSite: http.SameSiteNoneMode,
+			Secure:   false,
 		},
 		Token:      &CookieToken{},
 		collection: sessionsCollection,
