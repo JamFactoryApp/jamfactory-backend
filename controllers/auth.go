@@ -11,7 +11,7 @@ import (
 
 const (
 	afterLogoutRedirect   = apiPath + authPath + authStatusPath
-	afterCallbackRedirect = apiPath + authPath + authStatusPath
+	afterCallbackRedirect = "/"
 )
 
 var (
