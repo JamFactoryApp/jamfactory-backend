@@ -8,13 +8,13 @@ import (
 )
 
 const (
-	apiPath = "/api"
+	apiPath = "/api/v1"
 
 	authPath         = "/auth"
 	authCallbackPath = "/callback"
-	authLoginPath    = "/login/"
+	authLoginPath    = "/login"
 	authLogoutPath   = "/logout"
-	authStatusPath   = "/status/"
+	authStatusPath   = "/status"
 
 	partyPath         = "/party"
 	partyIndexPath    = "/"
