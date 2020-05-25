@@ -1,34 +1,19 @@
 package controller
 
 import (
-	"github.com/gorilla/mux"
-	"github.com/justinas/alice"
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
-	"jamfactory-backend/helpers"
-	"jamfactory-backend/middelwares"
-	"jamfactory-backend/models"
+	"jamfactory-backend/utils"
 	"net/http"
 	"strings"
 )
 
-func RegisterSpotifyRoutes(router *mux.Router) {
-	getSessionMiddleware := middelwares.GetSessionFromRequest{Store: Store}
-	getPartyMiddleware := middelwares.GetPartyFromSession{PartyControl: &Factory}
-
-	stdChain := alice.New(getSessionMiddleware.Handler, getPartyMiddleware.Handler)
-
-	router.Handle("/devices", stdChain.ThenFunc(devices)).Methods("GET")
-	router.Handle("/playlist", stdChain.ThenFunc(playlist)).Methods("GET")
-	router.Handle("/search", stdChain.ThenFunc(search)).Methods("PUT")
-}
-
-type searchBody struct {
+type searchRequestBody struct {
 	SearchText string `json:"text"`
 }
 
 func devices(w http.ResponseWriter, r *http.Request) {
-	party := r.Context().Value(models.PartyContextKey).(*models.Party)
+	party := utils.PartyFromRequestContext(r)
 
 	result, err := party.Client.PlayerDevices()
 
@@ -38,11 +23,11 @@ func devices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	helpers.RespondWithJSON(w, result)
+	utils.EncodeJSONBody(w, result)
 }
 
 func playlist(w http.ResponseWriter, r *http.Request) {
-	party := r.Context().Value(models.PartyContextKey).(*models.Party)
+	party := utils.PartyFromRequestContext(r)
 
 	result, err := party.Client.CurrentUsersPlaylists()
 
@@ -52,14 +37,14 @@ func playlist(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	helpers.RespondWithJSON(w, result)
+	utils.EncodeJSONBody(w, result)
 }
 
 func search(w http.ResponseWriter, r *http.Request) {
-	party := r.Context().Value(models.PartyContextKey).(*models.Party)
+	party := utils.PartyFromRequestContext(r)
 
-	var body searchBody
-	if err := helpers.DecodeJSONBody(w, r, &body); err != nil {
+	var body searchRequestBody
+	if err := utils.DecodeJSONBody(w, r, &body); err != nil {
 		return
 	}
 
@@ -79,5 +64,5 @@ func search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	helpers.RespondWithJSON(w, result)
+	utils.EncodeJSONBody(w, result)
 }

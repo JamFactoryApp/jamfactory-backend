@@ -1,37 +1,49 @@
 package controller
 
 import (
-	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
-	chain "github.com/justinas/alice"
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
-	"jamfactory-backend/helpers"
-	"jamfactory-backend/middelwares"
 	"jamfactory-backend/models"
+	"jamfactory-backend/utils"
 	"net/http"
 	"os"
 )
 
-var SpotifyAuthenticator spotify.Authenticator
+const (
+	afterLogoutRedirect   = apiPath + authPath + authStatusPath
+	afterCallbackRedirect = apiPath + authPath + authStatusPath
+)
 
-func RegisterAuthRoutes(router *mux.Router) {
-	getSessionMiddleware := middelwares.GetSessionFromRequest{Store: Store}
-	stdChain := chain.New(getSessionMiddleware.Handler)
-	SpotifyAuthenticator.SetAuthInfo(os.Getenv("SPOTIFY_ID"), os.Getenv("SPOTIFY_SECRET"))
+var (
+	spotifyAuthenticator spotify.Authenticator
+	spotifyScopes        = []string{
+		spotify.ScopeUserReadPrivate,
+		spotify.ScopeUserReadEmail,
+		spotify.ScopeUserModifyPlaybackState,
+		spotify.ScopeUserReadPlaybackState,
+	}
+)
 
-	router.Handle("/callback", stdChain.ThenFunc(callback))
-	router.Handle("/login/", stdChain.ThenFunc(login))
-	router.Handle("/logout", stdChain.ThenFunc(logout))
-	router.Handle("/status/", stdChain.ThenFunc(status))
+type statusResponseBody struct {
+	User  string `json:"user"`
+	Label string `json:"label"`
+}
+
+type loginResponseBody struct {
+	Url string `json:"url"`
+}
+
+func initSpotifyAuthenticator() {
+	spotifyAuthenticator = spotify.NewAuthenticator(os.Getenv("SPOTIFY_REDIRECT_URL"), spotifyScopes...)
+	spotifyAuthenticator.SetAuthInfo(os.Getenv("SPOTIFY_ID"), os.Getenv("SPOTIFY_SECRET"))
 }
 
 func callback(w http.ResponseWriter, r *http.Request) {
 	log.Trace("Controller call: auth.callback")
 
-	session := r.Context().Value(models.SessionContextKey).(*sessions.Session)
+	session := utils.SessionFromRequestContext(r)
 
-	token, err := SpotifyAuthenticator.Token(session.ID, r)
+	token, err := spotifyAuthenticator.Token(session.ID, r)
 
 	if err != nil {
 		http.Error(w, "Couldn't get token", http.StatusForbidden)
@@ -48,59 +60,57 @@ func callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session.Values[models.SessionTokenKey] = token
-	session.Values[models.SessionUserKey] = models.UserTypeHost
+	session.Values[SessionTokenKey] = token
+	session.Values[SessionUserTypeKey] = models.UserTypeHost
 
-	helpers.SaveSession(w, r, session)
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	SaveSession(w, r, session)
+	http.Redirect(w, r, afterCallbackRedirect, http.StatusSeeOther)
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
 	log.Trace("Controller call: auth.login")
 
-	session := r.Context().Value(models.SessionContextKey).(*sessions.Session)
+	session := utils.SessionFromRequestContext(r)
 
 	if session.IsNew {
-		helpers.SaveSession(w, r, session)
+		SaveSession(w, r, session)
 	}
 
 	state := session.ID
-	url := SpotifyAuthenticator.AuthURL(state)
+	url := spotifyAuthenticator.AuthURL(state)
 
-	res := make(map[string]interface{})
-	res["url"] = url
-
-	helpers.RespondWithJSON(w, res)
+	res := loginResponseBody{Url: url}
+	utils.EncodeJSONBody(w, res)
 }
 
 func logout(w http.ResponseWriter, r *http.Request) {
 	log.Trace("Controller call: auth.logout")
 
-	session := r.Context().Value(models.SessionContextKey).(*sessions.Session)
+	session := utils.SessionFromRequestContext(r)
 
 	session.Options.MaxAge = -1
-	helpers.SaveSession(w, r, session)
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	SaveSession(w, r, session)
+	http.Redirect(w, r, afterLogoutRedirect, http.StatusSeeOther)
 }
 
 func status(w http.ResponseWriter, r *http.Request) {
 	log.Trace("Controller call: auth.status")
 
-	session := r.Context().Value(models.SessionContextKey).(*sessions.Session)
+	session := utils.SessionFromRequestContext(r)
 
-	res := make(map[string]interface{})
+	res := statusResponseBody{}
 
-	if session.Values[models.SessionUserKey] == nil {
-		res["user"] = models.UserTypeNew
+	if session.Values[SessionUserTypeKey] == nil {
+		res.User = models.UserTypeNew
 	} else {
-		res["user"] = session.Values[models.SessionUserKey]
+		res.User = session.Values[SessionUserTypeKey].(string)
 	}
 
-	if session.Values[models.SessionLabelKey] == nil {
-		res["label"] = ""
+	if session.Values[SessionLabelKey] == nil {
+		res.Label = ""
 	} else {
-		res["label"] = session.Values[models.SessionLabelKey]
+		res.Label = session.Values[SessionLabelKey].(string)
 	}
 
-	helpers.RespondWithJSON(w, res)
+	utils.EncodeJSONBody(w, res)
 }

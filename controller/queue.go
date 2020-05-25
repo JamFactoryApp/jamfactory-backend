@@ -1,41 +1,39 @@
 package controller
 
 import (
-	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
-	chain "github.com/justinas/alice"
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
-	"jamfactory-backend/helpers"
-	"jamfactory-backend/middelwares"
 	"jamfactory-backend/models"
+	"jamfactory-backend/utils"
 	"net/http"
 )
 
-func RegisterQueueRoutes(router *mux.Router) {
-	getSessionMiddleware := middelwares.GetSessionFromRequest{Store: Store}
-	getPartyMiddleware := middelwares.GetPartyFromSession{PartyControl: &Factory}
-
-	stdChain := chain.New(getSessionMiddleware.Handler, getPartyMiddleware.Handler)
-
-	router.Handle("/", stdChain.ThenFunc(getQueue)).Methods("GET")
-	router.Handle("/playlist", stdChain.ThenFunc(addPlaylist)).Methods("PUT")
-	router.Handle("/vote", stdChain.ThenFunc(vote)).Methods("PUT")
-}
-
-type voteBody struct {
+type voteRequestBody struct {
 	Song spotify.FullTrack `json:"song"`
 }
 
-type playlistBody struct {
+type addPlaylistRequestBody struct {
 	PlaylistURI spotify.ID `json:"uri"`
 }
 
-func addPlaylist(w http.ResponseWriter, r *http.Request) {
-	party := r.Context().Value(models.PartyContextKey).(*models.Party)
+func getQueue(w http.ResponseWriter, r *http.Request) {
+	session := utils.SessionFromRequestContext(r)
+	party := utils.PartyFromRequestContext(r)
 
-	var body playlistBody
-	if err := helpers.DecodeJSONBody(w, r, &body); err != nil {
+	voteID := session.ID
+	if party.IpVoteEnabled {
+		voteID = r.RemoteAddr
+	}
+
+	queue := party.Queue.GetObjectWithoutId(voteID)
+	utils.EncodeJSONBody(w, queue)
+}
+
+func addPlaylist(w http.ResponseWriter, r *http.Request) {
+	party := utils.PartyFromRequestContext(r)
+
+	var body addPlaylistRequestBody
+	if err := utils.DecodeJSONBody(w, r, &body); err != nil {
 		return
 	}
 
@@ -52,29 +50,16 @@ func addPlaylist(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queue := party.Queue.GetObjectWithoutId("")
-	party.Socket.BroadcastToRoom("/", party.Label, "queue", party.Queue.GetObjectWithoutId(""))
-	helpers.RespondWithJSON(w, queue)
-}
-
-func getQueue(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value(models.SessionContextKey).(*sessions.Session)
-	party := r.Context().Value(models.PartyContextKey).(*models.Party)
-
-	voteID := session.ID
-	if party.IpVoteEnabled {
-		voteID = r.RemoteAddr
-	}
-
-	queue := party.Queue.GetObjectWithoutId(voteID)
-	helpers.RespondWithJSON(w, queue)
+	Socket.BroadcastToRoom("/", party.Label, SocketEventQueue, party.Queue.GetObjectWithoutId(""))
+	utils.EncodeJSONBody(w, queue)
 }
 
 func vote(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value(models.SessionContextKey).(*sessions.Session)
-	party := r.Context().Value(models.PartyContextKey).(*models.Party)
+	session := utils.SessionFromRequestContext(r)
+	party := utils.PartyFromRequestContext(r)
 
-	var body voteBody
-	if err := helpers.DecodeJSONBody(w, r, &body); err != nil {
+	var body voteRequestBody
+	if err := utils.DecodeJSONBody(w, r, &body); err != nil {
 		return
 	}
 
@@ -85,6 +70,6 @@ func vote(w http.ResponseWriter, r *http.Request) {
 
 	party.Queue.Vote(voteID, body.Song)
 	queue := party.Queue.GetObjectWithoutId(voteID)
-	party.Socket.BroadcastToRoom("/", party.Label, "queue", party.Queue.GetObjectWithoutId(""))
-	helpers.RespondWithJSON(w, queue)
+	Socket.BroadcastToRoom("/", party.Label, SocketEventQueue, party.Queue.GetObjectWithoutId(""))
+	utils.EncodeJSONBody(w, queue)
 }
