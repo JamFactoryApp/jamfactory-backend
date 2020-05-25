@@ -9,7 +9,7 @@ import (
 )
 
 type PartyQueue struct {
-	Songs  []Song
+	Songs []Song
 }
 
 func (queue *PartyQueue) Len() int {
@@ -24,19 +24,19 @@ func (queue *PartyQueue) Less(i, j int) bool {
 	if queue.Songs[i].VoteCount() != queue.Songs[j].VoteCount() {
 		return queue.Songs[i].VoteCount() > queue.Songs[j].VoteCount()
 	} else {
-		return queue.Songs[j].Date.Before(queue.Songs[i].Date)
+		return queue.Songs[i].Date.After(queue.Songs[j].Date)
 	}
 }
 
 func (queue *PartyQueue) Vote(id string, song spotify.FullTrack) {
 	notInQueueFlag := true
 
-	for i, _ := range queue.Songs {
+	for i := range queue.Songs {
 		if queue.Songs[i].Song.URI == song.URI {
 			var added = queue.Songs[i].Vote(id)
 			notInQueueFlag = false
 			log.WithFields(log.Fields{
-				"Song": queue.Songs[i].Song.Name,
+				"Song":  queue.Songs[i].Song.Name,
 				"Added": added}).Trace("Added Vote ", id)
 		}
 	}
