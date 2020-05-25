@@ -1,9 +1,10 @@
-package helpers
+package utils
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"strings"
@@ -13,7 +14,7 @@ func DecodeJSONBody(w http.ResponseWriter, r *http.Request, dst interface{}) err
 	if r.Header.Get("Content-Type") != "" {
 		value := r.Header.Get("Content-Type")
 		if value != "application/json" {
-			msg:= "Content-Type header is not application/json"
+			msg := "Content-Type header is not application/json"
 			http.Error(w, msg, http.StatusInternalServerError)
 			return errors.New(msg)
 		}
@@ -56,10 +57,21 @@ func DecodeJSONBody(w http.ResponseWriter, r *http.Request, dst interface{}) err
 
 	err = dec.Decode(&struct{}{})
 	if err != io.EOF {
-		msg := "Request body must only contain a single JSON object"
+		msg := "request body must only contain a single JSON object"
 		http.Error(w, msg, http.StatusBadRequest)
 		return errors.New(msg)
 	}
 
 	return nil
+}
+
+func EncodeJSONBody(w http.ResponseWriter, response interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	err := json.NewEncoder(w).Encode(response)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Warnf("Could not encode json:\n%s\n", err.Error())
+	}
 }
