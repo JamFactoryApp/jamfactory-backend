@@ -5,7 +5,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
 	log "github.com/sirupsen/logrus"
-	"jamfactory-backend/controller"
+	"jamfactory-backend/controllers"
 	"jamfactory-backend/models"
 	"math/rand"
 	"net/http"
@@ -41,7 +41,7 @@ func setup() {
 	models.Setup()
 	log.Info("Initialized models")
 
-	controller.Setup()
+	controllers.Setup()
 	log.Info("Initialized controllers")
 
 	initHttpServer()
@@ -64,7 +64,7 @@ func initEnvironment() {
 }
 
 func initHttpServer() {
-	corsHandler := cors.New(corsOptions).Handler(controller.Router)
+	corsHandler := cors.New(corsOptions).Handler(controllers.Router)
 	server = &http.Server{
 		Addr:         fmt.Sprintf(":%d", port),
 		ReadTimeout:  readTimeout,
@@ -72,7 +72,7 @@ func initHttpServer() {
 		IdleTimeout:  idleTimeout,
 		Handler:      corsHandler,
 	}
-	http.Handle("/", controller.Router)
+	http.Handle("/", controllers.Router)
 }
 
 func main() {

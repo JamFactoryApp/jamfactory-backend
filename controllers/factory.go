@@ -1,4 +1,4 @@
-package controller
+package controllers
 
 import (
 	log "github.com/sirupsen/logrus"
