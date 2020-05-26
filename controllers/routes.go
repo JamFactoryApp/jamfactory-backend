@@ -16,7 +16,7 @@ const (
 	authLogoutPath   = "/logout"
 	authStatusPath   = "/status"
 
-	jamSessionPath         = "/jamSession"
+	jamSessionPath         = "/jam"
 	jamSessionIndexPath    = "/"
 	jamSessionCreatePath   = "/create"
 	jamSessionJoinPath     = "/join"
