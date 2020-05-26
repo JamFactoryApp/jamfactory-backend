@@ -11,14 +11,14 @@ import (
 	"strings"
 )
 
-type partyBody struct {
+type jamSessionBody struct {
 	Name     string     `json:"name"`
 	DeviceID spotify.ID `json:"device"`
 	IpVoting bool       `json:"ip"`
 }
-type getPartyResponseBody partyBody
-type setPartyRequestBody partyBody
-type setPartyResponseBody partyBody
+type getJamSessionResponseBody jamSessionBody
+type setJamSessionRequestBody jamSessionBody
+type setJamSessionResponseBody jamSessionBody
 
 type playbackBody struct {
 	CurrentSong *spotify.FullTrack   `json:"currentSong"`
@@ -31,82 +31,82 @@ type setPlaybackResponseBody playbackBody
 type labelBody struct {
 	Label string `json:"label"`
 }
-type createPartyResponseBody labelBody
+type createJamSessionResponseBody labelBody
 type joinRequestBody labelBody
 type joinResponseBody labelBody
 
-type leavePartyResponseBody struct {
+type leaveJamSessionResponseBody struct {
 	Success bool `json:"Success"`
 }
 
-type partyStateResponseBody struct {
+type jamSessionStateResponseBody struct {
 	CurrentSong interface{} `json:"currentSong"`
 	State       interface{} `json:"state"`
 }
 
-func getParty(w http.ResponseWriter, r *http.Request) {
-	party := utils.PartyFromRequestContext(r)
+func getJamSession(w http.ResponseWriter, r *http.Request) {
+	jamSession := utils.JamSessionFromRequestContext(r)
 
-	res := getPartyResponseBody{
-		Name:     party.User.DisplayName,
-		DeviceID: party.DeviceID,
-		IpVoting: party.IpVoteEnabled,
+	res := getJamSessionResponseBody{
+		Name:     jamSession.User.DisplayName,
+		DeviceID: jamSession.DeviceID,
+		IpVoting: jamSession.IpVoteEnabled,
 	}
 
 	utils.EncodeJSONBody(w, res)
 }
 
-func setParty(w http.ResponseWriter, r *http.Request) {
-	party := utils.PartyFromRequestContext(r)
+func setJamSession(w http.ResponseWriter, r *http.Request) {
+	jamSession := utils.JamSessionFromRequestContext(r)
 
-	var body setPartyRequestBody
+	var body setJamSessionRequestBody
 	if err := utils.DecodeJSONBody(w, r, &body); err != nil {
 		return
 	}
 
-	party.SetClientID(body.DeviceID)
-	party.IpVoteEnabled = body.IpVoting
-	party.User.DisplayName = body.Name
+	jamSession.SetClientID(body.DeviceID)
+	jamSession.IpVoteEnabled = body.IpVoting
+	jamSession.User.DisplayName = body.Name
 
-	res := setPartyResponseBody{
-		Name:     party.User.DisplayName,
-		DeviceID: party.DeviceID,
-		IpVoting: party.IpVoteEnabled,
+	res := setJamSessionResponseBody{
+		Name:     jamSession.User.DisplayName,
+		DeviceID: jamSession.DeviceID,
+		IpVoting: jamSession.IpVoteEnabled,
 	}
 
 	utils.EncodeJSONBody(w, res)
 }
 
 func getPlayback(w http.ResponseWriter, r *http.Request) {
-	party := utils.PartyFromRequestContext(r)
+	jamSession := utils.JamSessionFromRequestContext(r)
 
 	res := getPlaybackResponseBody{
-		CurrentSong: party.CurrentSong,
-		Playback:    party.PlaybackState,
+		CurrentSong: jamSession.CurrentSong,
+		Playback:    jamSession.PlaybackState,
 	}
 
 	utils.EncodeJSONBody(w, res)
 }
 
 func setPlayback(w http.ResponseWriter, r *http.Request) {
-	party := utils.PartyFromRequestContext(r)
+	jamSession := utils.JamSessionFromRequestContext(r)
 
 	var body setPlayBackRequestBody
 	if err := utils.DecodeJSONBody(w, r, &body); err != nil {
 		return
 	}
 
-	party.SetPartyState(body.Playback.Playing)
+	jamSession.SetJamSessionState(body.Playback.Playing)
 
 	res := setPlaybackResponseBody{
-		CurrentSong: party.CurrentSong,
-		Playback:    party.PlaybackState,
+		CurrentSong: jamSession.CurrentSong,
+		Playback:    jamSession.PlaybackState,
 	}
 
 	utils.EncodeJSONBody(w, res)
 }
 
-func createParty(w http.ResponseWriter, r *http.Request) {
+func createJamSession(w http.ResponseWriter, r *http.Request) {
 	session := utils.SessionFromRequestContext(r)
 
 	if !LoggedInAsHost(session) {
@@ -131,20 +131,20 @@ func createParty(w http.ResponseWriter, r *http.Request) {
 
 	client := spotifyAuthenticator.NewClient(&token)
 
-	label, err := GenerateNewParty(client)
+	label, err := GenerateNewJamSession(client)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Printf("@%s Couldn't create party: %s", session.ID, err.Error())
+		log.Printf("@%s Couldn't create jamSession: %s", session.ID, err.Error())
 	}
 
 	session.Values[SessionLabelKey] = label
 	SaveSession(w, r, session)
 
-	res := createPartyResponseBody{Label: label}
+	res := createJamSessionResponseBody{Label: label}
 	utils.EncodeJSONBody(w, res)
 }
 
-func joinParty(w http.ResponseWriter, r *http.Request) {
+func joinJamSession(w http.ResponseWriter, r *http.Request) {
 	session := utils.SessionFromRequestContext(r)
 
 	var body joinRequestBody
@@ -152,34 +152,34 @@ func joinParty(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	party := GetParty(strings.ToUpper(body.Label))
+	jamSession := GetJamSession(strings.ToUpper(body.Label))
 
-	if party == nil {
-		http.Error(w, "Party Error: Could not find a party with the submitted label", http.StatusNotFound)
-		log.Printf("@%s Party Error: Could not find a party with the submitted label", session.ID)
+	if jamSession == nil {
+		http.Error(w, "JamSession Error: Could not find a jamSession with the submitted label", http.StatusNotFound)
+		log.Printf("@%s JamSession Error: Could not find a jamSession with the submitted label", session.ID)
 		return
 	}
 
 	session.Values[SessionUserTypeKey] = models.UserTypeGuest
-	session.Values[SessionLabelKey] = party.Label
+	session.Values[SessionLabelKey] = jamSession.Label
 	SaveSession(w, r, session)
 
-	res := joinResponseBody{Label: party.Label}
+	res := joinResponseBody{Label: jamSession.Label}
 	utils.EncodeJSONBody(w, res)
 }
 
-func leaveParty(w http.ResponseWriter, r *http.Request) {
+func leaveJamSession(w http.ResponseWriter, r *http.Request) {
 	session := utils.SessionFromRequestContext(r)
 
 	if LoggedInAsHost(session) {
-		party := GetParty(session.Values[SessionLabelKey].(string))
-		if party != nil {
-			party.SetPartyState(false)
-			body := partyStateResponseBody{
-				CurrentSong: party.CurrentSong,
-				State:       party.PlaybackState,
+		jamSession := GetJamSession(session.Values[SessionLabelKey].(string))
+		if jamSession != nil {
+			jamSession.SetJamSessionState(false)
+			body := jamSessionStateResponseBody{
+				CurrentSong: jamSession.CurrentSong,
+				State:       jamSession.PlaybackState,
 			}
-			Socket.BroadcastToRoom("sessions", party.Label, SocketEventPlayback, body)
+			Socket.BroadcastToRoom("sessions", jamSession.Label, SocketEventPlayback, body)
 		}
 	}
 
@@ -187,6 +187,6 @@ func leaveParty(w http.ResponseWriter, r *http.Request) {
 	session.Values[SessionLabelKey] = nil
 	SaveSession(w, r, session)
 
-	res := leavePartyResponseBody{Success: true}
+	res := leaveJamSessionResponseBody{Success: true}
 	utils.EncodeJSONBody(w, res)
 }

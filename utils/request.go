@@ -7,12 +7,12 @@ import (
 )
 
 const (
-	PartyContextKey   = "Party"
-	SessionContextKey = "Session"
+	JamSessionContextKey = "JamSession"
+	SessionContextKey    = "Session"
 )
 
-func PartyFromRequestContext(r *http.Request) *models.Party {
-	return r.Context().Value(PartyContextKey).(*models.Party)
+func JamSessionFromRequestContext(r *http.Request) *models.JamSession {
+	return r.Context().Value(JamSessionContextKey).(*models.JamSession)
 }
 
 func SessionFromRequestContext(r *http.Request) *sessions.Session {

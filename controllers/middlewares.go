@@ -11,7 +11,7 @@ type Middleware interface {
 	Handler(http.Handler) http.Handler
 }
 
-type PartyRequiredMiddleware struct{}
+type JamSessionRequiredMiddleware struct{}
 
 type SessionRequiredMiddleware struct{}
 
@@ -19,7 +19,7 @@ type UserTypeRequiredMiddleware struct {
 	UserType string
 }
 
-func (*PartyRequiredMiddleware) Handler(next http.Handler) http.Handler {
+func (*JamSessionRequiredMiddleware) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session := utils.SessionFromRequestContext(r)
 
@@ -32,20 +32,20 @@ func (*PartyRequiredMiddleware) Handler(next http.Handler) http.Handler {
 		logger := log.WithField("Session", session.ID)
 
 		if !(session.Values[SessionLabelKey] != nil) {
-			http.Error(w, "User error: Not joined a party", http.StatusUnauthorized)
-			logger.Trace("Could not get party: User not joined a party")
+			http.Error(w, "User error: Not joined a jamSession", http.StatusUnauthorized)
+			logger.Trace("Could not get jamSession: User not joined a jamSession")
 			return
 		}
 
-		party := GetParty(session.Values[SessionLabelKey].(string))
+		jamSession := GetJamSession(session.Values[SessionLabelKey].(string))
 
-		if party == nil {
-			http.Error(w, "Party error: Could not find a party with the submitted label", http.StatusNotFound)
-			logger.WithField("Label", session.Values[SessionLabelKey].(string)).Trace("Could not get party: Party not found")
+		if jamSession == nil {
+			http.Error(w, "JamSession error: Could not find a jamSession with the submitted label", http.StatusNotFound)
+			logger.WithField("Label", session.Values[SessionLabelKey].(string)).Trace("Could not get jamSession: JamSession not found")
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), utils.PartyContextKey, party)
+		ctx := context.WithValue(r.Context(), utils.JamSessionContextKey, jamSession)
 		rWithCtx := r.WithContext(ctx)
 
 		next.ServeHTTP(w, rWithCtx)

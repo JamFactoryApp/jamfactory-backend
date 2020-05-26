@@ -13,13 +13,13 @@ type searchRequestBody struct {
 }
 
 func devices(w http.ResponseWriter, r *http.Request) {
-	party := utils.PartyFromRequestContext(r)
+	jamSession := utils.JamSessionFromRequestContext(r)
 
-	result, err := party.Client.PlayerDevices()
+	result, err := jamSession.Client.PlayerDevices()
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.WithField("Party", party.Label).Debug("Could not get devices for party: ", err.Error())
+		log.WithField("JamSession", jamSession.Label).Debug("Could not get devices for jamSession: ", err.Error())
 		return
 	}
 
@@ -27,13 +27,13 @@ func devices(w http.ResponseWriter, r *http.Request) {
 }
 
 func playlist(w http.ResponseWriter, r *http.Request) {
-	party := utils.PartyFromRequestContext(r)
+	jamSession := utils.JamSessionFromRequestContext(r)
 
-	result, err := party.Client.CurrentUsersPlaylists()
+	result, err := jamSession.Client.CurrentUsersPlaylists()
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.WithField("Party", party.Label).Debug("Could not get playlists for party: ", err.Error())
+		log.WithField("JamSession", jamSession.Label).Debug("Could not get playlists for jamSession: ", err.Error())
 		return
 	}
 
@@ -41,7 +41,7 @@ func playlist(w http.ResponseWriter, r *http.Request) {
 }
 
 func search(w http.ResponseWriter, r *http.Request) {
-	party := utils.PartyFromRequestContext(r)
+	jamSession := utils.JamSessionFromRequestContext(r)
 
 	var body searchRequestBody
 	if err := utils.DecodeJSONBody(w, r, &body); err != nil {
@@ -54,13 +54,13 @@ func search(w http.ResponseWriter, r *http.Request) {
 	}
 
 	searchString := []string{body.SearchText, "*"}
-	result, err := party.Client.SearchOpt(strings.Join(searchString, ""), spotify.SearchTypeTrack, &opts)
+	result, err := jamSession.Client.SearchOpt(strings.Join(searchString, ""), spotify.SearchTypeTrack, &opts)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.WithFields(log.Fields{
-			"Party": party.Label,
-			"Text":  body.SearchText}).Debug("Could not get search results: ", err.Error())
+			"JamSession": jamSession.Label,
+			"Text":       body.SearchText}).Debug("Could not get search results: ", err.Error())
 		return
 	}
 

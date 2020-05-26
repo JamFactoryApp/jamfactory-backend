@@ -18,26 +18,26 @@ type addPlaylistRequestBody struct {
 
 func getQueue(w http.ResponseWriter, r *http.Request) {
 	session := utils.SessionFromRequestContext(r)
-	party := utils.PartyFromRequestContext(r)
+	jamSession := utils.JamSessionFromRequestContext(r)
 
 	voteID := session.ID
-	if party.IpVoteEnabled {
+	if jamSession.IpVoteEnabled {
 		voteID = r.RemoteAddr
 	}
 
-	queue := party.Queue.GetObjectWithoutId(voteID)
+	queue := jamSession.Queue.GetObjectWithoutId(voteID)
 	utils.EncodeJSONBody(w, queue)
 }
 
 func addPlaylist(w http.ResponseWriter, r *http.Request) {
-	party := utils.PartyFromRequestContext(r)
+	jamSession := utils.JamSessionFromRequestContext(r)
 
 	var body addPlaylistRequestBody
 	if err := utils.DecodeJSONBody(w, r, &body); err != nil {
 		return
 	}
 
-	playlist, err := party.Client.GetPlaylistTracks(body.PlaylistURI)
+	playlist, err := jamSession.Client.GetPlaylistTracks(body.PlaylistURI)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -46,17 +46,17 @@ func addPlaylist(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for i := 0; i < len(playlist.Tracks); i++ {
-		party.Queue.Vote(models.UserTypeHost, playlist.Tracks[i].Track)
+		jamSession.Queue.Vote(models.UserTypeHost, playlist.Tracks[i].Track)
 	}
 
-	queue := party.Queue.GetObjectWithoutId("")
-	Socket.BroadcastToRoom("/", party.Label, SocketEventQueue, party.Queue.GetObjectWithoutId(""))
+	queue := jamSession.Queue.GetObjectWithoutId("")
+	Socket.BroadcastToRoom("/", jamSession.Label, SocketEventQueue, jamSession.Queue.GetObjectWithoutId(""))
 	utils.EncodeJSONBody(w, queue)
 }
 
 func vote(w http.ResponseWriter, r *http.Request) {
 	session := utils.SessionFromRequestContext(r)
-	party := utils.PartyFromRequestContext(r)
+	jamSession := utils.JamSessionFromRequestContext(r)
 
 	var body voteRequestBody
 	if err := utils.DecodeJSONBody(w, r, &body); err != nil {
@@ -64,12 +64,12 @@ func vote(w http.ResponseWriter, r *http.Request) {
 	}
 
 	voteID := session.ID
-	if party.IpVoteEnabled {
+	if jamSession.IpVoteEnabled {
 		voteID = r.RemoteAddr
 	}
 
-	party.Queue.Vote(voteID, body.Song)
-	queue := party.Queue.GetObjectWithoutId(voteID)
-	Socket.BroadcastToRoom("/", party.Label, SocketEventQueue, party.Queue.GetObjectWithoutId(""))
+	jamSession.Queue.Vote(voteID, body.Song)
+	queue := jamSession.Queue.GetObjectWithoutId(voteID)
+	Socket.BroadcastToRoom("/", jamSession.Label, SocketEventQueue, jamSession.Queue.GetObjectWithoutId(""))
 	utils.EncodeJSONBody(w, queue)
 }

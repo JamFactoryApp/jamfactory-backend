@@ -51,7 +51,7 @@ func socketIOConnect(s socketio.Conn) error {
 		session.Values[SessionUserTypeKey] == models.UserTypeGuest) &&
 		session.Values[SessionLabelKey] != nil {
 
-		if GetParty(session.Values[SessionLabelKey].(string)) != nil {
+		if GetJamSession(session.Values[SessionLabelKey].(string)) != nil {
 			s.Join(session.Values[SessionLabelKey].(string))
 			s.SetContext(s.Context())
 			logger.Trace("allowed connection")

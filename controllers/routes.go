@@ -16,12 +16,12 @@ const (
 	authLogoutPath   = "/logout"
 	authStatusPath   = "/status"
 
-	partyPath         = "/party"
-	partyIndexPath    = "/"
-	partyCreatePath   = "/create"
-	partyJoinPath     = "/join"
-	partyLeavePath    = "/leave"
-	partyPlaybackPath = "/playback"
+	jamSessionPath         = "/jamSession"
+	jamSessionIndexPath    = "/"
+	jamSessionCreatePath   = "/create"
+	jamSessionJoinPath     = "/join"
+	jamSessionLeavePath    = "/leave"
+	jamSessionPlaybackPath = "/playback"
 
 	queuePath         = "/queue"
 	queueIndexPath    = "/"
@@ -41,27 +41,27 @@ var (
 	Router *mux.Router
 	Socket *socketio.Server
 
-	authRouter    *mux.Router
-	partyRouter   *mux.Router
-	queueRouter   *mux.Router
-	spotifyRouter *mux.Router
+	authRouter       *mux.Router
+	jamSessionRouter *mux.Router
+	queueRouter      *mux.Router
+	spotifyRouter    *mux.Router
 
 	socketRouter *mux.Router
 
-	sessionRequiredMiddleware = SessionRequiredMiddleware{}
-	partyRequiredMiddleware   = PartyRequiredMiddleware{}
-	hostRequiredMiddleware    = UserTypeRequiredMiddleware{UserType: models.UserTypeHost}
+	sessionRequiredMiddleware    = SessionRequiredMiddleware{}
+	jamSessionRequiredMiddleware = JamSessionRequiredMiddleware{}
+	hostRequiredMiddleware       = UserTypeRequiredMiddleware{UserType: models.UserTypeHost}
 
-	sessionRequired alice.Chain
-	partyRequired   alice.Chain
-	hostRequired    alice.Chain
+	sessionRequired    alice.Chain
+	jamSessionRequired alice.Chain
+	hostRequired       alice.Chain
 )
 
 func initRoutes() {
 	Router = mux.NewRouter()
 
 	authRouter = Router.PathPrefix(apiPath + authPath).Subrouter()
-	partyRouter = Router.PathPrefix(apiPath + partyPath).Subrouter()
+	jamSessionRouter = Router.PathPrefix(apiPath + jamSessionPath).Subrouter()
 	queueRouter = Router.PathPrefix(apiPath + queuePath).Subrouter()
 	spotifyRouter = Router.PathPrefix(apiPath + spotifyPath).Subrouter()
 
@@ -69,7 +69,7 @@ func initRoutes() {
 
 	registerAuthRoutes()
 	registerQueueRoutes()
-	registerPartyRoutes()
+	registerJamSessionRoutes()
 	registerSpotifyRoutes()
 
 	registerSocketIORoutes()
@@ -77,8 +77,8 @@ func initRoutes() {
 
 func initMiddleWares() {
 	sessionRequired = alice.New(sessionRequiredMiddleware.Handler)
-	partyRequired = sessionRequired.Append(partyRequiredMiddleware.Handler)
-	hostRequired = partyRequired.Append(hostRequiredMiddleware.Handler)
+	jamSessionRequired = sessionRequired.Append(jamSessionRequiredMiddleware.Handler)
+	hostRequired = jamSessionRequired.Append(hostRequiredMiddleware.Handler)
 }
 
 func registerAuthRoutes() {
@@ -88,26 +88,26 @@ func registerAuthRoutes() {
 	authRouter.Handle(authStatusPath, sessionRequired.ThenFunc(status)).Methods("GET")
 }
 
-func registerPartyRoutes() {
-	partyRouter.Handle(partyCreatePath, sessionRequired.ThenFunc(createParty)).Methods("GET")
-	partyRouter.Handle(partyJoinPath, partyRequired.ThenFunc(joinParty)).Methods("PUT")
-	partyRouter.Handle(partyLeavePath, partyRequired.ThenFunc(leaveParty)).Methods("GET")
-	partyRouter.Handle(partyIndexPath, partyRequired.ThenFunc(getParty)).Methods("GET")
-	partyRouter.Handle(partyIndexPath, hostRequired.ThenFunc(setParty)).Methods("PUT")
-	partyRouter.Handle(partyPlaybackPath, partyRequired.ThenFunc(getPlayback)).Methods("GET")
-	partyRouter.Handle(partyPlaybackPath, hostRequired.ThenFunc(setPlayback)).Methods("PUT")
+func registerJamSessionRoutes() {
+	jamSessionRouter.Handle(jamSessionCreatePath, sessionRequired.ThenFunc(createJamSession)).Methods("GET")
+	jamSessionRouter.Handle(jamSessionJoinPath, jamSessionRequired.ThenFunc(joinJamSession)).Methods("PUT")
+	jamSessionRouter.Handle(jamSessionLeavePath, jamSessionRequired.ThenFunc(leaveJamSession)).Methods("GET")
+	jamSessionRouter.Handle(jamSessionIndexPath, jamSessionRequired.ThenFunc(getJamSession)).Methods("GET")
+	jamSessionRouter.Handle(jamSessionIndexPath, hostRequired.ThenFunc(setJamSession)).Methods("PUT")
+	jamSessionRouter.Handle(jamSessionPlaybackPath, jamSessionRequired.ThenFunc(getPlayback)).Methods("GET")
+	jamSessionRouter.Handle(jamSessionPlaybackPath, hostRequired.ThenFunc(setPlayback)).Methods("PUT")
 }
 
 func registerQueueRoutes() {
-	queueRouter.Handle(queueIndexPath, partyRequired.ThenFunc(getQueue)).Methods("GET")
-	queueRouter.Handle(queuePlaylistPath, partyRequired.ThenFunc(addPlaylist)).Methods("PUT")
-	queueRouter.Handle(queueVotePath, partyRequired.ThenFunc(vote)).Methods("PUT")
+	queueRouter.Handle(queueIndexPath, jamSessionRequired.ThenFunc(getQueue)).Methods("GET")
+	queueRouter.Handle(queuePlaylistPath, jamSessionRequired.ThenFunc(addPlaylist)).Methods("PUT")
+	queueRouter.Handle(queueVotePath, jamSessionRequired.ThenFunc(vote)).Methods("PUT")
 }
 
 func registerSpotifyRoutes() {
-	spotifyRouter.Handle(spotifyDevicesPath, partyRequired.ThenFunc(devices)).Methods("GET")
-	spotifyRouter.Handle(spotifyPlaylistPath, partyRequired.ThenFunc(playlist)).Methods("GET")
-	spotifyRouter.Handle(spotifySearchPath, partyRequired.ThenFunc(search)).Methods("PUT")
+	spotifyRouter.Handle(spotifyDevicesPath, jamSessionRequired.ThenFunc(devices)).Methods("GET")
+	spotifyRouter.Handle(spotifyPlaylistPath, jamSessionRequired.ThenFunc(playlist)).Methods("GET")
+	spotifyRouter.Handle(spotifySearchPath, jamSessionRequired.ThenFunc(search)).Methods("PUT")
 }
 
 func registerSocketIORoutes() {
