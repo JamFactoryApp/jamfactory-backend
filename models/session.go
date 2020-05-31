@@ -111,6 +111,7 @@ func (store *SessionStore) New(r *http.Request, name string) (*sessions.Session,
 		HttpOnly: store.Options.HttpOnly,
 	}
 	session.IsNew = true
+	session.Values[SessionUserTypeKey] = UserTypeNew
 	var err error
 	if cookie, errToken := store.Token.GetToken(r, name); errToken == nil {
 		err = securecookie.DecodeMulti(name, cookie, &session.ID, store.Codecs...)
