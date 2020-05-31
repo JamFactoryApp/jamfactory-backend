@@ -36,7 +36,7 @@ type joinRequestBody labelBody
 type joinResponseBody labelBody
 
 type leaveJamSessionResponseBody struct {
-	Success bool `json:"Success"`
+	Success bool `json:"success"`
 }
 
 type jamSessionStateResponseBody struct {
