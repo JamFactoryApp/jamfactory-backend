@@ -4,15 +4,12 @@ import (
 	"github.com/gorilla/sessions"
 	log "github.com/sirupsen/logrus"
 	"jamfactory-backend/models"
+	"jamfactory-backend/utils"
 	"net/http"
 )
 
 const (
 	storeMaxAge = 3600
-
-	SessionUserTypeKey = "User"
-	SessionLabelKey    = "Label"
-	SessionTokenKey    = "Token"
 )
 
 var (
@@ -38,9 +35,13 @@ func SaveSession(w http.ResponseWriter, r *http.Request, session *sessions.Sessi
 }
 
 func SessionIsValid(session *sessions.Session) bool {
-	return session.Values[SessionUserTypeKey] != nil && session.Values[SessionTokenKey] != nil
+	return session.Values[models.SessionUserTypeKey] != nil
 }
 
 func LoggedInAsHost(session *sessions.Session) bool {
-	return SessionIsValid(session) && session.Values[SessionUserTypeKey] == models.UserTypeHost
+	return SessionIsValid(session) && session.Values[models.SessionUserTypeKey] == models.UserTypeHost
+}
+
+func LoggedIntoSpotify(session *sessions.Session) bool {
+	return SessionIsValid(session) && session.Values[models.SessionTokenKey] != nil && utils.ParseTokenFromSession(session).Valid()
 }

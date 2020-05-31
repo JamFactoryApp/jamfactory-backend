@@ -47,12 +47,12 @@ func socketIOConnect(s socketio.Conn) error {
 	})
 	logger.Trace("starting Socket.IO auth")
 
-	if (session.Values[SessionUserTypeKey] == models.UserTypeHost ||
-		session.Values[SessionUserTypeKey] == models.UserTypeGuest) &&
-		session.Values[SessionLabelKey] != nil {
+	if (session.Values[models.SessionUserTypeKey] == models.UserTypeHost ||
+		session.Values[models.SessionUserTypeKey] == models.UserTypeGuest) &&
+		session.Values[models.SessionLabelTypeKey] != nil {
 
-		if GetJamSession(session.Values[SessionLabelKey].(string)) != nil {
-			s.Join(session.Values[SessionLabelKey].(string))
+		if GetJamSession(session.Values[models.SessionLabelTypeKey].(string)) != nil {
+			s.Join(session.Values[models.SessionLabelTypeKey].(string))
 			s.SetContext(s.Context())
 			logger.Trace("allowed connection")
 			return nil

@@ -3,8 +3,6 @@ package controllers
 import (
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"golang.org/x/oauth2"
 	"jamfactory-backend/models"
 	"jamfactory-backend/utils"
 	"net/http"
@@ -109,26 +107,20 @@ func setPlayback(w http.ResponseWriter, r *http.Request) {
 func createJamSession(w http.ResponseWriter, r *http.Request) {
 	session := utils.SessionFromRequestContext(r)
 
-	if !LoggedInAsHost(session) {
+	if !LoggedIntoSpotify(session) {
 		http.Error(w, "User Error: Not logged in to spotify", http.StatusUnauthorized)
 		log.Printf("@%s User Error: Not logged in to spotify ", session.ID)
 		return
 	}
 
-	if session.Values[SessionLabelKey] != nil {
-		if jamSession := GetJamSession(session.Values[SessionLabelKey].(string)); jamSession != nil {
+	if session.Values[models.SessionLabelTypeKey] != nil {
+		if jamSession := GetJamSession(session.Values[models.SessionLabelTypeKey].(string)); jamSession != nil {
 			http.Error(w, "JamSession error: User already joined a JamSession", http.StatusUnprocessableEntity)
 			return
 		}
 	}
 
-	tokenMap := session.Values[SessionTokenKey].(map[string]interface{})
-	token := oauth2.Token{
-		AccessToken:  tokenMap["accesstoken"].(string),
-		TokenType:    tokenMap["tokentype"].(string),
-		RefreshToken: tokenMap["refreshtoken"].(string),
-		Expiry:       tokenMap["expiry"].(primitive.DateTime).Time(),
-	}
+	token := utils.ParseTokenFromSession(session)
 
 	if !token.Valid() {
 		http.Error(w, "User Error: Token not valid", http.StatusUnauthorized)
@@ -136,7 +128,7 @@ func createJamSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := spotifyAuthenticator.NewClient(&token)
+	client := spotifyAuthenticator.NewClient(token)
 
 	label, err := GenerateNewJamSession(client)
 	if err != nil {
@@ -144,7 +136,8 @@ func createJamSession(w http.ResponseWriter, r *http.Request) {
 		log.Printf("@%s Couldn't create jamSession: %s", session.ID, err.Error())
 	}
 
-	session.Values[SessionLabelKey] = label
+	session.Values[models.SessionLabelTypeKey] = label
+	session.Values[models.SessionUserTypeKey] = models.UserTypeHost
 	SaveSession(w, r, session)
 
 	res := createJamSessionResponseBody{Label: label}
@@ -154,8 +147,8 @@ func createJamSession(w http.ResponseWriter, r *http.Request) {
 func joinJamSession(w http.ResponseWriter, r *http.Request) {
 	session := utils.SessionFromRequestContext(r)
 
-	if session.Values[SessionLabelKey] != nil {
-		if jamSession := GetJamSession(session.Values[SessionLabelKey].(string)); jamSession != nil {
+	if session.Values[models.SessionLabelTypeKey] != nil {
+		if jamSession := GetJamSession(session.Values[models.SessionLabelTypeKey].(string)); jamSession != nil {
 			http.Error(w, "JamSession error: User already joined a JamSession", http.StatusUnprocessableEntity)
 			return
 		}
@@ -174,8 +167,8 @@ func joinJamSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session.Values[SessionUserTypeKey] = models.UserTypeGuest
-	session.Values[SessionLabelKey] = jamSession.Label
+	session.Values[models.SessionUserTypeKey] = models.UserTypeGuest
+	session.Values[models.SessionLabelTypeKey] = jamSession.Label
 	SaveSession(w, r, session)
 
 	res := joinResponseBody{Label: jamSession.Label}
@@ -186,7 +179,7 @@ func leaveJamSession(w http.ResponseWriter, r *http.Request) {
 	session := utils.SessionFromRequestContext(r)
 
 	if LoggedInAsHost(session) {
-		jamSession := GetJamSession(session.Values[SessionLabelKey].(string))
+		jamSession := GetJamSession(session.Values[models.SessionLabelTypeKey].(string))
 		if jamSession != nil {
 			jamSession.SetJamSessionState(false)
 			body := jamSessionStateResponseBody{
@@ -197,7 +190,8 @@ func leaveJamSession(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	session.Values[SessionLabelKey] = nil
+	session.Values[models.SessionUserTypeKey] = models.UserTypeNew
+	session.Values[models.SessionLabelTypeKey] = nil
 	SaveSession(w, r, session)
 
 	res := leaveJamSessionResponseBody{Success: true}

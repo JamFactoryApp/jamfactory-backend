@@ -18,6 +18,10 @@ import (
 const (
 	mongoSessions = "Sessions"
 	dropTimeout   = 3 * time.Second
+
+	SessionUserTypeKey  = "User"
+	SessionLabelTypeKey = "Label"
+	SessionTokenKey     = "Token"
 )
 
 var sessionsCollection *mongo.Collection

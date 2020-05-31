@@ -25,8 +25,9 @@ var (
 )
 
 type statusResponseBody struct {
-	User  string `json:"user"`
-	Label string `json:"label"`
+	User       string `json:"user"`
+	Label      string `json:"label"`
+	Authorized bool   `json:"authorized"`
 }
 
 type loginResponseBody struct {
@@ -60,8 +61,7 @@ func callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session.Values[SessionTokenKey] = token
-	session.Values[SessionUserTypeKey] = models.UserTypeHost
+	session.Values[models.SessionTokenKey] = token
 
 	SaveSession(w, r, session)
 	http.Redirect(w, r, afterCallbackRedirect, http.StatusSeeOther)
@@ -100,16 +100,22 @@ func current(w http.ResponseWriter, r *http.Request) {
 
 	res := statusResponseBody{}
 
-	if session.Values[SessionUserTypeKey] == nil {
+	if session.Values[models.SessionUserTypeKey] == nil {
 		res.User = models.UserTypeNew
 	} else {
-		res.User = session.Values[SessionUserTypeKey].(string)
+		res.User = session.Values[models.SessionUserTypeKey].(string)
 	}
 
-	if session.Values[SessionLabelKey] == nil {
+	if session.Values[models.SessionLabelTypeKey] == nil {
 		res.Label = ""
 	} else {
-		res.Label = session.Values[SessionLabelKey].(string)
+		res.Label = session.Values[models.SessionLabelTypeKey].(string)
+	}
+
+	if session.Values[models.SessionTokenKey] == nil {
+		res.Authorized = false
+	} else {
+		res.Authorized = utils.ParseTokenFromSession(session).Valid()
 	}
 
 	utils.EncodeJSONBody(w, res)

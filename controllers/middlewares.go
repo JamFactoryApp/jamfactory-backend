@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	log "github.com/sirupsen/logrus"
+	"jamfactory-backend/models"
 	"jamfactory-backend/utils"
 	"net/http"
 )
@@ -31,17 +32,17 @@ func (*JamSessionRequiredMiddleware) Handler(next http.Handler) http.Handler {
 
 		logger := log.WithField("Session", session.ID)
 
-		if !(session.Values[SessionLabelKey] != nil) {
+		if !(session.Values[models.SessionLabelTypeKey] != nil) {
 			http.Error(w, "User error: Not joined a jamSession", http.StatusUnauthorized)
 			logger.Trace("Could not get jamSession: User not joined a jamSession")
 			return
 		}
 
-		jamSession := GetJamSession(session.Values[SessionLabelKey].(string))
+		jamSession := GetJamSession(session.Values[models.SessionLabelTypeKey].(string))
 
 		if jamSession == nil {
 			http.Error(w, "JamSession error: Could not find a jamSession with the submitted label", http.StatusNotFound)
-			logger.WithField("Label", session.Values[SessionLabelKey].(string)).Trace("Could not get jamSession: JamSession not found")
+			logger.WithField("Label", session.Values[models.SessionLabelTypeKey].(string)).Trace("Could not get jamSession: JamSession not found")
 			return
 		}
 
@@ -73,10 +74,10 @@ func (m *UserTypeRequiredMiddleware) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session := utils.SessionFromRequestContext(r)
 
-		if !(session.Values[SessionUserTypeKey] == m.UserType) {
+		if !(session.Values[models.SessionUserTypeKey] == m.UserType) {
 			http.Error(w, "User Error: Not the correct user type", http.StatusUnauthorized)
 			log.WithFields(log.Fields{
-				"Current": session.Values[SessionUserTypeKey],
+				"Current": session.Values[models.SessionUserTypeKey],
 				"Wanted":  m.UserType,
 				"Session": session.ID,
 			}).Debug("User Error: Not the correct user type")
