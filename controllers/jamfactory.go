@@ -78,6 +78,15 @@ func GetJamSession(label string) *models.JamSession {
 	return nil
 }
 
+func DeleteJamSession(label string) {
+	for i := range jamSessions {
+		if jamSessions[i].Label == label {
+			jamSessions[i].SetJamSessionState(false)
+			jamSessions = append(jamSessions[:i], jamSessions[i+1:]...)
+		}
+	}
+}
+
 func QueueWorker() {
 	for {
 		time.Sleep(time.Second)
