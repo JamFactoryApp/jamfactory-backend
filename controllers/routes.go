@@ -17,14 +17,14 @@ const (
 	authCurrentPath  = "/current"
 
 	jamSessionPath         = "/jam"
-	jamSessionIndexPath    = "/"
+	jamSessionIndexPath    = ""
 	jamSessionCreatePath   = "/create"
 	jamSessionJoinPath     = "/join"
 	jamSessionLeavePath    = "/leave"
 	jamSessionPlaybackPath = "/playback"
 
 	queuePath         = "/queue"
-	queueIndexPath    = "/"
+	queueIndexPath    = ""
 	queuePlaylistPath = "/playlist"
 	queueVotePath     = "/vote"
 
