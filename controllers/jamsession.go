@@ -115,6 +115,13 @@ func createJamSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if session.Values[SessionLabelKey] != nil {
+		if jamSession := GetJamSession(session.Values[SessionLabelKey].(string)); jamSession != nil {
+			http.Error(w, "JamSession error: User already joined a JamSession", http.StatusUnprocessableEntity)
+			return
+		}
+	}
+
 	tokenMap := session.Values[SessionTokenKey].(map[string]interface{})
 	token := oauth2.Token{
 		AccessToken:  tokenMap["accesstoken"].(string),
@@ -146,6 +153,13 @@ func createJamSession(w http.ResponseWriter, r *http.Request) {
 
 func joinJamSession(w http.ResponseWriter, r *http.Request) {
 	session := utils.SessionFromRequestContext(r)
+
+	if session.Values[SessionLabelKey] != nil {
+		if jamSession := GetJamSession(session.Values[SessionLabelKey].(string)); jamSession != nil {
+			http.Error(w, "JamSession error: User already joined a JamSession", http.StatusUnprocessableEntity)
+			return
+		}
+	}
 
 	var body joinRequestBody
 	if err := utils.DecodeJSONBody(w, r, &body); err != nil {
@@ -183,7 +197,6 @@ func leaveJamSession(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	session.Values[SessionUserTypeKey] = models.UserTypeNew
 	session.Values[SessionLabelKey] = nil
 	SaveSession(w, r, session)
 

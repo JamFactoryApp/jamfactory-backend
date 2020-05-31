@@ -90,8 +90,8 @@ func registerAuthRoutes() {
 
 func registerJamSessionRoutes() {
 	jamSessionRouter.Handle(jamSessionCreatePath, sessionRequired.ThenFunc(createJamSession)).Methods("GET")
-	jamSessionRouter.Handle(jamSessionJoinPath, jamSessionRequired.ThenFunc(joinJamSession)).Methods("PUT")
-	jamSessionRouter.Handle(jamSessionLeavePath, jamSessionRequired.ThenFunc(leaveJamSession)).Methods("GET")
+	jamSessionRouter.Handle(jamSessionJoinPath, sessionRequired.ThenFunc(joinJamSession)).Methods("PUT")
+	jamSessionRouter.Handle(jamSessionLeavePath, sessionRequired.ThenFunc(leaveJamSession)).Methods("GET")
 	jamSessionRouter.Handle(jamSessionIndexPath, jamSessionRequired.ThenFunc(getJamSession)).Methods("GET")
 	jamSessionRouter.Handle(jamSessionIndexPath, hostRequired.ThenFunc(setJamSession)).Methods("PUT")
 	jamSessionRouter.Handle(jamSessionPlaybackPath, jamSessionRequired.ThenFunc(getPlayback)).Methods("GET")
