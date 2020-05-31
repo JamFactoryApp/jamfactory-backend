@@ -11,8 +11,13 @@ import (
 
 const (
 	SocketNamespace = "sessions"
+
 	SocketEventPlayback = "playback"
 	SocketEventQueue    = "queue"
+	SocketEventClose    = "close"
+
+	CloseTypeHostLeft      = "host"
+	CloseTypePartyInactive = "inactive"
 )
 
 func initSocketIO() {

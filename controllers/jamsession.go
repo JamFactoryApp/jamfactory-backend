@@ -179,14 +179,16 @@ func leaveJamSession(w http.ResponseWriter, r *http.Request) {
 	session := utils.SessionFromRequestContext(r)
 
 	if LoggedInAsHost(session) {
-		jamSession := GetJamSession(session.Values[models.SessionLabelTypeKey].(string))
+		label := session.Values[models.SessionLabelTypeKey].(string)
+		jamSession := GetJamSession(label)
 		if jamSession != nil {
-			jamSession.SetJamSessionState(false)
 			body := jamSessionStateResponseBody{
 				CurrentSong: jamSession.CurrentSong,
 				State:       jamSession.PlaybackState,
 			}
 			Socket.BroadcastToRoom(SocketNamespace, jamSession.Label, SocketEventPlayback, body)
+			Socket.BroadcastToRoom(SocketNamespace, jamSession.Label, SocketEventClose, CloseTypeHostLeft)
+			DeleteJamSession(label)
 		}
 	}
 
