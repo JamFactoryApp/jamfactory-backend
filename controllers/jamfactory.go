@@ -102,7 +102,7 @@ func QueueWorker() {
 			jamSessions[i].PlaybackState = state
 			jamSessions[i].CurrentSong = state.Item
 
-			if jamSessions[i].Active {
+			if jamSessions[i].Active && jamSessions[i].Queue.Len() > 0 {
 				if !state.Playing || state.Progress > state.Item.Duration-1000 {
 					log.Printf("Start next song for %s", jamSessions[i].Label)
 					jamSessions[i].StartNextSong()
