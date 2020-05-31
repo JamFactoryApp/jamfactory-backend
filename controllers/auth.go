@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	afterLogoutRedirect   = apiPath + authPath + authStatusPath
+	afterLogoutRedirect   = apiPath + authPath + authCurrentPath
 	afterCallbackRedirect = "/"
 )
 
@@ -93,8 +93,8 @@ func logout(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, afterLogoutRedirect, http.StatusSeeOther)
 }
 
-func status(w http.ResponseWriter, r *http.Request) {
-	log.Trace("Controller call: auth.status")
+func current(w http.ResponseWriter, r *http.Request) {
+	log.Trace("Controller call: auth.current")
 
 	session := utils.SessionFromRequestContext(r)
 

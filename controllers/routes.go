@@ -14,7 +14,7 @@ const (
 	authCallbackPath = "/callback"
 	authLoginPath    = "/login"
 	authLogoutPath   = "/logout"
-	authStatusPath   = "/status"
+	authCurrentPath  = "/current"
 
 	jamSessionPath         = "/jam"
 	jamSessionIndexPath    = "/"
@@ -85,7 +85,7 @@ func registerAuthRoutes() {
 	authRouter.Handle(authCallbackPath, sessionRequired.ThenFunc(callback)).Methods("GET")
 	authRouter.Handle(authLoginPath, sessionRequired.ThenFunc(login)).Methods("GET")
 	authRouter.Handle(authLogoutPath, sessionRequired.ThenFunc(logout)).Methods("GET")
-	authRouter.Handle(authStatusPath, sessionRequired.ThenFunc(status)).Methods("GET")
+	authRouter.Handle(authCurrentPath, sessionRequired.ThenFunc(current)).Methods("GET")
 }
 
 func registerJamSessionRoutes() {
