@@ -186,7 +186,7 @@ func leaveJamSession(w http.ResponseWriter, r *http.Request) {
 				CurrentSong: jamSession.CurrentSong,
 				State:       jamSession.PlaybackState,
 			}
-			Socket.BroadcastToRoom("sessions", jamSession.Label, SocketEventPlayback, body)
+			Socket.BroadcastToRoom(SocketNamespace, jamSession.Label, SocketEventPlayback, body)
 		}
 	}
 

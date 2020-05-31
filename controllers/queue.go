@@ -50,7 +50,7 @@ func addPlaylist(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queue := jamSession.Queue.GetObjectWithoutId("")
-	Socket.BroadcastToRoom("/", jamSession.Label, SocketEventQueue, jamSession.Queue.GetObjectWithoutId(""))
+	Socket.BroadcastToRoom(SocketNamespace, jamSession.Label, SocketEventQueue, jamSession.Queue.GetObjectWithoutId(""))
 	utils.EncodeJSONBody(w, queue)
 }
 
@@ -70,6 +70,6 @@ func vote(w http.ResponseWriter, r *http.Request) {
 
 	jamSession.Queue.Vote(voteID, body.Song)
 	queue := jamSession.Queue.GetObjectWithoutId(voteID)
-	Socket.BroadcastToRoom("/", jamSession.Label, SocketEventQueue, jamSession.Queue.GetObjectWithoutId(""))
+	Socket.BroadcastToRoom(SocketNamespace, jamSession.Label, SocketEventQueue, jamSession.Queue.GetObjectWithoutId(""))
 	utils.EncodeJSONBody(w, queue)
 }

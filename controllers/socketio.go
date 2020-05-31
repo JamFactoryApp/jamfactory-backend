@@ -10,6 +10,7 @@ import (
 )
 
 const (
+	SocketNamespace = "sessions"
 	SocketEventPlayback = "playback"
 	SocketEventQueue    = "queue"
 )

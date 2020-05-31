@@ -97,14 +97,14 @@ func QueueWorker() {
 				if !state.Playing || state.Progress > state.Item.Duration-1000 {
 					log.Printf("Start next song for %s", jamSessions[i].Label)
 					jamSessions[i].StartNextSong()
-					Socket.BroadcastToRoom("/", jamSessions[i].Label, SocketEventQueue, jamSessions[i].Queue.GetObjectWithoutId(""))
+					Socket.BroadcastToRoom(SocketNamespace, jamSessions[i].Label, SocketEventQueue, jamSessions[i].Queue.GetObjectWithoutId(""))
 
 					res := playbackBody{
 						CurrentSong: jamSessions[i].CurrentSong,
 						Playback:    jamSessions[i].PlaybackState,
 					}
 
-					Socket.BroadcastToRoom("/", jamSessions[i].Label, SocketEventPlayback, res)
+					Socket.BroadcastToRoom(SocketNamespace, jamSessions[i].Label, SocketEventPlayback, res)
 				}
 			}
 		}
