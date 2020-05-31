@@ -34,7 +34,6 @@ const (
 	spotifySearchPath   = "/search"
 
 	socketIOPath    = "/socket.io/"
-	socketIndexPath = "/"
 )
 
 var (
@@ -111,9 +110,9 @@ func registerSpotifyRoutes() {
 }
 
 func registerSocketIORoutes() {
-	Socket.OnConnect(socketIndexPath, socketIOConnect)
-	Socket.OnError(socketIndexPath, socketIOError)
-	Socket.OnDisconnect(socketIndexPath, socketIODisconnect)
+	Socket.OnConnect(SocketNamespace, socketIOConnect)
+	Socket.OnError(SocketNamespace, socketIOError)
+	Socket.OnDisconnect(SocketNamespace, socketIODisconnect)
 
-	socketRouter.Handle(socketIndexPath, Socket)
+	socketRouter.Handle(SocketNamespace, Socket)
 }
