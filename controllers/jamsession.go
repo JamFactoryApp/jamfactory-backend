@@ -46,7 +46,7 @@ func getJamSession(w http.ResponseWriter, r *http.Request) {
 	jamSession := utils.JamSessionFromRequestContext(r)
 
 	res := getJamSessionResponseBody{
-		Name:     jamSession.User.DisplayName,
+		Name:     jamSession.Name,
 		DeviceID: jamSession.DeviceID,
 		IpVoting: jamSession.IpVoteEnabled,
 	}
@@ -64,10 +64,10 @@ func setJamSession(w http.ResponseWriter, r *http.Request) {
 
 	jamSession.SetClientID(body.DeviceID)
 	jamSession.IpVoteEnabled = body.IpVoting
-	jamSession.User.DisplayName = body.Name
+	jamSession.Name = body.Name
 
 	res := setJamSessionResponseBody{
-		Name:     jamSession.User.DisplayName,
+		Name:     jamSession.Name,
 		DeviceID: jamSession.DeviceID,
 		IpVoting: jamSession.IpVoteEnabled,
 	}

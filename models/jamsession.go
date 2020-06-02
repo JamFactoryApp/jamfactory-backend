@@ -4,19 +4,19 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
-	"strings"
 )
 
 type JamSession struct {
 	Label         string
-	Queue         *Queue
+	Name		  string
 	IpVoteEnabled bool
+	Active        bool
+	Queue         *Queue
 	Client        spotify.Client
 	DeviceID      spotify.ID
 	CurrentSong   *spotify.FullTrack
 	PlaybackState *spotify.PlayerState
-	User          *spotify.PrivateUser
-	Active        bool
+
 }
 
 type JamSessions []JamSession
@@ -76,8 +76,4 @@ func (jamSession *JamSession) SetClientID(id spotify.ID) {
 			jamSession.DeviceID = id
 		}
 	}
-}
-
-func (jamSession *JamSession) SetJamSessionName() {
-	jamSession.User.DisplayName = strings.Join([]string{jamSession.User.DisplayName, "'s Jam Session"}, "")
 }

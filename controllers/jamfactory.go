@@ -26,19 +26,16 @@ func GenerateNewJamSession(client spotify.Client) (string, error) {
 	}
 
 	jamSession := models.JamSession{
-		Label:         "",
+		Label:         GenerateRandomLabel(),
+		Name:		   strings.Join([]string{user.DisplayName, "'s Jam Session"}, ""),
 		Queue:         &queue,
 		IpVoteEnabled: false,
 		Client:        client,
 		DeviceID:      playback.Device.ID,
-		CurrentSong:   playback.Item,
+		CurrentSong:   nil,
 		PlaybackState: playback,
-		User:          user,
 		Active:        true,
 	}
-
-	jamSession.Label = GenerateRandomLabel()
-	jamSession.SetJamSessionName()
 	jamSessions = append(jamSessions, jamSession)
 
 	return jamSession.Label, nil
