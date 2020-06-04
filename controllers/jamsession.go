@@ -10,21 +10,32 @@ import (
 )
 
 type jamSessionBody struct {
+	Label    string		`json:"label"`
 	Name     string     `json:"name"`
-	DeviceID spotify.ID `json:"device"`
-	IpVoting bool       `json:"ip"`
+	Active   bool       `json:"active"`
+	DeviceID spotify.ID `json:"device_id"`
+	IpVoting bool       `json:"ip_voting"`
 }
 type getJamSessionResponseBody jamSessionBody
-type setJamSessionRequestBody jamSessionBody
 type setJamSessionResponseBody jamSessionBody
+
+type setJamSessionRequestBody struct {
+	Name     string     `json:"name"`
+	Active   bool       `json:"active"`
+	DeviceID spotify.ID `json:"device_id"`
+	IpVoting bool       `json:"ip_voting"`
+}
 
 type playbackBody struct {
 	CurrentSong *spotify.FullTrack   `json:"currentSong"`
 	Playback    *spotify.PlayerState `json:"playback"`
 }
 type getPlaybackResponseBody playbackBody
-type setPlayBackRequestBody playbackBody
 type setPlaybackResponseBody playbackBody
+
+type setPlayBackRequestBody struct {
+	Playing bool `json:"playing"`
+}
 
 type labelBody struct {
 	Label string `json:"label"`
@@ -46,7 +57,9 @@ func getJamSession(w http.ResponseWriter, r *http.Request) {
 	jamSession := utils.JamSessionFromRequestContext(r)
 
 	res := getJamSessionResponseBody{
+		Label:	  jamSession.Label,
 		Name:     jamSession.Name,
+		Active:   jamSession.Active,
 		DeviceID: jamSession.DeviceID,
 		IpVoting: jamSession.IpVoteEnabled,
 	}
@@ -64,10 +77,13 @@ func setJamSession(w http.ResponseWriter, r *http.Request) {
 
 	jamSession.SetClientID(body.DeviceID)
 	jamSession.IpVoteEnabled = body.IpVoting
+	jamSession.Active = body.Active
 	jamSession.Name = body.Name
 
 	res := setJamSessionResponseBody{
+		Label:	  jamSession.Label,
 		Name:     jamSession.Name,
+		Active:   jamSession.Active,
 		DeviceID: jamSession.DeviceID,
 		IpVoting: jamSession.IpVoteEnabled,
 	}
@@ -79,7 +95,6 @@ func getPlayback(w http.ResponseWriter, r *http.Request) {
 	jamSession := utils.JamSessionFromRequestContext(r)
 
 	res := getPlaybackResponseBody{
-		CurrentSong: jamSession.CurrentSong,
 		Playback:    jamSession.PlaybackState,
 	}
 
@@ -94,10 +109,9 @@ func setPlayback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jamSession.SetJamSessionState(body.Playback.Playing)
+	jamSession.SetJamSessionState(body.Playing)
 
 	res := setPlaybackResponseBody{
-		CurrentSong: jamSession.CurrentSong,
 		Playback:    jamSession.PlaybackState,
 	}
 

@@ -16,7 +16,6 @@ type JamSession struct {
 	DeviceID      spotify.ID
 	CurrentSong   *spotify.FullTrack
 	PlaybackState *spotify.PlayerState
-
 }
 
 type JamSessions []JamSession
