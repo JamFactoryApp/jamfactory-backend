@@ -30,7 +30,7 @@ func (jamSession *JamSession) StartNextSong() {
 		return
 	}
 
-	jamSession.CurrentSong = &song.Song
+	jamSession.CurrentSong = song.Song
 
 	playOptions := spotify.PlayOptions{
 		URIs: []spotify.URI{jamSession.CurrentSong.URI},

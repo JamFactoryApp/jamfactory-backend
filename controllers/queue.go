@@ -46,7 +46,7 @@ func addPlaylist(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for i := 0; i < len(playlist.Tracks); i++ {
-		jamSession.Queue.Vote(models.UserTypeHost, playlist.Tracks[i].Track)
+		jamSession.Queue.Vote(models.UserTypeHost, &playlist.Tracks[i].Track)
 	}
 
 	queue := jamSession.Queue.GetObjectWithoutId("")

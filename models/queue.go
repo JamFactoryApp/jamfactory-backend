@@ -28,7 +28,7 @@ func (queue *Queue) Less(i, j int) bool {
 	}
 }
 
-func (queue *Queue) Vote(id string, song spotify.FullTrack) {
+func (queue *Queue) Vote(id string, song *spotify.FullTrack) {
 	notInQueueFlag := true
 
 	for i := range queue.Songs {
