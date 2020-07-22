@@ -105,7 +105,7 @@ func registerQueueRoutes() {
 
 func registerSpotifyRoutes() {
 	spotifyRouter.Handle(spotifyDevicesPath, jamSessionRequired.ThenFunc(devices)).Methods("GET")
-	spotifyRouter.Handle(spotifyPlaylistPath, jamSessionRequired.ThenFunc(playlist)).Methods("GET")
+	spotifyRouter.Handle(spotifyPlaylistPath, hostRequired.ThenFunc(playlist)).Methods("GET")
 	spotifyRouter.Handle(spotifySearchPath, jamSessionRequired.ThenFunc(search)).Methods("PUT")
 }
 

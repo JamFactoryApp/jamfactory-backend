@@ -9,11 +9,11 @@ import (
 )
 
 type voteRequestBody struct {
-	Song spotify.FullTrack `json:"song"`
+	TrackID spotify.ID `json:"track"`
 }
 
 type addPlaylistRequestBody struct {
-	PlaylistURI spotify.ID `json:"uri"`
+	PlaylistID spotify.ID `json:"playlist"`
 }
 
 func getQueue(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +37,7 @@ func addPlaylist(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	playlist, err := jamSession.Client.GetPlaylistTracks(body.PlaylistURI)
+	playlist, err := jamSession.Client.GetPlaylistTracks(body.PlaylistID)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -63,12 +63,20 @@ func vote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	song, err := jamSession.Client.GetTrack(body.TrackID)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+		log.WithField("ID", body.TrackID).Debug("Could not find track: ", err.Error())
+		return
+	}
+
 	voteID := session.ID
 	if jamSession.IpVoteEnabled {
 		voteID = r.RemoteAddr
 	}
 
-	jamSession.Queue.Vote(voteID, body.Song)
+	jamSession.Queue.Vote(voteID, song)
 	queue := jamSession.Queue.GetObjectWithoutId(voteID)
 	Socket.BroadcastToRoom(SocketNamespace, jamSession.Label, SocketEventQueue, jamSession.Queue.GetObjectWithoutId(""))
 	utils.EncodeJSONBody(w, queue)
