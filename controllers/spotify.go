@@ -10,6 +10,7 @@ import (
 
 type searchRequestBody struct {
 	SearchText string `json:"text"`
+	SearchType string `json:"type"`
 }
 
 func devices(w http.ResponseWriter, r *http.Request) {
@@ -52,9 +53,23 @@ func search(w http.ResponseWriter, r *http.Request) {
 	opts := spotify.Options{
 		Country: &country,
 	}
+	var searchType spotify.SearchType
+	switch body.SearchType {
+	case "track": searchType = spotify.SearchTypeTrack
+	case "playlist": searchType = spotify.SearchTypePlaylist
+	case "album": searchType = spotify.SearchTypeAlbum
+	}
+
+	if searchType == 0 {
+		http.Error(w, "Unsupported search type", http.StatusUnprocessableEntity)
+		log.WithFields(log.Fields{
+			"JamSession": jamSession.Label,
+			"Text":       body.SearchText}).Debug("Unsupported search type: ", body.SearchType)
+		return
+	}
 
 	searchString := []string{body.SearchText, "*"}
-	result, err := jamSession.Client.SearchOpt(strings.Join(searchString, ""), spotify.SearchTypeTrack, &opts)
+	result, err := jamSession.Client.SearchOpt(strings.Join(searchString, ""), searchType, &opts)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
