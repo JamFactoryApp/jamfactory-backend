@@ -106,7 +106,6 @@ func QueueWorker() {
 					Socket.BroadcastToRoom(SocketNamespace, jamSessions[i].Label, SocketEventQueue, jamSessions[i].Queue.GetObjectWithoutId(""))
 
 					res := playbackBody{
-						CurrentSong: jamSessions[i].CurrentSong,
 						Playback:    jamSessions[i].PlaybackState,
 					}
 

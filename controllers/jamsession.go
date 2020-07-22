@@ -27,7 +27,6 @@ type setJamSessionRequestBody struct {
 }
 
 type playbackBody struct {
-	CurrentSong *spotify.FullTrack   `json:"currentSong"`
 	Playback    *spotify.PlayerState `json:"playback"`
 }
 type getPlaybackResponseBody playbackBody
