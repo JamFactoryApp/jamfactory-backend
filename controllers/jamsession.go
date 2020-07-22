@@ -22,7 +22,6 @@ type setJamSessionResponseBody jamSessionBody
 type setJamSessionRequestBody struct {
 	Name     string     `json:"name"`
 	Active   bool       `json:"active"`
-	DeviceID spotify.ID `json:"device_id"`
 	IpVoting bool       `json:"ip_voting"`
 }
 
@@ -34,6 +33,7 @@ type setPlaybackResponseBody playbackBody
 
 type setPlayBackRequestBody struct {
 	Playing bool `json:"playing"`
+	DeviceID spotify.ID `json:"device_id"`
 }
 
 type labelBody struct {
@@ -74,7 +74,6 @@ func setJamSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jamSession.SetClientID(body.DeviceID)
 	jamSession.IpVoteEnabled = body.IpVoting
 	jamSession.Active = body.Active
 	jamSession.Name = body.Name
@@ -108,6 +107,7 @@ func setPlayback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	jamSession.SetClientID(body.DeviceID)
 	jamSession.SetJamSessionState(body.Playing)
 
 	res := setPlaybackResponseBody{
