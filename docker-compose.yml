@@ -9,7 +9,7 @@ services:
     environment:
       SPOTIFY_ID: ""
       SPOTIFY_SECRET: ""
-      SPOTIFY_REDIRECT_URL: "http://localhost:3000/auth/callback"
+      SPOTIFY_REDIRECT_URL: "http://localhost:3000/api/v1/auth/callback"
       MONGO_DB: "mongodb://mongo:27017"
       MONGO_DB_NAME: "jamfactory"
     depends_on:

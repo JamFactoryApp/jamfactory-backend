@@ -1,7 +1,7 @@
 # golang alpine 1.14.2
 FROM golang@sha256:b0678825431fd5e27a211e0d7581d5f24cede6b4d25ac1411416fa8044fa6c51 as builder
 
-RUN apk update && apk add --no-cache git tzdata
+RUN apk update && apk add --no-cache git tzdata ca-certificates
 
 ENV USER=appuser
 ENV UID=10001
@@ -32,6 +32,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-w -s -extldflags "
 ############################
 FROM scratch
 
+COPY --from=builder /etc/ssl/certs /etc/ssl/certs
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /etc/group /etc/group
