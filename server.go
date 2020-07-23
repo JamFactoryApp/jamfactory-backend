@@ -59,7 +59,7 @@ func initLogging() {
 
 func initEnvironment() {
 	if err := godotenv.Load(); err != nil {
-		log.Warnf("No .env file found:\n%s\n", err)
+		log.Warnf("No .env.example file found:\n%s\n", err)
 	}
 }
 

@@ -8,21 +8,8 @@ import (
 	"net/http"
 )
 
-const (
-	storeMaxAge = 3600
-)
-
-var (
-	Store         *models.SessionStore
-	storeKeyPairs = []byte("keyboardcat")
-)
-
-func initSessionStore() {
-	Store = models.NewSessionStore(storeMaxAge, storeKeyPairs)
-}
-
 func GetSession(r *http.Request, name string) (*sessions.Session, error) {
-	return Store.Get(r, name)
+	return models.Store.Get(r, name)
 }
 
 func SaveSession(w http.ResponseWriter, r *http.Request, session *sessions.Session) {

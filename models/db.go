@@ -1,35 +1,25 @@
 package models
 
 import (
-	"context"
+	"github.com/go-redis/redis"
 	log "github.com/sirupsen/logrus"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"os"
-	"time"
 )
-
-const connectTimeout = 3 * time.Second
 
 var (
-	db          *mongo.Database
-	mongoClient *mongo.Client
+	RedisAddress = os.Getenv("REDIS_ADDRESS")
 )
 
-func initMongoClient() {
-	ctx, cancel := context.WithTimeout(context.Background(), connectTimeout)
-	defer cancel()
+var (
+	rdb *redis.Client
+)
 
-	opts := options.Client().ApplyURI(os.Getenv("MONGO_DB"))
-
-	var err error
-	mongoClient, err = mongo.Connect(ctx, opts)
-
+func initRedisClient() {
+	rdb = redis.NewClient(&redis.Options{
+		Addr: RedisAddress,
+	})
+	_, err := rdb.Ping().Result()
 	if err != nil {
-		log.WithContext(ctx).Panic("Error connecting to database: ", err.Error())
+		log.Panic("Error connecting to redis: ", err.Error())
 	}
-}
-
-func initDb() {
-	db = mongoClient.Database(os.Getenv("MONGO_DB_NAME"))
 }

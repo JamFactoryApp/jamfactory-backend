@@ -19,7 +19,4 @@ func Setup() {
 
 	initFactory()
 	log.Info("Initialized factory")
-
-	initSessionStore()
-	log.Info("Initialized session store")
 }

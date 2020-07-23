@@ -5,15 +5,9 @@ import (
 )
 
 func Setup() {
-	initMongoClient()
-	log.Info("Initialized MongoDB client")
+	initRedisClient()
+	log.Info("Initialized redis client")
 
-	initDb()
-	log.Info("Initialized database")
-
-	initSessionsCollection()
-	log.Info("Initialized sessions collection")
-
-	dropOldSessions()
-	log.Warn("Dropped old sessions")
+	initSessionStore()
+	log.Info("Initialized session store")
 }

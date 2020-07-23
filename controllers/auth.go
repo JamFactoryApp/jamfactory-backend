@@ -62,6 +62,7 @@ func callback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	session.Values[models.SessionTokenKey] = token
+	session.Values[models.SessionUserTypeKey] = models.UserTypeNew
 
 	SaveSession(w, r, session)
 	http.Redirect(w, r, afterCallbackRedirect, http.StatusSeeOther)
@@ -79,9 +80,9 @@ func login(w http.ResponseWriter, r *http.Request) {
 	state := session.ID
 	url := spotifyAuthenticator.AuthURL(state)
 
-	http.Redirect(w, r, url, http.StatusSeeOther)
-	//res := loginResponseBody{Url: url}
-	//utils.EncodeJSONBody(w, res)
+	//http.Redirect(w, r, url, http.StatusSeeOther)
+	res := loginResponseBody{Url: url}
+	utils.EncodeJSONBody(w, res)
 }
 
 func logout(w http.ResponseWriter, r *http.Request) {
