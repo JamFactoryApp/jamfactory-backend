@@ -55,9 +55,12 @@ func search(w http.ResponseWriter, r *http.Request) {
 	}
 	var searchType spotify.SearchType
 	switch body.SearchType {
-	case "track": searchType = spotify.SearchTypeTrack
-	case "playlist": searchType = spotify.SearchTypePlaylist
-	case "album": searchType = spotify.SearchTypeAlbum
+	case "track":
+		searchType = spotify.SearchTypeTrack
+	case "playlist":
+		searchType = spotify.SearchTypePlaylist
+	case "album":
+		searchType = spotify.SearchTypeAlbum
 	}
 
 	if searchType == 0 {

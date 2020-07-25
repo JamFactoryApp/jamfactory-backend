@@ -10,7 +10,7 @@ import (
 )
 
 type jamSessionBody struct {
-	Label    string		`json:"label"`
+	Label    string     `json:"label"`
 	Name     string     `json:"name"`
 	Active   bool       `json:"active"`
 	DeviceID spotify.ID `json:"device_id"`
@@ -20,19 +20,19 @@ type getJamSessionResponseBody jamSessionBody
 type setJamSessionResponseBody jamSessionBody
 
 type setJamSessionRequestBody struct {
-	Name     string     `json:"name"`
-	Active   bool       `json:"active"`
-	IpVoting bool       `json:"ip_voting"`
+	Name     string `json:"name"`
+	Active   bool   `json:"active"`
+	IpVoting bool   `json:"ip_voting"`
 }
 
 type playbackBody struct {
-	Playback    *spotify.PlayerState `json:"playback"`
+	Playback *spotify.PlayerState `json:"playback"`
 }
 type getPlaybackResponseBody playbackBody
 type setPlaybackResponseBody playbackBody
 
 type setPlayBackRequestBody struct {
-	Playing bool `json:"playing"`
+	Playing  bool       `json:"playing"`
 	DeviceID spotify.ID `json:"device_id"`
 }
 
@@ -56,7 +56,7 @@ func getJamSession(w http.ResponseWriter, r *http.Request) {
 	jamSession := utils.JamSessionFromRequestContext(r)
 
 	res := getJamSessionResponseBody{
-		Label:	  jamSession.Label,
+		Label:    jamSession.Label,
 		Name:     jamSession.Name,
 		Active:   jamSession.Active,
 		DeviceID: jamSession.DeviceID,
@@ -79,7 +79,7 @@ func setJamSession(w http.ResponseWriter, r *http.Request) {
 	jamSession.Name = body.Name
 
 	res := setJamSessionResponseBody{
-		Label:	  jamSession.Label,
+		Label:    jamSession.Label,
 		Name:     jamSession.Name,
 		Active:   jamSession.Active,
 		DeviceID: jamSession.DeviceID,
@@ -93,7 +93,7 @@ func getPlayback(w http.ResponseWriter, r *http.Request) {
 	jamSession := utils.JamSessionFromRequestContext(r)
 
 	res := getPlaybackResponseBody{
-		Playback:    jamSession.PlaybackState,
+		Playback: jamSession.PlaybackState,
 	}
 
 	utils.EncodeJSONBody(w, res)
@@ -111,7 +111,7 @@ func setPlayback(w http.ResponseWriter, r *http.Request) {
 	jamSession.SetJamSessionState(body.Playing)
 
 	res := setPlaybackResponseBody{
-		Playback:    jamSession.PlaybackState,
+		Playback: jamSession.PlaybackState,
 	}
 
 	utils.EncodeJSONBody(w, res)
