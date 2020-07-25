@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
 	"jamfactory-backend/models"
@@ -27,16 +28,17 @@ func GenerateNewJamSession(client spotify.Client) (string, error) {
 
 	jamSession := models.JamSession{
 		Label:         GenerateRandomLabel(),
-		Name:		   strings.Join([]string{user.DisplayName, "'s Jam Session"}, ""),
+		Name:          strings.Join([]string{user.DisplayName, "'s Jam Session"}, ""),
 		Queue:         &queue,
 		IpVoteEnabled: false,
 		Client:        client,
+		Context:       context.Background(),
 		DeviceID:      playback.Device.ID,
 		CurrentSong:   nil,
 		PlaybackState: playback,
 		Active:        true,
 	}
-	jamSessions = append(jamSessions, jamSession)
+	jamSessions = append(jamSessions, &jamSession)
 
 	return jamSession.Label, nil
 }
@@ -79,7 +81,10 @@ func DeleteJamSession(label string) {
 	for i := range jamSessions {
 		if jamSessions[i].Label == label {
 			jamSessions[i].SetJamSessionState(false)
+			ctx, cancel := context.WithCancel(jamSessions[i].Context)
+			jamSessions[i].Context = ctx
 			jamSessions = append(jamSessions[:i], jamSessions[i+1:]...)
+			cancel()
 		}
 	}
 }
