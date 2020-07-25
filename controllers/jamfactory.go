@@ -14,7 +14,6 @@ var jamSessions models.JamSessions
 
 func initFactory() {
 	jamSessions = make(models.JamSessions, 0)
-	go QueueWorker()
 }
 
 func GenerateNewJamSession(client spotify.Client) (string, error) {
@@ -40,6 +39,7 @@ func GenerateNewJamSession(client spotify.Client) (string, error) {
 	}
 	jamSessions = append(jamSessions, &jamSession)
 
+	go Conductor(&jamSession)
 	return jamSession.Label, nil
 }
 
@@ -89,32 +89,34 @@ func DeleteJamSession(label string) {
 	}
 }
 
-func QueueWorker() {
+func Conductor(jamSession *models.JamSession) {
 	for {
-		time.Sleep(time.Second)
-
-		for i := range jamSessions {
-			state, err := jamSessions[i].Client.PlayerState()
+		select {
+		case <-jamSession.Context.Done():
+			log.Debug("Conductors leaves the jam session")
+			return
+		default:
+			time.Sleep(time.Second)
+			state, err := jamSession.Client.PlayerState()
 
 			if err != nil {
-				log.Printf("Couldn't get state for %s", jamSessions[i].Label)
+				log.WithField("Label", jamSession.Label).Debug("Conductor couldn't get state for")
 				continue
 			}
 
-			jamSessions[i].PlaybackState = state
-			jamSessions[i].CurrentSong = state.Item
+			jamSession.PlaybackState = state
+			jamSession.CurrentSong = state.Item
 
-			if jamSessions[i].Active && jamSessions[i].Queue.Len() > 0 {
+			if jamSession.Active && jamSession.Queue.Len() > 0 {
 				if !state.Playing || state.Progress > state.Item.Duration-1000 {
-					log.Printf("Start next song for %s", jamSessions[i].Label)
-					jamSessions[i].StartNextSong()
-					Socket.BroadcastToRoom(SocketNamespace, jamSessions[i].Label, SocketEventQueue, jamSessions[i].Queue.GetObjectWithoutId(""))
+					log.WithField("Label", jamSession.Label).Debug("Conductor started next song for")
+					jamSession.StartNextSong()
+					SendToRoom(jamSession.Label, SocketEventQueue, jamSession.Queue.GetObjectWithoutId(""))
 
 					res := playbackBody{
-						Playback:    jamSessions[i].PlaybackState,
+						Playback: jamSession.PlaybackState,
 					}
-
-					Socket.BroadcastToRoom(SocketNamespace, jamSessions[i].Label, SocketEventPlayback, res)
+					SendToRoom(jamSession.Label, SocketEventPlayback, res)
 				}
 			}
 		}
