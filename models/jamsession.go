@@ -18,7 +18,7 @@ type JamSession struct {
 	PlaybackState *spotify.PlayerState
 }
 
-type JamSessions []JamSession
+type JamSessions []*JamSession
 
 func (jamSession *JamSession) StartNextSong() {
 	log.WithField("JamSession", jamSession.Label).Trace("Model event: Start next song for jamSession")

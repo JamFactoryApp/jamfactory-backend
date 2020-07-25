@@ -71,7 +71,7 @@ func GenerateRandomLabel() string {
 func GetJamSession(label string) *models.JamSession {
 	for i := range jamSessions {
 		if jamSessions[i].Label == label {
-			return &jamSessions[i]
+			return jamSessions[i]
 		}
 	}
 	return nil
