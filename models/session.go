@@ -51,17 +51,6 @@ func initSessionsCollection() {
 	sessionsCollection = db.Collection(mongoSessions)
 }
 
-func dropOldSessions() {
-	ctx, cancel := context.WithTimeout(context.Background(), dropTimeout)
-	defer cancel()
-
-	err := sessionsCollection.Drop(ctx)
-
-	if err != nil {
-		log.WithContext(ctx).Panic("Error dropping old session data: ", err.Error())
-	}
-}
-
 func NewSessionStore(maxAge int, keyPairs ...[]byte) *SessionStore {
 	store := &SessionStore{
 		Codecs: securecookie.CodecsFromPairs(keyPairs...),

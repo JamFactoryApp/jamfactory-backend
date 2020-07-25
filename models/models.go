@@ -13,7 +13,4 @@ func Setup() {
 
 	initSessionsCollection()
 	log.Info("Initialized sessions collection")
-
-	dropOldSessions()
-	log.Warn("Dropped old sessions")
 }
