@@ -32,8 +32,10 @@ func NewRedisStore(client redis.Conn, keyPrefix string, maxAge int, keyPairs ...
 		client:    client,
 		keyPrefix: keyPrefix,
 		options: &sessions.Options{
-			Path:   "/",
-			MaxAge: maxAge,
+			Path:     "/",
+			MaxAge:   maxAge,
+			Secure:   false,
+			SameSite: http.SameSiteNoneMode,
 		},
 		codecs: securecookie.CodecsFromPairs(keyPairs...),
 	}
@@ -51,6 +53,7 @@ func (store *RedisStore) New(r *http.Request, name string) (*sessions.Session, e
 	options := store.options
 	session.Options = options
 	session.IsNew = true
+	session.Values[SessionUserTypeKey] = UserTypeNew
 
 	cookie, err := r.Cookie(name)
 	if err != nil {
@@ -106,6 +109,9 @@ func (store RedisStore) load(session *sessions.Session) error {
 	reply, err := store.client.Do("GET", store.keyPrefix+session.ID)
 	if err != nil {
 		return err
+	}
+	if reply == nil {
+		return errors.New("RedisStore: session not found")
 	}
 	if data, ok := reply.([]byte); ok {
 		err = store.deserializeSession(data, session)
