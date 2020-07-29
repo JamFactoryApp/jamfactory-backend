@@ -13,8 +13,8 @@ type Song struct {
 
 type SongWithoutId struct {
 	Song  *spotify.FullTrack `json:"spotifyTrackFull"`
-	Votes int               `json:"votes"`
-	Voted bool              `json:"voted"`
+	Votes int                `json:"votes"`
+	Voted bool               `json:"voted"`
 }
 
 func (song *Song) Vote(id string) bool {

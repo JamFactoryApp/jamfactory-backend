@@ -81,3 +81,7 @@ func socketIOError(s socketio.Conn, err error) {
 func socketIODisconnect(s socketio.Conn, reason string) {
 	log.Tracef("Closed Socket.IO connection %s:\n%s\n", s.ID(), reason)
 }
+
+func SendToRoom(room string, event string, message interface{}) {
+	Socket.BroadcastToRoom(SocketNamespace, room, event, message)
+}

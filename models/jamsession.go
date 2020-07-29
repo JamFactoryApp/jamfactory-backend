@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
@@ -8,9 +9,10 @@ import (
 
 type JamSession struct {
 	Label         string
-	Name		  string
+	Name          string
 	IpVoteEnabled bool
 	Active        bool
+	Context       context.Context
 	Queue         *Queue
 	Client        spotify.Client
 	DeviceID      spotify.ID
@@ -18,7 +20,7 @@ type JamSession struct {
 	PlaybackState *spotify.PlayerState
 }
 
-type JamSessions []JamSession
+type JamSessions []*JamSession
 
 func (jamSession *JamSession) StartNextSong() {
 	log.WithField("JamSession", jamSession.Label).Trace("Model event: Start next song for jamSession")
