@@ -37,7 +37,7 @@ func initSocketIO() {
 }
 
 func socketIOConnect(s socketio.Conn) error {
-	session, err := models.Store.Get(&http.Request{Header: s.RemoteHeader()}, "user-session")
+	session, err := Store.Get(&http.Request{Header: s.RemoteHeader()}, "user-session")
 
 	if err != nil {
 		_ = s.Close()

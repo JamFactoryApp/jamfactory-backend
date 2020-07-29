@@ -5,9 +5,6 @@ import (
 )
 
 func Setup() {
-	initRedisClient()
-	log.Info("Initialized redis client")
-
-	initSessionStore()
-	log.Info("Initialized session store")
+	initRedisPool()
+	log.Info("Initialized redis pool")
 }

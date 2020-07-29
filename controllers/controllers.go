@@ -5,6 +5,9 @@ import (
 )
 
 func Setup() {
+	initSessionStore()
+	log.Info("Initialized session store")
+
 	initSpotifyAuthenticator()
 	log.Info("Initialized Spotify authenticator")
 
