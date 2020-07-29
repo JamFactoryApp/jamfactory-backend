@@ -1,35 +1,34 @@
 package models
 
 import (
-	"context"
-	log "github.com/sirupsen/logrus"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/gomodule/redigo/redis"
 	"os"
 	"time"
 )
 
-const connectTimeout = 3 * time.Second
-
 var (
-	db          *mongo.Database
-	mongoClient *mongo.Client
+	RedisPool *redis.Pool
 )
 
-func initMongoClient() {
-	ctx, cancel := context.WithTimeout(context.Background(), connectTimeout)
-	defer cancel()
-
-	opts := options.Client().ApplyURI(os.Getenv("MONGO_DB"))
-
-	var err error
-	mongoClient, err = mongo.Connect(ctx, opts)
-
-	if err != nil {
-		log.WithContext(ctx).Panic("Error connecting to database: ", err.Error())
-	}
+func initRedisPool() {
+	RedisPool = newRedisPool()
 }
 
-func initDb() {
-	db = mongoClient.Database(os.Getenv("MONGO_DB_NAME"))
+func newRedisPool() *redis.Pool {
+	pool := &redis.Pool{
+		MaxIdle:     3,
+		IdleTimeout: 240 * time.Second,
+		Dial: func() (redis.Conn, error) {
+			c, err := redis.Dial("tcp", os.Getenv("REDIS_ADDRESS"))
+			if err != nil {
+				return nil, err
+			}
+			if _, err := c.Do("SELECT", os.Getenv("REDIS_DATABASE")); err != nil {
+				_ = c.Close()
+				return nil, err
+			}
+			return c, err
+		},
+	}
+	return pool
 }

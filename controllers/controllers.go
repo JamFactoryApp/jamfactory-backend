@@ -5,6 +5,9 @@ import (
 )
 
 func Setup() {
+	initSessionStore()
+	log.Info("Initialized session store")
+
 	initSpotifyAuthenticator()
 	log.Info("Initialized Spotify authenticator")
 
@@ -19,7 +22,4 @@ func Setup() {
 
 	initFactory()
 	log.Info("Initialized factory")
-
-	initSessionStore()
-	log.Info("Initialized session store")
 }

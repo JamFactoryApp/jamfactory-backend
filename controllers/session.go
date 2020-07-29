@@ -13,12 +13,13 @@ const (
 )
 
 var (
-	Store         *models.SessionStore
+	Store         *models.RedisStore
 	storeKeyPairs = []byte("keyboardcat")
 )
 
 func initSessionStore() {
-	Store = models.NewSessionStore(storeMaxAge, storeKeyPairs)
+	conn := models.RedisPool.Get()
+	Store = models.NewRedisStore(conn, "session:", storeMaxAge, storeKeyPairs)
 }
 
 func GetSession(r *http.Request, name string) (*sessions.Session, error) {
@@ -42,6 +43,10 @@ func LoggedInAsHost(session *sessions.Session) bool {
 	return SessionIsValid(session) && session.Values[models.SessionUserTypeKey] == models.UserTypeHost
 }
 
-func LoggedIntoSpotify(session *sessions.Session) bool {
-	return SessionIsValid(session) && session.Values[models.SessionTokenKey] != nil && utils.ParseTokenFromSession(session).Valid()
+func LoggedIntoSpotify(session *sessions.Session) (bool, error) {
+	token, err := utils.ParseTokenFromSession(session)
+	if err != nil {
+		return false, err
+	}
+	return SessionIsValid(session) && session.Values[models.SessionTokenKey] != nil && token.Valid(), nil
 }

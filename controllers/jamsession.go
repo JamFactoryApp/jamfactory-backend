@@ -120,7 +120,8 @@ func setPlayback(w http.ResponseWriter, r *http.Request) {
 func createJamSession(w http.ResponseWriter, r *http.Request) {
 	session := utils.SessionFromRequestContext(r)
 
-	if !LoggedIntoSpotify(session) {
+	loggedIn, err := LoggedIntoSpotify(session)
+	if err != nil || !loggedIn {
 		http.Error(w, "User Error: Not logged in to spotify", http.StatusUnauthorized)
 		log.Printf("@%s User Error: Not logged in to spotify ", session.ID)
 		return
@@ -133,11 +134,16 @@ func createJamSession(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	token := utils.ParseTokenFromSession(session)
+	token, err := utils.ParseTokenFromSession(session)
+	if err != nil {
+		http.Error(w, "User Error: failed to parse token", http.StatusUnauthorized)
+		log.Printf("@%s User Error: failed to parse token", session.ID)
+		return
+	}
 
 	if !token.Valid() {
-		http.Error(w, "User Error: Token not valid", http.StatusUnauthorized)
-		log.Printf("@%s User Error: Token not valid", session.ID)
+		http.Error(w, "User Error: token not valid", http.StatusUnauthorized)
+		log.Printf("@%s User Error: token not valid", session.ID)
 		return
 	}
 

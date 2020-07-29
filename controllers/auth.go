@@ -62,6 +62,7 @@ func callback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	session.Values[models.SessionTokenKey] = token
+	session.Values[models.SessionUserTypeKey] = models.UserTypeNew
 
 	SaveSession(w, r, session)
 	http.Redirect(w, r, afterCallbackRedirect, http.StatusSeeOther)
@@ -116,7 +117,13 @@ func current(w http.ResponseWriter, r *http.Request) {
 	if session.Values[models.SessionTokenKey] == nil {
 		res.Authorized = false
 	} else {
-		res.Authorized = utils.ParseTokenFromSession(session).Valid()
+		token, err := utils.ParseTokenFromSession(session)
+		if err != nil {
+			http.Error(w, "Couldn't get token", http.StatusForbidden)
+			log.WithField("Session", session.ID).Error("Couldn't get token: ", err.Error())
+			return
+		}
+		res.Authorized = token.Valid()
 	}
 
 	utils.EncodeJSONBody(w, res)

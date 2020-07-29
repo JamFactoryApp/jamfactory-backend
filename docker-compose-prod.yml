@@ -3,7 +3,7 @@ version: '3.1'
 services:
 
   jamfactory:
-    build: .
+    build: ./Dockerfile-prod
     ports:
       - 3000:3000
     environment:
@@ -11,15 +11,12 @@ services:
       SPOTIFY_SECRET: "24e342ee665c4aa991ff3dae2a15ef36"
       SPOTIFY_REDIRECT_URL: "http://localhost:3000/api/v1/auth/callback"
       REDIS_ADDRESS: "redis:6379"
-      REDIS_DATABASE: "0"
     depends_on:
       - redis
 
   redis:
     image: redis
     restart: always
-    ports:
-      - 6379:6379
 
 networks:
   default:

@@ -7,6 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"jamfactory-backend/controllers"
 	"jamfactory-backend/models"
+	"jamfactory-backend/utils"
 	"math/rand"
 	"net/http"
 	"os"
@@ -38,6 +39,9 @@ func setup() {
 	initEnvironment()
 	log.Info("Initialized environment")
 
+	utils.Setup()
+	log.Info("Inititialized utils")
+
 	models.Setup()
 	log.Info("Initialized models")
 
@@ -59,7 +63,7 @@ func initLogging() {
 
 func initEnvironment() {
 	if err := godotenv.Load(); err != nil {
-		log.Warnf("No .env file found:\n%s\n", err)
+		log.Warnf("No .env.example file found:\n%s\n", err)
 	}
 }
 
