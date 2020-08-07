@@ -29,6 +29,12 @@ var (
 		Debug:            false,
 	}
 	//corsAll := cors.Default().Handler(controllers.Router)
+	requiredEnvVars = []string{
+		"SPOTIFY_ID",
+		"SPOTIFY_SECRET",
+		"SPOTIFY_REDIRECT_URL",
+		"REDIS_ADDRESS",
+	}
 )
 
 func setup() {
@@ -64,6 +70,16 @@ func initLogging() {
 func initEnvironment() {
 	if err := godotenv.Load(); err != nil {
 		log.Warnf("No .env.example file found:\n%s\n", err)
+	}
+
+	var notDefined []string
+	for _, envVar := range requiredEnvVars {
+		if os.Getenv(envVar) == "" {
+			notDefined = append(notDefined, envVar)
+		}
+	}
+	if len(notDefined) > 0 {
+		log.Fatalf("The following environment variables are not defined: %v\n", notDefined)
 	}
 }
 
