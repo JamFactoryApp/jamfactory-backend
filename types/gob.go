@@ -1,10 +1,10 @@
-package utils
+package types
 
 import (
 	"encoding/gob"
 	"golang.org/x/oauth2"
 )
 
-func registerGobTypes() {
+func RegisterGobTypes() {
 	gob.Register(&oauth2.Token{})
 }

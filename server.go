@@ -7,7 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"jamfactory-backend/controllers"
 	"jamfactory-backend/models"
-	"jamfactory-backend/utils"
+	"jamfactory-backend/types"
 	"math/rand"
 	"net/http"
 	"os"
@@ -45,8 +45,8 @@ func setup() {
 	initEnvironment()
 	log.Info("Initialized environment")
 
-	utils.Setup()
-	log.Info("Inititialized utils")
+	types.RegisterGobTypes()
+	log.Info("Initialized types")
 
 	models.Setup()
 	log.Info("Initialized models")
