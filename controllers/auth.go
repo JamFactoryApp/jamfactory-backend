@@ -4,6 +4,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
 	"jamfactory-backend/models"
+	"jamfactory-backend/types"
 	"jamfactory-backend/utils"
 	"net/http"
 	"os"
@@ -23,16 +24,6 @@ var (
 		spotify.ScopeUserReadPlaybackState,
 	}
 )
-
-type statusResponseBody struct {
-	User       string `json:"user"`
-	Label      string `json:"label"`
-	Authorized bool   `json:"authorized"`
-}
-
-type loginResponseBody struct {
-	Url string `json:"url"`
-}
 
 func initSpotifyAuthenticator() {
 	spotifyAuthenticator = spotify.NewAuthenticator(os.Getenv("SPOTIFY_REDIRECT_URL"), spotifyScopes...)
@@ -100,7 +91,7 @@ func current(w http.ResponseWriter, r *http.Request) {
 
 	session := utils.SessionFromRequestContext(r)
 
-	res := statusResponseBody{}
+	res := types.StatusResponseBody{}
 
 	if session.Values[models.SessionUserTypeKey] == nil {
 		res.User = models.UserTypeNew

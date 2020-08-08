@@ -68,8 +68,7 @@ func (jamSession *JamSession) SetJamSessionState(state bool) {
 
 func (jamSession *JamSession) SetClientID(id spotify.ID) {
 	if jamSession.DeviceID != id {
-		playOptions := spotify.PlayOptions{DeviceID: &id}
-		err := jamSession.Client.PlayOpt(&playOptions)
+		err := jamSession.Client.TransferPlayback(id, jamSession.Active)
 
 		if err != nil {
 

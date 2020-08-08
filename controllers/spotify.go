@@ -3,15 +3,11 @@ package controllers
 import (
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
+	"jamfactory-backend/types"
 	"jamfactory-backend/utils"
 	"net/http"
 	"strings"
 )
-
-type searchRequestBody struct {
-	SearchText string `json:"text"`
-	SearchType string `json:"type"`
-}
 
 func devices(w http.ResponseWriter, r *http.Request) {
 	jamSession := utils.JamSessionFromRequestContext(r)
@@ -44,7 +40,7 @@ func playlist(w http.ResponseWriter, r *http.Request) {
 func search(w http.ResponseWriter, r *http.Request) {
 	jamSession := utils.JamSessionFromRequestContext(r)
 
-	var body searchRequestBody
+	var body types.SearchRequestBody
 	if err := utils.DecodeJSONBody(w, r, &body); err != nil {
 		return
 	}
@@ -54,7 +50,7 @@ func search(w http.ResponseWriter, r *http.Request) {
 		Country: &country,
 	}
 	var searchType spotify.SearchType
-	switch body.SearchType {
+	switch body.SearchType.Value {
 	case "track":
 		searchType = spotify.SearchTypeTrack
 	case "playlist":
@@ -71,7 +67,7 @@ func search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	searchString := []string{body.SearchText, "*"}
+	searchString := []string{body.SearchText.Value, "*"}
 	result, err := jamSession.Client.SearchOpt(strings.Join(searchString, ""), searchType, &opts)
 
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
 	"jamfactory-backend/models"
+	"jamfactory-backend/types"
 	"math/rand"
 	"strings"
 	"time"
@@ -113,8 +114,8 @@ func Conductor(jamSession *models.JamSession) {
 					jamSession.StartNextSong()
 					SendToRoom(jamSession.Label, SocketEventQueue, jamSession.Queue.GetObjectWithoutId(""))
 
-					res := playbackBody{
-						Playback: jamSession.PlaybackState,
+					res := types.PlaybackBody{
+						Playback: *jamSession.PlaybackState,
 					}
 					SendToRoom(jamSession.Label, SocketEventPlayback, res)
 				}

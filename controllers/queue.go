@@ -4,17 +4,10 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
 	"jamfactory-backend/models"
+	"jamfactory-backend/types"
 	"jamfactory-backend/utils"
 	"net/http"
 )
-
-type voteRequestBody struct {
-	TrackID spotify.ID `json:"track"`
-}
-
-type addPlaylistRequestBody struct {
-	PlaylistID spotify.ID `json:"playlist"`
-}
 
 func getQueue(w http.ResponseWriter, r *http.Request) {
 	session := utils.SessionFromRequestContext(r)
@@ -32,12 +25,12 @@ func getQueue(w http.ResponseWriter, r *http.Request) {
 func addPlaylist(w http.ResponseWriter, r *http.Request) {
 	jamSession := utils.JamSessionFromRequestContext(r)
 
-	var body addPlaylistRequestBody
+	var body types.AddPlaylistRequestBody
 	if err := utils.DecodeJSONBody(w, r, &body); err != nil {
 		return
 	}
 
-	playlist, err := jamSession.Client.GetPlaylistTracks(body.PlaylistID)
+	playlist, err := jamSession.Client.GetPlaylistTracks(spotify.ID(body.PlaylistID.Value))
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -58,12 +51,12 @@ func vote(w http.ResponseWriter, r *http.Request) {
 	session := utils.SessionFromRequestContext(r)
 	jamSession := utils.JamSessionFromRequestContext(r)
 
-	var body voteRequestBody
+	var body types.VoteRequestBody
 	if err := utils.DecodeJSONBody(w, r, &body); err != nil {
 		return
 	}
 
-	song, err := jamSession.Client.GetTrack(body.TrackID)
+	song, err := jamSession.Client.GetTrack(spotify.ID(body.TrackID.Value))
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
