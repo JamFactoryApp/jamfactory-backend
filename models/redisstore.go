@@ -35,12 +35,11 @@ func NewRedisStore(client redis.Conn, keyPrefix string, maxAge int, keyPairs ...
 			Path:     "/",
 			MaxAge:   maxAge,
 			Secure:   false,
-			SameSite: http.SameSiteNoneMode,
+			SameSite: http.SameSiteLaxMode,
 		},
 		codecs: securecookie.CodecsFromPairs(keyPairs...),
 	}
 	redisStore.MaxAge(redisStore.options.MaxAge)
-
 	return redisStore
 }
 
@@ -50,24 +49,24 @@ func (store *RedisStore) Get(r *http.Request, name string) (*sessions.Session, e
 
 func (store *RedisStore) New(r *http.Request, name string) (*sessions.Session, error) {
 	session := sessions.NewSession(store, name)
-	options := store.options
-	session.Options = options
+	opts := *store.options
+	session.Options = &opts
 	session.IsNew = true
-	session.Values[SessionUserTypeKey] = UserTypeNew
 
-	cookie, err := r.Cookie(name)
-	if err != nil {
+	cookie, errCookie := r.Cookie(name)
+	if errCookie != nil {
 		return session, nil
 	}
+	//err := securecookie.DecodeMulti(name, cookie.Value, &session.ID, store.codecs...)
 	session.ID = cookie.Value
 
-	err = store.load(session)
-
+	err := store.load(session)
 	if err == nil {
 		session.IsNew = false
 	} else if err == redis.ErrNil {
 		err = nil
 	}
+
 	return session, err
 }
 
@@ -83,10 +82,16 @@ func (store *RedisStore) Save(r *http.Request, w http.ResponseWriter, session *s
 	if session.ID == "" {
 		id, err := store.idGen()
 		if err != nil {
-			return errors.New("RedisStore: failed to generate session id")
+			return errors.New("RedisStore: Failed to generate session id")
 		}
 		session.ID = id
 	}
+
+	//encoded, err := securecookie.EncodeMulti(session.Name(), session.ID, store.codecs...)
+	//if err != nil {
+	//	return err
+	//}
+
 	if err := store.save(session); err != nil {
 		return err
 	}
@@ -99,8 +104,8 @@ func (store RedisStore) MaxAge(age int) {
 	store.options.MaxAge = age
 
 	for _, codec := range store.codecs {
-		if sc, ok := codec.(*securecookie.SecureCookie); ok {
-			sc.MaxAge(age)
+		if secureCookie, ok := codec.(*securecookie.SecureCookie); ok {
+			secureCookie.MaxAge(age)
 		}
 	}
 }

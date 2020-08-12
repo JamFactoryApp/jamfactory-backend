@@ -12,7 +12,7 @@ import (
 
 const (
 	afterLogoutRedirect   = apiPath + authPath + authCurrentPath
-	afterCallbackRedirect = "/"
+	afterCallbackRedirect = "http://localhost:4200/"
 )
 
 var (
@@ -71,9 +71,8 @@ func login(w http.ResponseWriter, r *http.Request) {
 	state := session.ID
 	url := spotifyAuthenticator.AuthURL(state)
 
-	http.Redirect(w, r, url, http.StatusSeeOther)
-	//res := loginResponseBody{Url: url}
-	//utils.EncodeJSONBody(w, res)
+	res := types.LoginResponseBody{Url: url}
+	utils.EncodeJSONBody(w, res)
 }
 
 func logout(w http.ResponseWriter, r *http.Request) {

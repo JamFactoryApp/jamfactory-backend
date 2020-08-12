@@ -11,6 +11,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -22,18 +23,18 @@ const (
 )
 
 var (
-	server      *http.Server
-	corsOptions = cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost:4200"},
-		AllowCredentials: true,
-		Debug:            false,
-	}
-	//corsAll := cors.Default().Handler(controllers.Router)
+	server          *http.Server
 	requiredEnvVars = []string{
+		"ALLOWED_CLIENTS",
+		"ALLOWED_CLIENTS_SEP",
+		"ALLOWED_HEADERS",
+		"ALLOWED_HEADERS_SEP",
 		"SPOTIFY_ID",
 		"SPOTIFY_SECRET",
 		"SPOTIFY_REDIRECT_URL",
 		"REDIS_ADDRESS",
+		"REDIS_DATABASE",
+		"REDIS_PASSWORD",
 	}
 )
 
@@ -84,6 +85,11 @@ func initEnvironment() {
 }
 
 func initHttpServer() {
+	corsOptions := cors.Options{
+		AllowedOrigins:   strings.Split(os.Getenv("ALLOWED_CLIENTS"), os.Getenv("ALLOWED_CLIENTS_SEP")),
+		AllowedHeaders:   strings.Split(os.Getenv("ALLOWED_HEADERS"), os.Getenv("ALLOWED_HEADERS_SEP")),
+		AllowCredentials: true,
+	}
 	corsHandler := cors.New(corsOptions).Handler(controllers.Router)
 	server = &http.Server{
 		Addr:         fmt.Sprintf(":%d", port),

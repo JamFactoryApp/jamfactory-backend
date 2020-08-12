@@ -23,6 +23,10 @@ func newRedisPool() *redis.Pool {
 			if err != nil {
 				return nil, err
 			}
+			if _, err := c.Do("AUTH", os.Getenv("REDIS_PASSWORD")); err != nil {
+				_ = c.Close()
+				return nil, err
+			}
 			if _, err := c.Do("SELECT", os.Getenv("REDIS_DATABASE")); err != nil {
 				_ = c.Close()
 				return nil, err
