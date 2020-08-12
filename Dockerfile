@@ -1,5 +1,5 @@
-# golang alpine 1.14.2
-FROM golang@sha256:b0678825431fd5e27a211e0d7581d5f24cede6b4d25ac1411416fa8044fa6c51 as builder
+# golang:1.15.0-alpine
+FROM golang@sha256:59eae48746048266891b7839f7bb9ac54a05cec6170f17ed9f4fd60b331b644b as builder
 
 WORKDIR $GOPATH/src/jamfactory-backend
 
