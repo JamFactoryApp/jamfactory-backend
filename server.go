@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/gorilla/handlers"
 	"github.com/joho/godotenv"
-	"github.com/rs/cors"
 	log "github.com/sirupsen/logrus"
 	"jamfactory-backend/controllers"
 	"jamfactory-backend/models"
@@ -85,12 +85,12 @@ func initEnvironment() {
 }
 
 func initHttpServer() {
-	corsOptions := cors.Options{
-		AllowedOrigins:   strings.Split(os.Getenv("ALLOWED_CLIENTS"), os.Getenv("ALLOWED_CLIENTS_SEP")),
-		AllowedHeaders:   strings.Split(os.Getenv("ALLOWED_HEADERS"), os.Getenv("ALLOWED_HEADERS_SEP")),
-		AllowCredentials: true,
-	}
-	corsHandler := cors.New(corsOptions).Handler(controllers.Router)
+	allowedOrigins := handlers.AllowedOrigins(strings.Split(os.Getenv("ALLOWED_CLIENTS"), os.Getenv("ALLOWED_CLIENTS_SEP")))
+	allowedHeaders := handlers.AllowedHeaders(strings.Split(os.Getenv("ALLOWED_HEADERS"), os.Getenv("ALLOWED_HEADERS_SEP")))
+	allowedMethods := handlers.AllowedMethods([]string{"GET", "POST", "PUT", "OPTIONS"})
+	allowCredentials := handlers.AllowCredentials()
+	corsHandler := handlers.CORS(allowedOrigins, allowedHeaders, allowedMethods, allowCredentials)(controllers.Router)
+
 	server = &http.Server{
 		Addr:         fmt.Sprintf(":%d", port),
 		ReadTimeout:  readTimeout,

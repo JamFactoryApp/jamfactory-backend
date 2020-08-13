@@ -6,14 +6,13 @@ require (
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/googollee/go-socket.io v1.4.3
-	github.com/gorilla/handlers v1.4.2 // indirect
+	github.com/gorilla/handlers v1.4.2
 	github.com/gorilla/mux v1.7.4
 	github.com/gorilla/securecookie v1.1.1
 	github.com/gorilla/sessions v1.2.0
 	github.com/joho/godotenv v1.3.0
 	github.com/justinas/alice v1.2.0
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
-	github.com/rs/cors v1.7.0
 	github.com/sirupsen/logrus v1.4.2
 	github.com/zmb3/spotify v0.0.0-20200525010707-bc712583571e
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
