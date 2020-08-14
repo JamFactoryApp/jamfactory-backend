@@ -49,8 +49,8 @@ func callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session.Values[models.SessionTokenKey] = token
-	session.Values[models.SessionUserTypeKey] = models.UserTypeNew
+	session.Values[utils.SessionTokenKey] = token
+	session.Values[utils.SessionUserTypeKey] = models.UserTypeNew
 
 	SaveSession(w, r, session)
 	http.Redirect(w, r, afterCallbackRedirect, http.StatusSeeOther)
@@ -89,19 +89,19 @@ func current(w http.ResponseWriter, r *http.Request) {
 
 	res := types.StatusResponseBody{}
 
-	if session.Values[models.SessionUserTypeKey] == nil {
+	if session.Values[utils.SessionUserTypeKey] == nil {
 		res.User = models.UserTypeNew
 	} else {
-		res.User = session.Values[models.SessionUserTypeKey].(string)
+		res.User = session.Values[utils.SessionUserTypeKey].(string)
 	}
 
-	if session.Values[models.SessionLabelTypeKey] == nil {
+	if session.Values[utils.SessionLabelTypeKey] == nil {
 		res.Label = ""
 	} else {
-		res.Label = session.Values[models.SessionLabelTypeKey].(string)
+		res.Label = session.Values[utils.SessionLabelTypeKey].(string)
 	}
 
-	if session.Values[models.SessionTokenKey] == nil {
+	if session.Values[utils.SessionTokenKey] == nil {
 		res.Authorized = false
 	} else {
 		token, err := utils.ParseTokenFromSession(session)

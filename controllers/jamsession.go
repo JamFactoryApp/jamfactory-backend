@@ -92,8 +92,8 @@ func createJamSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if session.Values[models.SessionLabelTypeKey] != nil {
-		if jamSession := GetJamSession(session.Values[models.SessionLabelTypeKey].(string)); jamSession != nil {
+	if session.Values[utils.SessionLabelTypeKey] != nil {
+		if jamSession := GetJamSession(session.Values[utils.SessionLabelTypeKey].(string)); jamSession != nil {
 			http.Error(w, "JamSession error: User already joined a JamSession", http.StatusUnprocessableEntity)
 			return
 		}
@@ -120,8 +120,8 @@ func createJamSession(w http.ResponseWriter, r *http.Request) {
 		log.Printf("@%s Couldn't create jamSession: %s", session.ID, err.Error())
 	}
 
-	session.Values[models.SessionLabelTypeKey] = label
-	session.Values[models.SessionUserTypeKey] = models.UserTypeHost
+	session.Values[utils.SessionLabelTypeKey] = label
+	session.Values[utils.SessionUserTypeKey] = models.UserTypeHost
 	SaveSession(w, r, session)
 
 	res := types.CreateJamSessionResponseBody{Label: label}
@@ -131,8 +131,8 @@ func createJamSession(w http.ResponseWriter, r *http.Request) {
 func joinJamSession(w http.ResponseWriter, r *http.Request) {
 	session := utils.SessionFromRequestContext(r)
 
-	if session.Values[models.SessionLabelTypeKey] != nil {
-		if jamSession := GetJamSession(session.Values[models.SessionLabelTypeKey].(string)); jamSession != nil {
+	if session.Values[utils.SessionLabelTypeKey] != nil {
+		if jamSession := GetJamSession(session.Values[utils.SessionLabelTypeKey].(string)); jamSession != nil {
 			http.Error(w, "JamSession error: User already joined a JamSession", http.StatusUnprocessableEntity)
 			return
 		}
@@ -151,8 +151,8 @@ func joinJamSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session.Values[models.SessionUserTypeKey] = models.UserTypeGuest
-	session.Values[models.SessionLabelTypeKey] = jamSession.Label
+	session.Values[utils.SessionUserTypeKey] = models.UserTypeGuest
+	session.Values[utils.SessionLabelTypeKey] = jamSession.Label
 	SaveSession(w, r, session)
 
 	res := types.JoinResponseBody{Label: jamSession.Label}
@@ -163,7 +163,7 @@ func leaveJamSession(w http.ResponseWriter, r *http.Request) {
 	session := utils.SessionFromRequestContext(r)
 
 	if LoggedInAsHost(session) {
-		label := session.Values[models.SessionLabelTypeKey].(string)
+		label := session.Values[utils.SessionLabelTypeKey].(string)
 		jamSession := GetJamSession(label)
 		if jamSession != nil {
 			body := types.JamSessionStateResponseBody{
@@ -176,8 +176,8 @@ func leaveJamSession(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	session.Values[models.SessionUserTypeKey] = models.UserTypeNew
-	session.Values[models.SessionLabelTypeKey] = nil
+	session.Values[utils.SessionUserTypeKey] = models.UserTypeNew
+	session.Values[utils.SessionLabelTypeKey] = nil
 	SaveSession(w, r, session)
 
 	res := types.LeaveJamSessionResponseBody{Success: true}
