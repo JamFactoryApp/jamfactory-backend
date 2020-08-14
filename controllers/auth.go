@@ -10,14 +10,11 @@ import (
 	"os"
 )
 
-const (
-	afterLogoutRedirect   = apiPath + authPath + authCurrentPath
-	afterCallbackRedirect = "http://localhost:4200/"
-)
-
 var (
-	spotifyAuthenticator spotify.Authenticator
-	spotifyScopes        = []string{
+	afterCallbackRedirect = os.Getenv("CLIENT_ADDRESS")
+	afterLogoutRedirect   = os.Getenv("CLIENT_ADDRESS")
+	spotifyAuthenticator  spotify.Authenticator
+	spotifyScopes         = []string{
 		spotify.ScopeUserReadPrivate,
 		spotify.ScopeUserReadEmail,
 		spotify.ScopeUserModifyPlaybackState,
