@@ -81,20 +81,28 @@ func search(w http.ResponseWriter, r *http.Request) {
 
 	searchString := []string{body.SearchText.Value, "*"}
 
-	result, err := cache.Query(spotifySearchCacheKey, strings.Join(searchString, ""),
+	entry, err := cache.Query(spotifySearchCacheKey, strings.Join(searchString, ""),
 		func(index string) (interface{}, error) {return jamSession.Client.SearchOpt(index, searchType, &opts)})
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.WithFields(log.Fields{
 			"JamSession": jamSession.Label,
-			"Text":       body.SearchText}).Debug("Could not get search results: ", err.Error())
+			"Text":       body.SearchText}).Debug("Could not get query cache: ", err.Error())
 		return
 	}
 
-	res := types.PutSearchResponseBody{
-		SearchResult: result,
+	if result, ok := entry.(spotify.SearchResult); ok {
+		res := types.PutSearchResponseBody{
+			SearchResult: &result,
+		}
+		utils.EncodeJSONBody(w, res)
+	} else {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Warn("Could not cast cache response to corresponding struct")
+		return
 	}
 
-	utils.EncodeJSONBody(w, res)
+
+
 }
