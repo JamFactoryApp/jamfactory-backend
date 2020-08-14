@@ -13,17 +13,17 @@ const (
 )
 
 var (
-	Store         *models.RedisStore
+	store         *models.RedisStore
 	storeKeyPairs = []byte("keyboardcat")
 )
 
 func initSessionStore() {
 	conn := models.RedisPool.Get()
-	Store = models.NewRedisStore(conn, "session:", storeMaxAge, storeKeyPairs)
+	store = models.NewRedisStore(conn, "session:", storeMaxAge, storeKeyPairs)
 }
 
 func GetSession(r *http.Request, name string) (*sessions.Session, error) {
-	return Store.Get(r, name)
+	return store.Get(r, name)
 }
 
 func SaveSession(w http.ResponseWriter, r *http.Request, session *sessions.Session) {
