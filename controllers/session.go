@@ -15,11 +15,12 @@ const (
 var (
 	store         *utils.RedisStore
 	storeKeyPairs = []byte("keyboardcat")
+	storeRedisKey = utils.RedisKey{}.Append("session")
 )
 
 func initSessionStore() {
 	conn := models.RedisPool.Get()
-	store = models.NewRedisStore(conn, "session:", storeMaxAge, storeKeyPairs)
+	store = utils.NewRedisStore(conn, storeRedisKey, storeMaxAge, storeKeyPairs)
 }
 
 func GetSession(r *http.Request, name string) (*sessions.Session, error) {
