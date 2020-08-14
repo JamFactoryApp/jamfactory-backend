@@ -9,6 +9,10 @@ import (
 	"strings"
 )
 
+var (
+	spotifySearchCacheKey = utils.RedisKey{}.Append("search")
+)
+
 func devices(w http.ResponseWriter, r *http.Request) {
 	jamSession := utils.JamSessionFromRequestContext(r)
 
@@ -76,7 +80,9 @@ func search(w http.ResponseWriter, r *http.Request) {
 	}
 
 	searchString := []string{body.SearchText.Value, "*"}
-	result, err := jamSession.Client.SearchOpt(strings.Join(searchString, ""), searchType, &opts)
+
+	result, err := cache.Query(spotifySearchCacheKey, strings.Join(searchString, ""),
+		func(index string) (interface{}, error) {return jamSession.Client.SearchOpt(index, searchType, &opts)})
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

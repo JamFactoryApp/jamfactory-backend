@@ -5,6 +5,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
 	"jamfactory-backend/models"
+	"jamfactory-backend/utils"
 )
 
 const (
@@ -54,6 +55,8 @@ var (
 	sessionRequired    alice.Chain
 	jamSessionRequired alice.Chain
 	hostRequired       alice.Chain
+
+	cache *utils.RedisCache
 )
 
 func initRoutes() {
@@ -72,6 +75,8 @@ func initRoutes() {
 	registerSpotifyRoutes()
 
 	registerSocketIORoutes()
+
+	cache = utils.NewRedisCache(models.RedisPool.Get(), utils.RedisKey{}.Append("cache"), 30)
 }
 
 func initMiddleWares() {
