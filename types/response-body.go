@@ -1,9 +1,13 @@
 package types
 
-import "github.com/zmb3/spotify"
+import (
+	"github.com/zmb3/spotify"
+	"jamfactory-backend/models"
+)
 
 // ---------------------------------------------------------------------------------------------------------------------
 // auth controller
+
 type StatusResponseBody struct {
 	User       string `json:"user"`
 	Label      string `json:"label"`
@@ -13,6 +17,7 @@ type StatusResponseBody struct {
 type LoginResponseBody struct {
 	Url string `json:"url"`
 }
+
 // ---------------------------------------------------------------------------------------------------------------------
 // jamsession controller
 
@@ -20,7 +25,7 @@ type JamSessionBody struct {
 	Label    string     `json:"label"`
 	Name     string     `json:"name"`
 	Active   bool       `json:"active"`
-	DeviceID spotify.ID 	`json:"device_id"`
+	DeviceID spotify.ID `json:"device_id"`
 	IpVoting bool       `json:"ip_voting"`
 }
 type GetJamSessionResponseBody JamSessionBody
@@ -46,4 +51,29 @@ type LeaveJamSessionResponseBody struct {
 type JamSessionStateResponseBody struct {
 	CurrentSong interface{} `json:"currentSong"`
 	State       interface{} `json:"state"`
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// queue controller
+
+type GetQueueResponseBody struct {
+	Queue []models.SongWithoutId `json:"queue"`
+}
+
+type PlaylistQueueResponseBody GetQueueResponseBody
+type VoteQueueResponseBody GetQueueResponseBody
+
+// ---------------------------------------------------------------------------------------------------------------------
+// spotify controller
+
+type GetPlaylistsResponseBody struct {
+	Playlists *spotify.SimplePlaylistPage `json:"playlists"`
+}
+
+type GetSpotifyDevicesResponseBody struct {
+	Devices []spotify.PlayerDevice `json:"devices"`
+}
+
+type PutSearchResponseBody struct {
+	SearchResult *spotify.SearchResult `json:"search_result"`
 }

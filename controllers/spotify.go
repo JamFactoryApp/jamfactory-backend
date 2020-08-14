@@ -20,7 +20,11 @@ func devices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.EncodeJSONBody(w, result)
+	res := types.GetSpotifyDevicesResponseBody{
+		Devices: result,
+	}
+
+	utils.EncodeJSONBody(w, res)
 }
 
 func playlist(w http.ResponseWriter, r *http.Request) {
@@ -34,7 +38,11 @@ func playlist(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.EncodeJSONBody(w, result)
+	res := types.GetPlaylistsResponseBody{
+		Playlists: result,
+	}
+
+	utils.EncodeJSONBody(w, res)
 }
 
 func search(w http.ResponseWriter, r *http.Request) {
@@ -78,5 +86,9 @@ func search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.EncodeJSONBody(w, result)
+	res := types.PutSearchResponseBody{
+		SearchResult: result,
+	}
+
+	utils.EncodeJSONBody(w, res)
 }

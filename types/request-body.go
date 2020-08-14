@@ -6,6 +6,7 @@ type SearchRequestBody struct {
 	SearchText JSONString `json:"text"`
 	SearchType JSONString `json:"type"`
 }
+
 // ---------------------------------------------------------------------------------------------------------------------
 // queue controller
 type VoteRequestBody struct {
@@ -18,7 +19,6 @@ type AddPlaylistRequestBody struct {
 
 // ---------------------------------------------------------------------------------------------------------------------
 // jamsession controller
-
 type SetJamSessionRequestBody struct {
 	Name     JSONString `json:"name"`
 	Active   JSONBool   `json:"active"`
@@ -26,6 +26,6 @@ type SetJamSessionRequestBody struct {
 }
 
 type SetPlayBackRequestBody struct {
-	Playing  JSONBool       `json:"playing,omitempty"`
+	Playing  JSONBool   `json:"playing,omitempty"`
 	DeviceID JSONString `json:"device_id,omitempty"`
 }
