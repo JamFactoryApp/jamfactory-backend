@@ -136,7 +136,7 @@ func (store RedisStore) save(session *sessions.Session) error {
 }
 
 func (store RedisStore) delete(session *sessions.Session) error {
-	_, err := store.client.Do("DELETE", store.keyPrefix+session.ID)
+	_, err := store.client.Do("DEL", store.keyPrefix+session.ID)
 	return err
 }
 
