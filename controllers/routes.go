@@ -30,7 +30,7 @@ const (
 
 	spotifyPath         = "/spotify"
 	spotifyDevicesPath  = "/devices"
-	spotifyPlaylistPath = "/playlist"
+	spotifyPlaylistPath = "/playlists"
 	spotifySearchPath   = "/search"
 
 	socketIOPath = "/socket.io/"
