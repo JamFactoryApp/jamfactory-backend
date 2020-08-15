@@ -77,7 +77,9 @@ func logout(w http.ResponseWriter, r *http.Request) {
 
 	session.Options.MaxAge = -1
 	SaveSession(w, r, session)
-	http.Redirect(w, r, afterLogoutRedirect, http.StatusSeeOther)
+
+	res := types.LogutResponseBody{Success: true}
+	utils.EncodeJSONBody(w, res)
 }
 
 func current(w http.ResponseWriter, r *http.Request) {

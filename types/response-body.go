@@ -18,6 +18,10 @@ type LoginResponseBody struct {
 	Url string `json:"url"`
 }
 
+type LogutResponseBody struct {
+	Success bool `json:"success"`
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 // jamsession controller
 
