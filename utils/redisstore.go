@@ -2,14 +2,12 @@ package utils
 
 import (
 	"bytes"
-	"crypto/rand"
 	"encoding/base32"
 	"encoding/gob"
 	"errors"
 	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
-	"io"
 	"net/http"
 	"strings"
 )
@@ -53,18 +51,15 @@ func (store *RedisStore) New(r *http.Request, name string) (*sessions.Session, e
 	session.Options = &opts
 	session.IsNew = true
 
-	cookie, errCookie := r.Cookie(name)
-	if errCookie != nil {
-		return session, nil
-	}
-	//err := securecookie.DecodeMulti(name, cookie.Value, &session.ID, store.codecs...)
-	session.ID = cookie.Value
-
-	err := store.load(session)
-	if err == nil {
-		session.IsNew = false
-	} else if err == redis.ErrNil {
-		err = nil
+	var err error
+	if cookie, errCookie := r.Cookie(name); errCookie == nil {
+		err = securecookie.DecodeMulti(name, cookie.Value, &session.ID, store.codecs...)
+		if err == nil {
+			err = store.load(session)
+			if err == nil {
+				session.IsNew = false
+			}
+		}
 	}
 
 	return session, err
@@ -80,23 +75,16 @@ func (store *RedisStore) Save(r *http.Request, w http.ResponseWriter, session *s
 	}
 
 	if session.ID == "" {
-		id, err := store.idGen()
-		if err != nil {
-			return errors.New("RedisStore: Failed to generate session id")
-		}
-		session.ID = id
+		session.ID = store.idGen()
 	}
-
-	//encoded, err := securecookie.EncodeMulti(session.Name(), session.ID, store.codecs...)
-	//if err != nil {
-	//	return err
-	//}
-
 	if err := store.save(session); err != nil {
 		return err
 	}
-
-	http.SetCookie(w, sessions.NewCookie(session.Name(), session.ID, session.Options))
+	encoded, err := securecookie.EncodeMulti(session.Name(), session.ID, store.codecs...)
+	if err != nil {
+		return err
+	}
+	http.SetCookie(w, sessions.NewCookie(session.Name(), encoded, session.Options))
 	return nil
 }
 
@@ -157,10 +145,6 @@ func (store RedisStore) deserializeSession(data []byte, session *sessions.Sessio
 	return decoder.Decode(&session.Values)
 }
 
-func (store RedisStore) idGen() (string, error) {
-	key := make([]byte, 64)
-	if _, err := io.ReadFull(rand.Reader, key); err != nil {
-		return "", err
-	}
-	return strings.TrimRight(base32.StdEncoding.EncodeToString(key), "="), nil
+func (store RedisStore) idGen() string {
+	return strings.TrimRight(base32.StdEncoding.EncodeToString(securecookie.GenerateRandomKey(32)), "=")
 }

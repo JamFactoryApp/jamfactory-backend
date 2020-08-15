@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	log "github.com/sirupsen/logrus"
 	"jamfactory-backend/models"
@@ -14,7 +15,7 @@ const (
 
 var (
 	store         *utils.RedisStore
-	storeKeyPairs = []byte("keyboardcat")
+	storeKeyPairs = securecookie.GenerateRandomKey(32)
 	storeRedisKey = utils.RedisKey{}.Append("session")
 )
 

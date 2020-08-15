@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
 	"jamfactory-backend/models"
@@ -46,6 +47,10 @@ func callback(w http.ResponseWriter, r *http.Request) {
 		}).Error("State mismatch")
 		return
 	}
+
+	fmt.Println(session.ID)
+	fmt.Println(token.AccessToken)
+	fmt.Println(token.RefreshToken)
 
 	session.Values[utils.SessionTokenKey] = token
 	session.Values[utils.SessionUserTypeKey] = models.UserTypeNew
