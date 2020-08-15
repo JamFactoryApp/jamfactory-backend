@@ -32,7 +32,7 @@ func (queue *Queue) Vote(id string, song *spotify.FullTrack) {
 	notInQueueFlag := true
 
 	for i := range queue.Songs {
-		if queue.Songs[i].Song.URI == song.URI {
+		if queue.Songs[i].Song.ID == song.ID {
 			var added = queue.Songs[i].Vote(id)
 			notInQueueFlag = false
 			log.WithFields(log.Fields{
@@ -54,6 +54,16 @@ func (queue *Queue) Vote(id string, song *spotify.FullTrack) {
 
 	queue.CheckForEmptySongs()
 	queue.SortQueue()
+}
+
+func (queue *Queue) DeleteSong(id spotify.ID) bool {
+	for i := range queue.Songs {
+		if queue.Songs[i].Song.ID == id {
+			queue.Songs = append(queue.Songs[:i], queue.Songs[i+1:]...)
+			return true
+		}
+	}
+	return false
 }
 
 func (queue *Queue) CheckForEmptySongs() {

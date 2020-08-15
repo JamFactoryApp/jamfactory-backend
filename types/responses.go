@@ -66,6 +66,7 @@ type GetQueueResponse struct {
 
 type PutQueuePlaylistsResponse GetQueueResponse
 type PutQueueVoteResponse GetQueueResponse
+type DeleteQueueSongResponse GetQueueResponse
 
 // ---------------------------------------------------------------------------------------------------------------------
 // spotify controller

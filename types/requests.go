@@ -26,6 +26,10 @@ type PutQueuePlaylistRequest struct {
 	PlaylistID string `json:"playlist"`
 }
 
+type DeleteQueueSongRequest struct {
+	TrackID string `json:"track"`
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 // jamsession controller
 

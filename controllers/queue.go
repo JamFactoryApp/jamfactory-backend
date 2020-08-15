@@ -85,3 +85,30 @@ func vote(w http.ResponseWriter, r *http.Request) {
 	}
 	utils.EncodeJSONBody(w, res)
 }
+
+func deleteSong(w http.ResponseWriter, r *http.Request) {
+	session := utils.SessionFromRequestContext(r)
+	jamSession := utils.JamSessionFromRequestContext(r)
+
+	var body types.DeleteQueueSongRequest
+	if err := utils.DecodeJSONBody(w, r, &body); err != nil {
+		return
+	}
+
+	voteID := session.ID
+	if jamSession.IpVoteEnabled {
+		voteID = r.RemoteAddr
+	}
+
+	if ok := jamSession.Queue.DeleteSong(spotify.ID(body.TrackID)); !ok {
+		http.Error(w, "Could not find song", http.StatusUnprocessableEntity)
+		return
+	}
+
+	res := types.DeleteQueueSongResponse{
+		Queue: jamSession.Queue.GetObjectWithoutId(voteID),
+	}
+	Socket.BroadcastToRoom(SocketNamespace, jamSession.Label, SocketEventQueue, jamSession.Queue.GetObjectWithoutId(""))
+	utils.EncodeJSONBody(w, res)
+}
+

@@ -28,6 +28,7 @@ const (
 	queueIndexPath    = ""
 	queuePlaylistPath = "/playlist"
 	queueVotePath     = "/vote"
+	queueDeletePath   = "/delete"
 
 	spotifyPath         = "/spotify"
 	spotifyDevicesPath  = "/devices"
@@ -104,8 +105,9 @@ func registerJamSessionRoutes() {
 
 func registerQueueRoutes() {
 	queueRouter.Handle(queueIndexPath, jamSessionRequired.ThenFunc(getQueue)).Methods("GET")
-	queueRouter.Handle(queuePlaylistPath, jamSessionRequired.ThenFunc(addPlaylist)).Methods("PUT")
+	queueRouter.Handle(queuePlaylistPath, hostRequired.ThenFunc(addPlaylist)).Methods("PUT")
 	queueRouter.Handle(queueVotePath, jamSessionRequired.ThenFunc(vote)).Methods("PUT")
+	queueRouter.Handle(queueDeletePath, hostRequired.ThenFunc(deleteSong)).Methods("DELETE")
 }
 
 func registerSpotifyRoutes() {
