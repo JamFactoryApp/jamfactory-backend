@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
 	"sort"
@@ -87,6 +88,15 @@ func (queue *Queue) GetNextSong(removeSong bool) (*Song, error) {
 		queue.Songs = queue.Songs[1:]
 	}
 	return &song, nil
+}
+
+func (queue *Queue) GetSong(id string) (*Song, error) {
+	for _, song := range queue.Songs {
+		if song.Song.ID.String() == id {
+			return &song, nil
+		}
+	}
+	return nil, errors.New(fmt.Sprintf("song %s does not exist in queue", id))
 }
 
 func (queue *Queue) GetObjectWithoutId(id string) []SongWithoutId {
