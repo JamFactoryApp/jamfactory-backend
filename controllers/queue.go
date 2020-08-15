@@ -33,7 +33,7 @@ func addPlaylist(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	playlist, err := jamSession.Client.GetPlaylistTracks(spotify.ID(body.PlaylistID.Value))
+	playlist, err := jamSession.Client.GetPlaylistTracks(spotify.ID(body.PlaylistID))
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -63,7 +63,7 @@ func vote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	song, err := jamSession.Client.GetTrack(spotify.ID(body.TrackID.Value))
+	song, err := jamSession.Client.GetTrack(spotify.ID(body.TrackID))
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnprocessableEntity)

@@ -11,28 +11,28 @@ type LabelRequest struct {
 // spotify controller
 
 type PutSpotifySearchRequest struct {
-	SearchText JSONString `json:"text"`
-	SearchType JSONString `json:"type"`
+	SearchText string `json:"text"`
+	SearchType string `json:"type"`
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // queue controller
 
 type PutQueueVoteRequest struct {
-	TrackID JSONString `json:"track"`
+	TrackID string `json:"track"`
 }
 
 type PutQueuePlaylistRequest struct {
-	PlaylistID JSONString `json:"playlist"`
+	PlaylistID string `json:"playlist"`
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // jamsession controller
 
 type PutJamRequest struct {
-	Name     JSONString `json:"name"`
-	Active   JSONBool   `json:"active"`
-	IpVoting JSONBool   `json:"ip_voting"`
+	Name     JSONString `json:"name,omitempty"`
+	Active   JSONBool   `json:"active,omitempty"`
+	IpVoting JSONBool   `json:"ip_voting,omitempty"`
 }
 
 type PutJamPlaybackRequest struct {

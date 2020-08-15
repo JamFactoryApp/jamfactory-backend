@@ -62,7 +62,7 @@ func search(w http.ResponseWriter, r *http.Request) {
 		Country: &country,
 	}
 	var searchType spotify.SearchType
-	switch body.SearchType.Value {
+	switch body.SearchType {
 	case "track":
 		searchType = spotify.SearchTypeTrack
 	case "playlist":
@@ -79,7 +79,7 @@ func search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	searchString := []string{body.SearchText.Value, "*"}
+	searchString := []string{body.SearchText, "*"}
 
 	entry, err := cache.Query(spotifySearchCacheKey, strings.Join(searchString, ""),
 		func(index string) (interface{}, error) { return jamSession.Client.SearchOpt(index, searchType, &opts) })
