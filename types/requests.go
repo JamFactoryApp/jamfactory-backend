@@ -1,31 +1,43 @@
 package types
 
 // ---------------------------------------------------------------------------------------------------------------------
+// general
+
+type LabelRequest struct {
+	Label string `json:"label"`
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // spotify controller
-type SearchRequestBody struct {
+
+type PutSpotifySearchRequest struct {
 	SearchText JSONString `json:"text"`
 	SearchType JSONString `json:"type"`
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // queue controller
-type VoteRequestBody struct {
+
+type PutQueueVoteRequest struct {
 	TrackID JSONString `json:"track"`
 }
 
-type AddPlaylistRequestBody struct {
+type PutQueuePlaylistRequest struct {
 	PlaylistID JSONString `json:"playlist"`
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // jamsession controller
-type SetJamSessionRequestBody struct {
+
+type PutJamRequest struct {
 	Name     JSONString `json:"name"`
 	Active   JSONBool   `json:"active"`
 	IpVoting JSONBool   `json:"ip_voting"`
 }
 
-type SetPlayBackRequestBody struct {
+type PutJamPlaybackRequest struct {
 	Playing  JSONBool   `json:"playing,omitempty"`
 	DeviceID JSONString `json:"device_id,omitempty"`
 }
+
+type PutJamJoinRequest LabelRequest

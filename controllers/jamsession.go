@@ -13,7 +13,7 @@ import (
 func getJamSession(w http.ResponseWriter, r *http.Request) {
 	jamSession := utils.JamSessionFromRequestContext(r)
 
-	res := types.GetJamSessionResponseBody{
+	res := types.GetJamResponse{
 		Label:    jamSession.Label,
 		Name:     jamSession.Name,
 		Active:   jamSession.Active,
@@ -27,7 +27,7 @@ func getJamSession(w http.ResponseWriter, r *http.Request) {
 func setJamSession(w http.ResponseWriter, r *http.Request) {
 	jamSession := utils.JamSessionFromRequestContext(r)
 
-	var body types.SetJamSessionRequestBody
+	var body types.PutJamRequest
 	if err := utils.DecodeJSONBody(w, r, &body); err != nil {
 		return
 	}
@@ -36,7 +36,7 @@ func setJamSession(w http.ResponseWriter, r *http.Request) {
 	jamSession.Active = body.Active.Value
 	jamSession.Name = body.Name.Value
 
-	res := types.SetJamSessionResponseBody{
+	res := types.PutJamResponse{
 		Label:    jamSession.Label,
 		Name:     jamSession.Name,
 		Active:   jamSession.Active,
@@ -50,7 +50,7 @@ func setJamSession(w http.ResponseWriter, r *http.Request) {
 func getPlayback(w http.ResponseWriter, r *http.Request) {
 	jamSession := utils.JamSessionFromRequestContext(r)
 
-	res := types.GetPlaybackResponseBody{
+	res := types.GetJamPlaybackResponse{
 		Playback: *jamSession.PlaybackState,
 	}
 
@@ -60,7 +60,7 @@ func getPlayback(w http.ResponseWriter, r *http.Request) {
 func setPlayback(w http.ResponseWriter, r *http.Request) {
 	jamSession := utils.JamSessionFromRequestContext(r)
 
-	var body types.SetPlayBackRequestBody
+	var body types.PutJamPlaybackRequest
 	if err := utils.DecodeJSONBody(w, r, &body); err != nil {
 		return
 	}
@@ -70,12 +70,12 @@ func setPlayback(w http.ResponseWriter, r *http.Request) {
 		log.Debug("Set State")
 	}
 
-	if body.DeviceID.Set{
+	if body.DeviceID.Set {
 		jamSession.SetClientID(spotify.ID(body.DeviceID.Value))
 		log.Debug("Set ID")
 	}
 
-	res := types.SetPlaybackResponseBody{
+	res := types.PutJamPlaybackResponse{
 		Playback: *jamSession.PlaybackState,
 	}
 
@@ -124,7 +124,7 @@ func createJamSession(w http.ResponseWriter, r *http.Request) {
 	session.Values[utils.SessionUserTypeKey] = models.UserTypeHost
 	SaveSession(w, r, session)
 
-	res := types.CreateJamSessionResponseBody{Label: label}
+	res := types.GetJamCreateResponse{Label: label}
 	utils.EncodeJSONBody(w, res)
 }
 
@@ -138,7 +138,7 @@ func joinJamSession(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var body types.JoinRequestBody
+	var body types.PutJamJoinRequest
 	if err := utils.DecodeJSONBody(w, r, &body); err != nil {
 		return
 	}
@@ -155,7 +155,7 @@ func joinJamSession(w http.ResponseWriter, r *http.Request) {
 	session.Values[utils.SessionLabelTypeKey] = jamSession.Label
 	SaveSession(w, r, session)
 
-	res := types.JoinResponseBody{Label: jamSession.Label}
+	res := types.PutJamJoinResponse{Label: jamSession.Label}
 	utils.EncodeJSONBody(w, res)
 }
 
@@ -166,7 +166,7 @@ func leaveJamSession(w http.ResponseWriter, r *http.Request) {
 		label := session.Values[utils.SessionLabelTypeKey].(string)
 		jamSession := GetJamSession(label)
 		if jamSession != nil {
-			body := types.JamSessionStateResponseBody{
+			body := types.SocketJamState{
 				CurrentSong: jamSession.CurrentSong,
 				State:       jamSession.PlaybackState,
 			}
@@ -180,6 +180,8 @@ func leaveJamSession(w http.ResponseWriter, r *http.Request) {
 	session.Values[utils.SessionLabelTypeKey] = nil
 	SaveSession(w, r, session)
 
-	res := types.LeaveJamSessionResponseBody{Success: true}
+	res := types.GetJamLeaveResponse{
+		Success: true,
+	}
 	utils.EncodeJSONBody(w, res)
 }

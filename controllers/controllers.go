@@ -7,7 +7,6 @@ import (
 
 var (
 	afterCallbackRedirect string
-	afterLogoutRedirect   string
 )
 
 func Setup() {
@@ -35,5 +34,4 @@ func Setup() {
 
 func initVars() {
 	afterCallbackRedirect = os.Getenv("CLIENT_ADDRESS")
-	afterLogoutRedirect = os.Getenv("CLIENT_ADDRESS")
 }

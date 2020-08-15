@@ -24,7 +24,7 @@ func devices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := types.GetSpotifyDevicesResponseBody{
+	res := types.GetSpotifyDevicesResponse{
 		Devices: result,
 	}
 
@@ -42,7 +42,7 @@ func playlist(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := types.GetPlaylistsResponseBody{
+	res := types.GetSpotifyPlaylistsResponse{
 		Playlists: result,
 	}
 
@@ -52,7 +52,7 @@ func playlist(w http.ResponseWriter, r *http.Request) {
 func search(w http.ResponseWriter, r *http.Request) {
 	jamSession := utils.JamSessionFromRequestContext(r)
 
-	var body types.SearchRequestBody
+	var body types.PutSpotifySearchRequest
 	if err := utils.DecodeJSONBody(w, r, &body); err != nil {
 		return
 	}
@@ -82,7 +82,7 @@ func search(w http.ResponseWriter, r *http.Request) {
 	searchString := []string{body.SearchText.Value, "*"}
 
 	entry, err := cache.Query(spotifySearchCacheKey, strings.Join(searchString, ""),
-		func(index string) (interface{}, error) {return jamSession.Client.SearchOpt(index, searchType, &opts)})
+		func(index string) (interface{}, error) { return jamSession.Client.SearchOpt(index, searchType, &opts) })
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -93,7 +93,7 @@ func search(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if result, ok := entry.(*spotify.SearchResult); ok {
-		res := types.PutSearchResponseBody{
+		res := types.PutSpotifySearchResponse{
 			SearchResult: result,
 		}
 		utils.EncodeJSONBody(w, res)
@@ -102,7 +102,4 @@ func search(w http.ResponseWriter, r *http.Request) {
 		log.Warn("Could not cast cache response to corresponding struct")
 		return
 	}
-
-
-
 }

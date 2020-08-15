@@ -114,7 +114,7 @@ func Conductor(jamSession *models.JamSession) {
 					jamSession.StartNextSong()
 					SendToRoom(jamSession.Label, SocketEventQueue, jamSession.Queue.GetObjectWithoutId(""))
 
-					res := types.PlaybackBody{
+					res := types.SocketPlaybackState{
 						Playback: *jamSession.PlaybackState,
 					}
 					SendToRoom(jamSession.Label, SocketEventPlayback, res)

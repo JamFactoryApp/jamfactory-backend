@@ -66,7 +66,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 	state := session.ID
 	url := spotifyAuthenticator.AuthURL(state)
 
-	res := types.LoginResponseBody{Url: url}
+	res := types.AuthLoginResponse{Url: url}
 	utils.EncodeJSONBody(w, res)
 }
 
@@ -78,7 +78,7 @@ func logout(w http.ResponseWriter, r *http.Request) {
 	session.Options.MaxAge = -1
 	SaveSession(w, r, session)
 
-	res := types.LogutResponseBody{Success: true}
+	res := types.AuthLogoutResponse{Success: true}
 	utils.EncodeJSONBody(w, res)
 }
 
@@ -87,7 +87,7 @@ func current(w http.ResponseWriter, r *http.Request) {
 
 	session := utils.SessionFromRequestContext(r)
 
-	res := types.StatusResponseBody{}
+	res := types.AuthCurrentResponse{}
 
 	if session.Values[utils.SessionUserTypeKey] == nil {
 		res.User = models.UserTypeNew
