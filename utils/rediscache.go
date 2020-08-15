@@ -26,7 +26,7 @@ func NewRedisCache(client redis.Conn, keyPrefix RedisKey, maxAge int) *RedisCach
 	return redisCache
 }
 
-func (cache *RedisCache) Query (key RedisKey, index string, source sourceFunc) (interface{}, error){
+func (cache *RedisCache) Query(key RedisKey, index string, source sourceFunc) (interface{}, error) {
 
 	reply, err := cache.client.Do("GET", cache.keyPrefix.AppendKey(key).Append(index))
 	var data interface{}
@@ -86,5 +86,3 @@ func (cache *RedisCache) deserialize(serializeddata []byte, data *interface{}) e
 	decoder := gob.NewDecoder(buffer)
 	return decoder.Decode(&data)
 }
-
-

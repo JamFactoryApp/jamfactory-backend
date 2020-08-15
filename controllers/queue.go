@@ -111,4 +111,3 @@ func deleteSong(w http.ResponseWriter, r *http.Request) {
 	Socket.BroadcastToRoom(SocketNamespace, jamSession.Label, SocketEventQueue, jamSession.Queue.GetObjectWithoutId(""))
 	utils.EncodeJSONBody(w, res)
 }
-

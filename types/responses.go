@@ -9,15 +9,15 @@ import (
 // general
 
 type JamResponse struct {
-	Label    string     `json:"label"`
-	Name     string     `json:"name"`
-	Active   bool       `json:"active"`
-	IpVoting bool       `json:"ip_voting"`
+	Label    string `json:"label"`
+	Name     string `json:"name"`
+	Active   bool   `json:"active"`
+	IpVoting bool   `json:"ip_voting"`
 }
 
 type PlaybackBody struct {
 	Playback spotify.PlayerState `json:"playback"`
-	DeviceID spotify.ID `json:"device_id"`
+	DeviceID spotify.ID          `json:"device_id"`
 }
 
 type LabelResponse struct {
@@ -27,17 +27,17 @@ type LabelResponse struct {
 // ---------------------------------------------------------------------------------------------------------------------
 // auth controller
 
-type AuthCurrentResponse struct {
+type GetAuthCurrentResponse struct {
 	User       string `json:"user"`
 	Label      string `json:"label"`
 	Authorized bool   `json:"authorized"`
 }
 
-type AuthLoginResponse struct {
+type GetAuthLoginResponse struct {
 	Url string `json:"url"`
 }
 
-type AuthLogoutResponse struct {
+type GetAuthLogoutResponse struct {
 	Success bool `json:"success"`
 }
 
