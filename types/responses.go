@@ -12,12 +12,12 @@ type JamResponse struct {
 	Label    string     `json:"label"`
 	Name     string     `json:"name"`
 	Active   bool       `json:"active"`
-	DeviceID spotify.ID `json:"device_id"`
 	IpVoting bool       `json:"ip_voting"`
 }
 
 type PlaybackBody struct {
 	Playback spotify.PlayerState `json:"playback"`
+	DeviceID spotify.ID `json:"device_id"`
 }
 
 type LabelResponse struct {

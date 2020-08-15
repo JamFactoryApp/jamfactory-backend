@@ -17,7 +17,6 @@ func getJamSession(w http.ResponseWriter, r *http.Request) {
 		Label:    jamSession.Label,
 		Name:     jamSession.Name,
 		Active:   jamSession.Active,
-		DeviceID: jamSession.DeviceID,
 		IpVoting: jamSession.IpVoteEnabled,
 	}
 
@@ -40,7 +39,6 @@ func setJamSession(w http.ResponseWriter, r *http.Request) {
 		Label:    jamSession.Label,
 		Name:     jamSession.Name,
 		Active:   jamSession.Active,
-		DeviceID: jamSession.DeviceID,
 		IpVoting: jamSession.IpVoteEnabled,
 	}
 
@@ -52,6 +50,7 @@ func getPlayback(w http.ResponseWriter, r *http.Request) {
 
 	res := types.GetJamPlaybackResponse{
 		Playback: *jamSession.PlaybackState,
+		DeviceID: jamSession.DeviceID,
 	}
 
 	utils.EncodeJSONBody(w, res)
