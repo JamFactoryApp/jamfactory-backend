@@ -92,13 +92,13 @@ func search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if result, ok := entry.(spotify.SearchResult); ok {
+	if result, ok := entry.(*spotify.SearchResult); ok {
 		res := types.PutSearchResponseBody{
-			SearchResult: &result,
+			SearchResult: result,
 		}
 		utils.EncodeJSONBody(w, res)
 	} else {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Could not cast cache response to corresponding struct", http.StatusInternalServerError)
 		log.Warn("Could not cast cache response to corresponding struct")
 		return
 	}
