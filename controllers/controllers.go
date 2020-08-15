@@ -2,9 +2,18 @@ package controllers
 
 import (
 	log "github.com/sirupsen/logrus"
+	"os"
+)
+
+var (
+	afterCallbackRedirect string
+	afterLogoutRedirect   string
 )
 
 func Setup() {
+	initVars()
+	log.Info("Initialized vars")
+
 	initSessionStore()
 	log.Info("Initialized session store")
 
@@ -22,4 +31,9 @@ func Setup() {
 
 	initFactory()
 	log.Info("Initialized factory")
+}
+
+func initVars() {
+	afterCallbackRedirect = os.Getenv("CLIENT_ADDRESS")
+	afterLogoutRedirect = os.Getenv("CLIENT_ADDRESS")
 }

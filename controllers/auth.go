@@ -11,10 +11,8 @@ import (
 )
 
 var (
-	afterCallbackRedirect = os.Getenv("CLIENT_ADDRESS")
-	afterLogoutRedirect   = os.Getenv("CLIENT_ADDRESS")
-	spotifyAuthenticator  spotify.Authenticator
-	spotifyScopes         = []string{
+	spotifyAuthenticator spotify.Authenticator
+	spotifyScopes        = []string{
 		spotify.ScopeUserReadPrivate,
 		spotify.ScopeUserReadEmail,
 		spotify.ScopeUserModifyPlaybackState,
