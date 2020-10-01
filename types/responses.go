@@ -2,7 +2,6 @@ package types
 
 import (
 	"github.com/zmb3/spotify"
-	"jamfactory-backend/models"
 )
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -61,7 +60,7 @@ type GetJamLeaveResponse struct {
 // queue controller
 
 type GetQueueResponse struct {
-	Queue []models.SongWithoutId `json:"queue"`
+	Queue []SongWithoutId `json:"queue"`
 }
 
 type PutQueuePlaylistsResponse GetQueueResponse

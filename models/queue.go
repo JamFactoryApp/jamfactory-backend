@@ -5,6 +5,7 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
+	"jamfactory-backend/types"
 	"sort"
 	"time"
 )
@@ -99,8 +100,8 @@ func (queue *Queue) GetSong(id string) (*Song, error) {
 	return nil, errors.New(fmt.Sprintf("song %s does not exist in queue", id))
 }
 
-func (queue *Queue) GetObjectWithoutId(id string) []SongWithoutId {
-	res := make([]SongWithoutId, len(queue.Songs))
+func (queue *Queue) GetObjectWithoutId(id string) []types.SongWithoutId {
+	res := make([]types.SongWithoutId, len(queue.Songs))
 	for i, song := range queue.Songs {
 		res[i] = song.WithoutId(id)
 	}

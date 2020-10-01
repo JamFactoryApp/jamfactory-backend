@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/zmb3/spotify"
+	"jamfactory-backend/types"
 	"time"
 )
 
@@ -9,12 +10,6 @@ type Song struct {
 	Song  *spotify.FullTrack
 	Votes []Vote
 	Date  time.Time
-}
-
-type SongWithoutId struct {
-	Song  *spotify.FullTrack `json:"spotifyTrackFull"`
-	Votes int                `json:"votes"`
-	Voted bool               `json:"voted"`
 }
 
 func (song *Song) Vote(id string) bool {
@@ -35,8 +30,8 @@ func (song Song) VoteCount() int {
 	return len(song.Votes)
 }
 
-func (song Song) WithoutId(voteID string) SongWithoutId {
-	return SongWithoutId{
+func (song Song) WithoutId(voteID string) types.SongWithoutId {
+	return types.SongWithoutId{
 		Song:  song.Song,
 		Votes: song.VoteCount(),
 		Voted: song.containsVote(voteID),
