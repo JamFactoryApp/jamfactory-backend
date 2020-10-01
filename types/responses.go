@@ -12,7 +12,7 @@ type JamResponse struct {
 	Label    string `json:"label"`
 	Name     string `json:"name"`
 	Active   bool   `json:"active"`
-	IpVoting bool   `json:"ip_voting"`
+	VotingType VotingType `json:"voting_type"`
 }
 
 type PlaybackBody struct {

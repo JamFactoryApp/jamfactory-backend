@@ -36,7 +36,7 @@ type DeleteQueueSongRequest struct {
 type PutJamRequest struct {
 	Name     JSONString `json:"name,omitempty"`
 	Active   JSONBool   `json:"active,omitempty"`
-	IpVoting JSONBool   `json:"ip_voting,omitempty"`
+	VotingType JSONString   `json:"voting_type,omitempty"`
 }
 
 type PutJamPlaybackRequest struct {

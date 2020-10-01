@@ -30,7 +30,7 @@ func GenerateNewJamSession(client spotify.Client) (string, error) {
 		Label:         GenerateRandomLabel(),
 		Name:          strings.Join([]string{user.DisplayName, "'s Jam Session"}, ""),
 		Queue:         &queue,
-		IpVoteEnabled: false,
+		VotingType:    types.SessionVotingType,
 		Client:        client,
 		Context:       context.Background(),
 		DeviceID:      playback.Device.ID,

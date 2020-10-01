@@ -5,12 +5,13 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
+	"jamfactory-backend/types"
 )
 
 type JamSession struct {
 	Label         string
 	Name          string
-	IpVoteEnabled bool
+	VotingType 	  types.VotingType
 	Active        bool
 	Context       context.Context
 	Queue         *Queue
@@ -19,6 +20,8 @@ type JamSession struct {
 	CurrentSong   *spotify.FullTrack
 	PlaybackState *spotify.PlayerState
 }
+
+
 
 type JamSessions []*JamSession
 

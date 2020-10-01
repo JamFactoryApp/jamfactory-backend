@@ -17,7 +17,7 @@ func getJamSession(w http.ResponseWriter, r *http.Request) {
 		Label:    jamSession.Label,
 		Name:     jamSession.Name,
 		Active:   jamSession.Active,
-		IpVoting: jamSession.IpVoteEnabled,
+		VotingType: jamSession.VotingType,
 	}
 
 	utils.EncodeJSONBody(w, res)
@@ -30,16 +30,32 @@ func setJamSession(w http.ResponseWriter, r *http.Request) {
 	if err := utils.DecodeJSONBody(w, r, &body); err != nil {
 		return
 	}
+	
+	if body.VotingType.Set && body.VotingType.Valid {
+		switch body.VotingType.Value {
+		case string(types.SessionVotingType):
+			jamSession.VotingType = types.SessionVotingType
+		case string(types.IpVotingType):
+			jamSession.VotingType = types.IpVotingType
+		default:
+			http.Error(w, "Not supported voting type", http.StatusUnprocessableEntity)
+			return
+		}
+	}
 
-	jamSession.IpVoteEnabled = body.IpVoting.Value
-	jamSession.Active = body.Active.Value
-	jamSession.Name = body.Name.Value
+	if body.Active.Set && body.Active.Valid {
+		jamSession.Active = body.Active.Value
+	}
+
+	if body.Name.Set && body.Name.Valid {
+		jamSession.Name = body.Name.Value
+	}
 
 	res := types.PutJamResponse{
 		Label:    jamSession.Label,
 		Name:     jamSession.Name,
 		Active:   jamSession.Active,
-		IpVoting: jamSession.IpVoteEnabled,
+		VotingType: jamSession.VotingType,
 	}
 
 	utils.EncodeJSONBody(w, res)

@@ -14,7 +14,7 @@ func getQueue(w http.ResponseWriter, r *http.Request) {
 	jamSession := utils.JamSessionFromRequestContext(r)
 
 	voteID := session.ID
-	if jamSession.IpVoteEnabled {
+	if jamSession.VotingType == types.IpVotingType {
 		voteID = r.RemoteAddr
 	}
 
@@ -72,7 +72,7 @@ func vote(w http.ResponseWriter, r *http.Request) {
 	}
 
 	voteID := session.ID
-	if jamSession.IpVoteEnabled {
+	if jamSession.VotingType == types.IpVotingType {
 		voteID = r.RemoteAddr
 	}
 
@@ -96,7 +96,7 @@ func deleteSong(w http.ResponseWriter, r *http.Request) {
 	}
 
 	voteID := session.ID
-	if jamSession.IpVoteEnabled {
+	if jamSession.VotingType == types.IpVotingType{
 		voteID = r.RemoteAddr
 	}
 
