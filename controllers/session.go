@@ -21,6 +21,9 @@ var (
 
 func initSessionStore() {
 	conn := models.RedisPool.Get()
+	if conn.Err() != nil {
+		log.Fatal("Connection to redis could not be established!")
+	}
 	store = utils.NewRedisStore(conn, storeRedisKey, storeMaxAge, storeKeyPairs)
 }
 
