@@ -78,6 +78,5 @@ type GetSpotifyDevicesResponse struct {
 	Devices []spotify.PlayerDevice `json:"devices"`
 }
 
-type PutSpotifySearchResponse struct {
-	SearchResult *spotify.SearchResult `json:"search_result"`
-}
+type PutSpotifySearchResponse *spotify.SearchResult
+
