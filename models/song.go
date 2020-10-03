@@ -15,8 +15,10 @@ type Song struct {
 func (song *Song) Vote(id string) bool {
 	if song.containsVote(id) {
 		// The id has already voted for the song. Another vote will remove the current vote
-		i := song.indexOfVote(id)
-		song.Votes = append(song.Votes[:i], song.Votes[i+1:]...)
+		if id != UserTypeHost {
+			i := song.indexOfVote(id)
+			song.Votes = append(song.Votes[:i], song.Votes[i+1:]...)
+		}
 		return false
 	}
 

@@ -25,28 +25,60 @@ func getQueue(w http.ResponseWriter, r *http.Request) {
 	utils.EncodeJSONBody(w, res)
 }
 
-func addPlaylist(w http.ResponseWriter, r *http.Request) {
+func addCollection(w http.ResponseWriter, r *http.Request) {
 	jamSession := utils.JamSessionFromRequestContext(r)
 
-	var body types.PutQueuePlaylistRequest
+	var body types.PutQueueCollectionRequest
 	if err := utils.DecodeJSONBody(w, r, &body); err != nil {
 		return
 	}
 
-	playlist, err := jamSession.Client.GetPlaylistTracks(spotify.ID(body.PlaylistID))
+	switch body.CollectionType {
+	case "playlist":
+		playlist, err := jamSession.Client.GetPlaylistTracks(spotify.ID(body.CollectionID))
 
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
-		log.Debug("Could not get playlist: ", err.Error())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			log.Debug("Could not get playlist: ", err.Error())
+			return
+		}
+
+		for i := 0; i < len(playlist.Tracks); i++ {
+			jamSession.Queue.Vote(models.UserTypeHost, &playlist.Tracks[i].Track)
+		}
+
+
+	case "album":
+		album, err := jamSession.Client.GetAlbumTracks(spotify.ID(body.CollectionID))
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			log.Debug("Could not get album: ", err.Error())
+			return
+		}
+
+		ids := make([]spotify.ID, len(album.Tracks))
+		for i := 0; i < len(album.Tracks); i++ {
+			ids[i] = album.Tracks[i].ID
+		}
+
+		tracks, err := jamSession.Client.GetTracks(ids...)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			log.Debug("Error getting album tracks ", err.Error())
+			return
+		}
+
+		for i := 0; i < len(tracks); i++ {
+			jamSession.Queue.Vote(models.UserTypeHost, tracks[i])
+		}
+
+	default:
+		http.Error(w, "Unsupported collection type", http.StatusUnprocessableEntity)
 		return
 	}
-
-	for i := 0; i < len(playlist.Tracks); i++ {
-		jamSession.Queue.Vote(models.UserTypeHost, &playlist.Tracks[i].Track)
-	}
-
 	queue := jamSession.Queue.GetObjectWithoutId("")
-	Socket.BroadcastToRoom(SocketNamespace, jamSession.Label, SocketEventQueue, jamSession.Queue.GetObjectWithoutId(""))
+	//Socket.BroadcastToRoom(SocketNamespace, jamSession.Label, SocketEventQueue, jamSession.Queue.GetObjectWithoutId(""))
 
 	res := types.PutQueuePlaylistsResponse{
 		Queue: queue,

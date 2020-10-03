@@ -22,8 +22,9 @@ type PutQueueVoteRequest struct {
 	TrackID string `json:"track"`
 }
 
-type PutQueuePlaylistRequest struct {
-	PlaylistID string `json:"playlist"`
+type PutQueueCollectionRequest struct {
+	CollectionID string `json:"collection"`
+	CollectionType string `json:"type"`
 }
 
 type DeleteQueueSongRequest struct {
