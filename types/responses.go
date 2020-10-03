@@ -8,9 +8,9 @@ import (
 // general
 
 type JamResponse struct {
-	Label    string `json:"label"`
-	Name     string `json:"name"`
-	Active   bool   `json:"active"`
+	Label      string     `json:"label"`
+	Name       string     `json:"name"`
+	Active     bool       `json:"active"`
 	VotingType VotingType `json:"voting_type"`
 }
 
@@ -78,5 +78,9 @@ type GetSpotifyDevicesResponse struct {
 	Devices []spotify.PlayerDevice `json:"devices"`
 }
 
-type PutSpotifySearchResponse *spotify.SearchResult
-
+type PutSpotifySearchResponse struct {
+	Artists   *spotify.FullArtistPage     `json:"artists"`
+	Albums    *spotify.SimpleAlbumPage    `json:"albums"`
+	Playlists *spotify.SimplePlaylistPage `json:"playlists"`
+	Tracks    *spotify.FullTrackPage      `json:"tracks"`
+}
