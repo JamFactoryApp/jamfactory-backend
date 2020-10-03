@@ -3,6 +3,6 @@ package types
 // Voting types
 type VotingType string
 const (
-	IpVotingType = "IpVoting"
-	SessionVotingType = "SessionVoting"
+	IpVotingType = "ip_voting"
+	SessionVotingType = "session_voting"
 )
