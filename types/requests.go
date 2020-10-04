@@ -23,7 +23,7 @@ type PutQueueVoteRequest struct {
 }
 
 type PutQueueCollectionRequest struct {
-	CollectionID string `json:"collection"`
+	CollectionID   string `json:"collection"`
 	CollectionType string `json:"type"`
 }
 
@@ -35,9 +35,9 @@ type DeleteQueueSongRequest struct {
 // jamsession controller
 
 type PutJamRequest struct {
-	Name     JSONString `json:"name,omitempty"`
-	Active   JSONBool   `json:"active,omitempty"`
-	VotingType JSONString   `json:"voting_type,omitempty"`
+	Name       JSONString `json:"name,omitempty"`
+	Active     JSONBool   `json:"active,omitempty"`
+	VotingType JSONString `json:"voting_type,omitempty"`
 }
 
 type PutJamPlaybackRequest struct {

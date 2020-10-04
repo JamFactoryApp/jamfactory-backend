@@ -47,7 +47,6 @@ func addCollection(w http.ResponseWriter, r *http.Request) {
 			jamSession.Queue.Vote(models.UserTypeHost, &playlist.Tracks[i].Track)
 		}
 
-
 	case "album":
 		album, err := jamSession.Client.GetAlbumTracks(spotify.ID(body.CollectionID))
 
@@ -128,7 +127,7 @@ func deleteSong(w http.ResponseWriter, r *http.Request) {
 	}
 
 	voteID := session.ID
-	if jamSession.VotingType == types.IpVotingType{
+	if jamSession.VotingType == types.IpVotingType {
 		voteID = r.RemoteAddr
 	}
 

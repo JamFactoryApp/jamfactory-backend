@@ -14,9 +14,9 @@ func getJamSession(w http.ResponseWriter, r *http.Request) {
 	jamSession := utils.JamSessionFromRequestContext(r)
 
 	res := types.GetJamResponse{
-		Label:    jamSession.Label,
-		Name:     jamSession.Name,
-		Active:   jamSession.Active,
+		Label:      jamSession.Label,
+		Name:       jamSession.Name,
+		Active:     jamSession.Active,
 		VotingType: jamSession.VotingType,
 	}
 
@@ -30,7 +30,7 @@ func setJamSession(w http.ResponseWriter, r *http.Request) {
 	if err := utils.DecodeJSONBody(w, r, &body); err != nil {
 		return
 	}
-	
+
 	if body.VotingType.Set && body.VotingType.Valid {
 		switch body.VotingType.Value {
 		case string(types.SessionVotingType):
@@ -52,9 +52,9 @@ func setJamSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res := types.PutJamResponse{
-		Label:    jamSession.Label,
-		Name:     jamSession.Name,
-		Active:   jamSession.Active,
+		Label:      jamSession.Label,
+		Name:       jamSession.Name,
+		Active:     jamSession.Active,
 		VotingType: jamSession.VotingType,
 	}
 
@@ -80,7 +80,7 @@ func setPlayback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if body.DeviceID.Set && body.DeviceID.Value != ""{
+	if body.DeviceID.Set && body.DeviceID.Value != "" {
 		jamSession.SetClientID(spotify.ID(body.DeviceID.Value))
 		log.Debug("Set ID")
 	}

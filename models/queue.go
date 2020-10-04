@@ -93,9 +93,8 @@ func (queue *Queue) AdvanceQueue() error {
 		return errors.New("no song")
 	}
 	queue.Songs = queue.Songs[1:]
-	return  nil
+	return nil
 }
-
 
 func (queue *Queue) GetSong(id string) (*Song, error) {
 	for _, song := range queue.Songs {

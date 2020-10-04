@@ -11,7 +11,7 @@ import (
 type JamSession struct {
 	Label         string
 	Name          string
-	VotingType 	  types.VotingType
+	VotingType    types.VotingType
 	Active        bool
 	Context       context.Context
 	Queue         *Queue
@@ -20,8 +20,6 @@ type JamSession struct {
 	CurrentSong   *spotify.FullTrack
 	PlaybackState *spotify.PlayerState
 }
-
-
 
 type JamSessions []*JamSession
 
