@@ -8,32 +8,32 @@
     * [Overview](#overview)
     * [User Types](#user-types)
     * [How voting works](#how-voting-works)
-        * [Available voting types](#avaliable-voting-types)
+        * [Available voting types](#available-voting-types)
     * [JamSession State](#jamsession-state)
 * [Object Model](#object-model)
     * [Queue Song](#queue-song)
 
 * [API Reference](#api-reference)
     * [Authorization](#authorization)
-        * [Get the User's Authorization Status](#1-get-the-user's-authorization-status)
+        * [Get the User's Authorization Status](#1-get-the-users-authorization-status)
         * [Logout the User](#2-logout-the-user)
         * [Start Spotify Authorization Flow for User](#3-start-spotify-authorization-flow-for-user)
     * [JamSession](#jamsession)
         * [Create a new JamSession](#1-create-a-new-jamsession)
-        * [Get the Information of the User's joined JamSession](#2-get-the-information-of-the-user's-joined-jamsession)
-        * [Get the Playback of the User's joined JamSession](#3-get-the-playback-of-the-user's-joined-jamsession)
+        * [Get the Information of the User's joined JamSession](#2-get-the-information-of-the-users-joined-jamsession)
+        * [Get the Playback of the User's joined JamSession](#3-get-the-playback-of-the-users-joined-jamsession)
         * [Join an existing JamSession](#4-join-an-existing-jamsession)
-        * [Leave the User's currently joined JamSession](#5-leave-the-user's-currently-joined-jamsession)
-        * [Set Playback of the current User's JamSession](#6-set-playback-of-the-current-user's-jamsession)
-        * [Set the Information of the User's joined JamSession](#7-set-the-information-of-the-user's-joined-jamsession)
+        * [Leave the User's currently joined JamSession](#5-leave-the-users-currently-joined-jamsession)
+        * [Set Playback of the current User's JamSession](#6-set-playback-of-the-current-users-jamsession)
+        * [Set the Information of the User's joined JamSession](#7-set-the-information-of-the-users-joined-jamsession)
     * [Queue](#queue)
-        * [Add a Collection to the Queue of the User's joined JamSession](#1-add-a-collection-to-the-queue-of-the-user's-joined-jamsession)
-        * [Delete a Song in the Queue of the User's joined JamSession](#2-delete-a-song-in-the-queue-of-the-user's-joined-jamsession)
-        * [Get the Queue of the User's joined JamSession](#3-get-the-queue-of-the-user's-joined-jamsession)
-        * [Vote for a Song in the Queue of the User's joined JamSession](#4-vote-for-a-song-in-the-queue-of-the-user's-joined-jamsession)
+        * [Add a Collection to the Queue of the User's joined JamSession](#1-add-a-collection-to-the-queue-of-the-users-joined-jamsession)
+        * [Delete a Song in the Queue of the User's joined JamSession](#2-delete-a-song-in-the-queue-of-the-users-joined-jamsession)
+        * [Get the Queue of the User's joined JamSession](#3-get-the-queue-of-the-users-joined-jamsession)
+        * [Vote for a Song in the Queue of the User's joined JamSession](#4-vote-for-a-song-in-the-queue-of-the-users-joined-jamsession)
     * [Spotify](#spotify)
-        * [Get the User's Available Spotify Playback Devices](#1-get-the-user's-available-spotify-playback-devices)
-        * [Get the User's Available Spotify Playlists](#2-get-the-user's-available-spotify-playlists)
+        * [Get the User's Available Spotify Playback Devices](#1-get-the-users-available-spotify-playback-devices)
+        * [Get the User's Available Spotify Playlists](#2-get-the-users-available-spotify-playlists)
         * [Search for an Item on Spotify](#3-search-for-an-item-on-spotify)
 
 * [Socket Reference](#socket-reference)
@@ -143,7 +143,7 @@ URL: jamfactory.app/api/v1/auth/current
 | ``label``     | string 	        | JamLabel of the User's currently joined JamSession. Empty if the User is not joined a JamSession              |
 | ``authorized``| boolean 	        | Current Spotify authorization Status. True if the User completed the Spotify authorization process 	        |
 
-```js
+```json
 {
     "user": "Host",
     "label": "GF7DZ",
@@ -173,7 +173,7 @@ URL: jamfactory.app/api/v1/auth/logout
 |----------	    |-----------------  |------------------------------------------------------------------------------------------------------------	|
 | ``success`` 	| boolean 	        | Feedback if the Logout process was successfull.                                      	                        |
 
-```js
+```json
 {
     "success": true
 }
@@ -200,7 +200,7 @@ URL: jamfactory.app/api/v1/auth/login
 |----------	    |-----------------  |------------------------------------------------------------------------------------------------------------	|
 | ``url`` 	    | string 	        | The Url to the Spotify Account Service for the Authorization. See [Authorization Code Flow](https://developer.spotify.com/documentation/general/guides/authorization-guide/#authorization-code-flow)               	                        |
 
-```js
+```json
 {
     "url": "https://accounts.spotify.com/authorize"
 }
@@ -230,7 +230,7 @@ URL: jamfactory.app/api/v1/jam/create
 |----------	    |-------------------	|---------------------------------------------------    |
 | ``label`` 	| string             	| The JamLabel of the created JamSession                |
 
-```js
+```json
 {
     "label": "HG5FZ"
 }
@@ -258,9 +258,9 @@ URL: jamfactory.app/api/v1/jam
 | ``label``         | string  	            | JamLabel of the User's currently joined JamSession                                       	            |
 | ``name`` 	        | string             	| Name of the User's currently joined JamSession    	                                                |
 | ``active`` 	    | string            	| State of the User's currently joined JamSession. See [JamSession State](#jamsession-state)	|
-| ``voting_type`` 	| string             	| Voting type of the User's currently joined JamSession. See [Avaliable Voting Types](#avaliable-voting-types)	|
+| ``voting_type`` 	| string             	| Voting type of the User's currently joined JamSession. See [Avaliable Voting Types](#available-voting-types)	|
 
-```js
+```json
 {
     "label": "TPMU4",
     "name": "Joe's Birthday Party",
@@ -291,11 +291,9 @@ URL: jamfactory.app/api/v1/jam/playback
 | ``playback``      | [Spotify Playback Object](https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-get-information-about-the-users-current-playback)  	| Playback state                                     	|
 | ``device_id`` 	| string      	                                                                                            | Device ID of the currently selected playback device   |
 
-```js
+```json
 {
-    "playback": {
-        <Spotify Playback Object>
-    },
+    "playback": "<Spotify Playback Object>",
     "device_id": "abc123456"
 }
 ```
@@ -319,7 +317,7 @@ URL: jamfactory.app/api/v1/jam/join
 |----------	    |-------------------	|---------------------------------------------------    |
 | ``label`` 	| string *required*           	| The JamLable of JamSession the user wants to join              |
 
-```js
+```json
 {
 	"label": "KWXBZ"
 }
@@ -331,7 +329,7 @@ URL: jamfactory.app/api/v1/jam/join
 |----------	    |-------------------	|---------------------------------------------------    |
 | ``label`` 	| string             	| The JamLabel of the joined JamSession                 |
 
-```js
+```json
 {
 	"label": "KWXBZ"
 }
@@ -359,7 +357,7 @@ URL: jamfactory.app/api/v1/jam/leave
 |----------	    |-------------------	|---------------------------------------------------    |
 | ``success`` 	| boolean             	| Result of the operation                               |
 
-```js
+```json
 {
 	"success": true
 }
@@ -386,7 +384,7 @@ URL: jamfactory.app/api/v1/jam/playback
 | ``device_id``     | string *optional*     | Device ID of the playback device                      |
 | ``playing`` 	    | boolean *optional*    | Playback state. ``True``= Play ``False`` = Pause      |
 
-```js
+```json
 {
     "device_id": "abc123456",
     "playing": false
@@ -400,11 +398,9 @@ URL: jamfactory.app/api/v1/jam/playback
 | ``playback``      | [Spotify Playback Object](https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-get-information-about-the-users-current-playback)  	| Playback state                                     	|
 | ``device_id`` 	| string             	                                                                                            | Device ID of the currently selected playback device   |
 
-```js
+```json
 {
-    "playback": {
-        <Spotify Playback Object>
-    },
+    "playback": "<Spotify Playback Object>",
     "device_id": "abc123456"
 }
 ```
@@ -429,9 +425,9 @@ URL: jamfactory.app/api/v1/jam
 |----------	        |-------------------	|-------------------------------------------------------------------------------------------------------|
 | ``name`` 	        | string *optional*    	| Name of the User's currently joined JamSession    	                                                |
 | ``active`` 	    | boolean *optional*    | State of the User's currently joined JamSession. See [JamSession State](#jamsession-state)	|
-| ``voting_type`` 	| string *optional*    	| Voting type of the User's currently joined JamSession. See [Avaliable Voting Types](avaliable-voting-types)	|
+| ``voting_type`` 	| string *optional*    	| Voting type of the User's currently joined JamSession. See [Avaliable Voting Types](#available-voting-types)	|
 
-```js
+```json
 {
     "name": "Joes Birthday Party",
     "active": true,
@@ -446,9 +442,9 @@ URL: jamfactory.app/api/v1/jam
 | ``label``         | string  	            | JamLabel of the User's currently joined JamSession                                       	            |
 | ``name`` 	        | string             	| Name of the User's currently joined JamSession    	                                                |
 | ``active`` 	    | boolean            	| State of the User's currently joined JamSession. See [JamSession State](#jamsession-state)	|
-| ``voting_type`` 	| string             	| Voting type of the User's currently joined JamSession. See [Avaliable Voting Types](avaliable-voting-types)	|
+| ``voting_type`` 	| string             	| Voting type of the User's currently joined JamSession. See [Avaliable Voting Types](#available-voting-types)	|
 
-```js
+```json
 {
     "label": "KWXBZ",
     "name": "Joe's Birthday Party",
@@ -481,9 +477,9 @@ URL: jamfactory.app/api/v1/queue/collection
 | ``collection`` 	| string *required*   	| Spotify ID of the collection.  |
 | ``type`` 	        | string *required*   	| Type of he collection. <br> ``playlist`` for a playlist <br> ``album`` for an album  |
 
-```js
+```json
 {
-	"collection": "3AGOiaoRXMSjswCLtuNqv5"
+	"collection": "3AGOiaoRXMSjswCLtuNqv5",
 	"type": "album"
 }
 ```
@@ -494,9 +490,9 @@ URL: jamfactory.app/api/v1/queue/collection
 |----------	    |-------------------	|---------------------------------------------------             |
 | ``queue`` 	| array             	| Array of the Songs in the current Queue. See [Queue Song](#queue-song). The Queue Song Objects are personalized to the User requesting the Queue. |
 
-```js
+```json
 {
-	"queue": []<Queue Song Object>
+	"queue": "[]<Queue Song Object>"
 }
 ```
 
@@ -522,7 +518,7 @@ URL: jamfactory.app/api/v1/queue/delete
 |----------	    |-------------------	|---------------------------------------------------             |
 | ``track`` 	| string *required*   	| Spotify ID of the track which should be deleted. See [Spotify Track Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#track-object-full)  |
 
-```js
+```json
 {
 	"track": "2374M0fQpWi3dLnB54qaLX"
 }
@@ -534,9 +530,9 @@ URL: jamfactory.app/api/v1/queue/delete
 |----------	    |-------------------	|---------------------------------------------------             |
 | ``queue`` 	| array             	| Array of the Songs in the current Queue. See [Queue Song](#queue-song). The Queue Song Objects are personalized to the User requesting the Queue. |
 
-```js
+```json
 {
-	"queue": []<Queue Song Object>
+	"queue": "[]<Queue Song Object>"
 }
 ```
 
@@ -545,7 +541,7 @@ URL: jamfactory.app/api/v1/queue/delete
 
 ***Description***
 
-Returns the Queue of the Users's joined JamSession. Don't query this endpoint on a regular basis. To get updates on chages of the queue use the provided Socket. See [Socket Reference](#1-apiv1queue). Requires the User to be joined a JamSession.
+Returns the Queue of the Users's joined JamSession. Don't query this endpoint on a regular basis. To get updates on chages of the queue use the provided Socket. See [Socket Reference](#socket-reference). Requires the User to be joined a JamSession.
 
 ***Endpoint:***
 
@@ -562,9 +558,9 @@ URL: jamfactory.app/api/v1/queue
 |----------	    |-------------------	|---------------------------------------------------             |
 | ``queue`` 	| array             	| Array of the Songs in the current Queue. See [Queue Song](#queue-song). The Queue Song Objects are personalized to the User requesting the Queue. |
 
-```js
+```json
 {
-	"queue": []<Queue Song Object>
+	"queue": "[]<Queue Song Object>"
 }
 ```
 
@@ -590,7 +586,7 @@ URL: jamfactory.app/api/v1/queue/vote
 |----------	    |-------------------	|---------------------------------------------------             |
 | ``track`` 	| string *required*   	| Spotify ID of the track. See [Spotify Track Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#track-object-full)  |
 
-```js
+```json
 {
 	"track": "2374M0fQpWi3dLnB54qaLX"
 }
@@ -602,9 +598,9 @@ URL: jamfactory.app/api/v1/queue/vote
 |----------	    |-------------------	|---------------------------------------------------             |
 | ``queue`` 	| array             	| Array of the Songs in the current Queue. See [Queue Song](#queue-song). The Queue Song Objects are personalized to the User requesting the Queue. |
 
-```js
+```json
 {
-	"queue": []<Queue Song Object>
+	"queue": "[]<Queue Song Object>"
 }
 ```
 
@@ -632,9 +628,9 @@ URL: jamfactory.app/api/v1/spotify/devices
 |----------	    |-------------------	|------------------------------------------------------------------------------------------------------------	|
 | ``devices``   | array 	            | Array of the available Spotify Playback Devices of the User. See [Spotify Device Object](https://developer.spotify.com/documentation/web-api/reference/player/get-a-users-available-devices/#device-object)                                    	|
 
-```js
+```json
 {
-    "devices": []<Spotify Device Object>
+    "devices": "[]<Spotify Device Object>"
 }
 ```
 
@@ -660,11 +656,9 @@ URL: jamfactory.app/api/v1/spotify/playlists
 |----------	        |-------------------	|------------------------------------------------------------------------------------------------------------	|
 | ``playlists`` 	| [Spotify Paging Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#paging-object) 	| Array of the Users avaliable Spotify Playlists as [Spotify Simplified Playlist Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#playlist-object-simplified) wrapped in a [Spotify Paging Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#paging-object)
 
-```js
+```json
 {
-    "playlists": {
-        <Spotify Paging Object>
-    }
+    "playlists": "<Spotify Paging Object>"
 }
 ```
 
@@ -689,7 +683,7 @@ URL: jamfactory.app/api/v1/spotify/search
 | ``text`` 	| string *required* 	| Search text. All search texts are completed with a ``*`` for autofill.                                       	|
 | ``type`` 	| string *required* 	| Type of the searched item. Available:<br>``track`` for spotify track,<br>``playlist`` for spotify playlist 	|
 
-```js
+```json
 {
 	"text": "abba",
 	"type": "track"
@@ -705,21 +699,12 @@ URL: jamfactory.app/api/v1/spotify/search
 | ``playlists`` 	| [Spotify Paging Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#paging-object) 	| Spotify Playlists found with the submitted search as [Spotify Simplified Playlist Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#playlist-object-simplified) wrapped in a [Spotify Paging Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#paging-object) |
 | ``tracks`` 	    | [Spotify Paging Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#paging-object) 	| Spotify Tracks found with the submitted search as [Spotify Simplified Track Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#track-object-simplified) wrapped in a [Spotify Paging Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#paging-object) |
 
-```js
+```json
 {
-    "artists": {
-        <Spotify Paging Object>
-    },
-    "albums": {
-        <Spotify Paging Object>
-    },
-    "playlists": {
-        <Spotify Paging Object>
-    },
-    "tracks": {
-        <Spotify Paging Object>
-    }
-
+    "artists": "<Spotify Paging Object>",
+    "albums": "<Spotify Paging Object>",
+    "playlists": "<Spotify Paging Object>",
+    "tracks": "<Spotify Paging Object>"
 }
 ```
 
