@@ -113,12 +113,11 @@ func Conductor(jamSession *models.JamSession) {
 					log.WithField("Label", jamSession.Label).Debug("Conductor started next song for")
 					jamSession.StartNextSong()
 					SendToRoom(jamSession.Label, SocketEventQueue, jamSession.Queue.GetObjectWithoutId(""))
-
-					res := types.SocketPlaybackState{
-						Playback: *jamSession.PlaybackState,
-					}
-					SendToRoom(jamSession.Label, SocketEventPlayback, res)
 				}
+				res := types.SocketPlaybackState{
+					Playback: *jamSession.PlaybackState,
+				}
+				SendToRoom(jamSession.Label, SocketEventPlayback, res)
 			}
 		}
 	}

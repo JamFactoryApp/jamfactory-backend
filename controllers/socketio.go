@@ -2,6 +2,10 @@ package controllers
 
 import (
 	"errors"
+	engineio "github.com/googollee/go-engine.io"
+	"github.com/googollee/go-engine.io/transport"
+	"github.com/googollee/go-engine.io/transport/polling"
+	"github.com/googollee/go-engine.io/transport/websocket"
 	socketio "github.com/googollee/go-socket.io"
 	log "github.com/sirupsen/logrus"
 	"jamfactory-backend/models"
@@ -22,7 +26,19 @@ const (
 
 func initSocketIO() {
 	var err error
-	Socket, err = socketio.NewServer(nil)
+
+	pt := polling.Default
+	wt := websocket.Default
+	wt.CheckOrigin = func(req *http.Request) bool {
+		return true
+	}
+
+	Socket, err = socketio.NewServer(&engineio.Options{
+		Transports: []transport.Transport{
+			pt,
+			wt,
+		},
+	})
 	if err != nil {
 		log.Fatalln("Error creating socketio server\n", err)
 	}
@@ -59,7 +75,7 @@ func socketIOConnect(s socketio.Conn) error {
 
 		if GetJamSession(session.Values[utils.SessionLabelTypeKey].(string)) != nil {
 			s.Join(session.Values[utils.SessionLabelTypeKey].(string))
-			s.SetContext(s.Context())
+			s.SetContext("")
 			logger.Trace("allowed connection")
 			return nil
 		}
@@ -75,7 +91,7 @@ func socketIOConnect(s socketio.Conn) error {
 }
 
 func socketIOError(s socketio.Conn, err error) {
-	log.Errorf("Socket.IO Error in %s:\n%s\n", s.ID(), err.Error())
+	log.Error("Socket.IO Error:", err.Error())
 }
 
 func socketIODisconnect(s socketio.Conn, reason string) {

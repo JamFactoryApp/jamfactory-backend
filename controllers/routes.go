@@ -35,7 +35,7 @@ const (
 	spotifyPlaylistPath = "/playlists"
 	spotifySearchPath   = "/search"
 
-	socketIOPath = "/socket.io/"
+	socketIOPath = "/socket.io"
 )
 
 var (
