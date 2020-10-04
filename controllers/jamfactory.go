@@ -113,6 +113,10 @@ func Conductor(jamSession *models.JamSession) {
 			jamSession.PlaybackState = state
 			jamSession.CurrentSong = state.Item
 
+			if jamSession.DeviceID == "" && state.Device != (spotify.PlayerDevice{}) {
+				jamSession.DeviceID = state.Device.ID
+			}
+
 			if jamSession.Active && jamSession.Queue.Len() > 0  && jamSession.DeviceID != ""{
 				if !state.Playing || state.Progress > state.Item.Duration-1000 {
 					log.WithField("Label", jamSession.Label).Debug("Conductor started next song for")
