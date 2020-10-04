@@ -36,7 +36,11 @@
         * [Get the User's Available Spotify Playlists](#2-get-the-users-available-spotify-playlists)
         * [Search for an Item on Spotify](#3-search-for-an-item-on-spotify)
 
-* [Socket Reference](#socket-reference)
+* [Socket Reference](#socket.io-reference)
+    * [Socket Events](#socket-events)
+        * [Event: ``queue`` ](#event-queue)
+        * [Event: ``playback`` ](#event-playback)
+        * [Event: ``close`` ](#event-close)
 --------
 
 ## Functional Documentation
@@ -709,6 +713,80 @@ URL: jamfactory.app/api/v1/spotify/search
 ```
 
 # Socket Reference
+JamFactory supports [Socket.IO](https://socket.io/) Websockets to update the Users information at certain events.
+**Currently only Socket.IO Version <= 1.4 is supported**
+When the a User has joined a JamSession as a Host or as a Guest, he can connect to the Socket.IO room created by the JamSession.
+The connection will automatically join the right room based on the Session Cookie. 
+The client only needs to open or close the connection and listen for the events.
+
+***Example:***
+
+Connect to the Socket
+```js
+    import * as io from 'socket.io-client';
+    this.socket = io.connect('http://jamfactory.app:3000');
+```
+
+Listen to events
+```js
+     this.socket.on('<EventName>', (message: any) => {
+          <Code to handle the message>
+     });
+```
+
+Close the connection if the User Leaves
+```js
+     this.socket.close();
+```
+
+## Socket Events
+
+### Event: ``queue`` 
+
+The Queue of the Users joined JamSession has changed.
+
+***Message (JSON):***
+
+| key      	    | value type            | value description                                              |
+|----------	    |-------------------	|---------------------------------------------------             |
+| ``queue`` 	| array             	| Array of the Songs in the current Queue. See [Queue Song](#queue-song). The Queue Song Objects are **not** personalized to the User requesting the Queue. |
+
+```json
+{
+	"queue": "[]<Queue Song Object>"
+}
+```
+
+### Event: ``playback`` 
+
+Update on the current Playback State of the JamSession. This event is triggeredapproximately every second.
+
+***Message (JSON):***
+
+| key      	        | value type        	                                                                                            | value description                                     |
+|----------	        |-------------------	                                                                                            |---------------------------------------------------    |
+| ``playback``      | [Spotify Playback Object](https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-get-information-about-the-users-current-playback)  	| Playback state                                     	|
+| ``device_id`` 	| string             	                                                                                            | Device ID of the currently selected playback device   |
+
+```json
+{
+    "playback": "<Spotify Playback Object>",
+    "device_id": "abc123456"
+}
+```
+
+### Event: ``close`` 
+
+The JamSession was closed.
+
+***Message (String):***
+
+Reason why the JamSession was closed.
+
+| Reason      	    | Description       
+|----------	        |-------------------
+| ``host``          | The Host closed the JamSession
+| ``inactive`` 	    | The JamSession was closed due to inactivity 
 
 ---
 [Back to top](#jamfactory)
