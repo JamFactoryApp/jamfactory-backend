@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/base32"
 	"encoding/gob"
@@ -8,7 +9,10 @@ import (
 	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
+	"io"
+	"log"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -16,16 +20,21 @@ const (
 	SessionUserTypeKey  = "User"
 	SessionLabelTypeKey = "Label"
 	SessionTokenKey     = "Token"
+
+	MinCookieKeyPairsCount = 4
+	CookieKeyLength        = 32
+	CookieKeyPairsFile     = "./.keypairs"
 )
 
 type RedisStore struct {
-	client    redis.Conn
-	keyPrefix RedisKey
-	options   *sessions.Options
-	codecs    []securecookie.Codec
+	client        redis.Conn
+	keyPrefix     RedisKey
+	options       *sessions.Options
+	codecs        []securecookie.Codec
+	keyPairsCount int
 }
 
-func NewRedisStore(client redis.Conn, keyPrefix RedisKey, maxAge int, keyPairs ...[]byte) *RedisStore {
+func NewRedisStore(client redis.Conn, keyPrefix RedisKey, maxAge int, keyPairsCount int) *RedisStore {
 	redisStore := &RedisStore{
 		client:    client,
 		keyPrefix: keyPrefix,
@@ -35,9 +44,10 @@ func NewRedisStore(client redis.Conn, keyPrefix RedisKey, maxAge int, keyPairs .
 			Secure:   false,
 			SameSite: http.SameSiteLaxMode,
 		},
-		codecs: securecookie.CodecsFromPairs(keyPairs...),
+		keyPairsCount: keyPairsCount,
 	}
 	redisStore.MaxAge(redisStore.options.MaxAge)
+	redisStore.LoadCookieKeyPairs()
 	return redisStore
 }
 
@@ -96,6 +106,79 @@ func (store RedisStore) MaxAge(age int) {
 			secureCookie.MaxAge(age)
 		}
 	}
+}
+
+func (store *RedisStore) LoadCookieKeyPairs() {
+	var keyPairs [][]byte
+	if FileExists(CookieKeyPairsFile) {
+		keyPairs = store.readExistingCookieKeyPairs()
+	} else {
+		keyPairs = store.generateCookieKeyPairs()
+		store.saveCookieKeyPairs(keyPairs)
+	}
+	store.codecs = securecookie.CodecsFromPairs(keyPairs...)
+}
+
+func (store RedisStore) readExistingCookieKeyPairs() [][]byte {
+	file, err := os.Open(CookieKeyPairsFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer CloseProperly(file)
+	r := bufio.NewReader(file)
+
+	keyPairs := make([][]byte, 2*store.keyPairsCount)
+	for i := 0; i < store.keyPairsCount*2; i++ {
+		keyPairs[i] = make([]byte, CookieKeyLength)
+		n, err := io.ReadFull(r, keyPairs[i])
+		if n != CookieKeyLength {
+			log.Fatalf("Error parsing %s\n", CookieKeyPairsFile)
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	if len(keyPairs) != store.keyPairsCount*2 {
+		log.Fatalf("wrong number of cookie key pairs in %s\n", CookieKeyPairsFile)
+	}
+	return keyPairs
+}
+
+func (store RedisStore) saveCookieKeyPairs(keyPairs [][]byte) {
+	file, err := os.Create(CookieKeyPairsFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer CloseProperly(file)
+	w := bufio.NewWriter(file)
+
+	for _, k := range keyPairs {
+		if _, err := w.Write(k); err != nil {
+			log.Fatal(err)
+		}
+	}
+	if err := w.Flush(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func (store RedisStore) generateCookieKeyPairs() [][]byte {
+	var count int
+	var keyPairs [][]byte
+
+	if store.keyPairsCount < MinCookieKeyPairsCount {
+		count = MinCookieKeyPairsCount
+	} else {
+		count = store.keyPairsCount
+	}
+	keyPairs = make([][]byte, 2*count)
+
+	for i := range keyPairs {
+		keyPairs[i] = securecookie.GenerateRandomKey(CookieKeyLength)
+	}
+
+	return keyPairs
 }
 
 func (store RedisStore) load(session *sessions.Session) error {

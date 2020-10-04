@@ -1,12 +1,13 @@
 package controllers
 
 import (
-	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	log "github.com/sirupsen/logrus"
 	"jamfactory-backend/models"
 	"jamfactory-backend/utils"
 	"net/http"
+	"os"
+	"strconv"
 )
 
 const (
@@ -15,7 +16,6 @@ const (
 
 var (
 	store         *utils.RedisStore
-	storeKeyPairs = securecookie.GenerateRandomKey(32)
 	storeRedisKey = utils.RedisKey{}.Append("session")
 )
 
@@ -24,7 +24,11 @@ func initSessionStore() {
 	if conn.Err() != nil {
 		log.Fatal("Connection to redis could not be established!")
 	}
-	store = utils.NewRedisStore(conn, storeRedisKey, storeMaxAge, storeKeyPairs)
+	cookieKeyPairsCount, err := strconv.Atoi(os.Getenv("COOKIE_KEY_PAIRS_COUNT"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	store = utils.NewRedisStore(conn, storeRedisKey, storeMaxAge, cookieKeyPairsCount)
 }
 
 func GetSession(r *http.Request, name string) (*sessions.Session, error) {
