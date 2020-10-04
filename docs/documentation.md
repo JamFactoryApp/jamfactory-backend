@@ -36,7 +36,7 @@
         * [Get the User's Available Spotify Playlists](#2-get-the-users-available-spotify-playlists)
         * [Search for an Item on Spotify](#3-search-for-an-item-on-spotify)
 
-* [Socket Reference](#socket.io-reference)
+* [Socket Reference](#socket-reference)
     * [Socket Events](#socket-events)
         * [Event: ``queue`` ](#event-queue)
         * [Event: ``playback`` ](#event-playback)
@@ -730,7 +730,7 @@ Connect to the Socket
 Listen to events
 ```js
      this.socket.on('<EventName>', (message: any) => {
-          <Code to handle the message>
+          // <Code to handle the message>
      });
 ```
 
