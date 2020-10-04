@@ -72,6 +72,6 @@ func EncodeJSONBody(w http.ResponseWriter, response interface{}) {
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Warnf("Could not encode json:\n%s\n", err.Error())
+		log.Warnf("Could not encode json: %s\n", err.Error())
 	}
 }

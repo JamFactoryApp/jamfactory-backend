@@ -63,6 +63,8 @@ func setJamSession(w http.ResponseWriter, r *http.Request) {
 
 func getPlayback(w http.ResponseWriter, r *http.Request) {
 	jamSession := utils.JamSessionFromRequestContext(r)
+	jamSession.Lock()
+	defer jamSession.Unlock()
 
 	res := types.GetJamPlaybackResponse{
 		Playback: *jamSession.PlaybackState,

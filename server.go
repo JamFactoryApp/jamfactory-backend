@@ -71,7 +71,7 @@ func initLogging() {
 
 func initEnvironment() {
 	if err := godotenv.Load(); err != nil {
-		log.Warnf("No .env.example file found:\n%s\n", err)
+		log.Warnf("No .env file found: %s\n", err)
 	}
 
 	var notDefined []string
@@ -109,6 +109,6 @@ func main() {
 	log.Infof("HTTP server is listening on port %v\n", port)
 
 	if err := server.ListenAndServe(); err != nil {
-		log.Fatalf("Error while listening and serving:\n%s\n", err)
+		log.Fatalf("Error while listening and serving: %s\n", err)
 	}
 }

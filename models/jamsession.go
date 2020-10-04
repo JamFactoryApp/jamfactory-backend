@@ -6,6 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
 	"jamfactory-backend/types"
+	"sync"
 )
 
 type JamSession struct {
@@ -19,6 +20,7 @@ type JamSession struct {
 	DeviceID      spotify.ID
 	CurrentSong   *spotify.FullTrack
 	PlaybackState *spotify.PlayerState
+	mux           sync.Mutex
 }
 
 type JamSessions []*JamSession
@@ -85,4 +87,24 @@ func (jamSession *JamSession) SetClientID(id spotify.ID) {
 			jamSession.DeviceID = id
 		}
 	}
+}
+
+func (jamSession *JamSession) UpdatePlaybackState(state *spotify.PlayerState) {
+	jamSession.Lock()
+	defer jamSession.Unlock()
+	jamSession.PlaybackState = state
+}
+
+func (jamSession *JamSession) UpdateCurrentSong(item *spotify.FullTrack) {
+	jamSession.Lock()
+	defer jamSession.Unlock()
+	jamSession.CurrentSong = item
+}
+
+func (jamSession *JamSession) Lock() {
+	jamSession.mux.Lock()
+}
+
+func (jamSession *JamSession) Unlock() {
+	jamSession.mux.Unlock()
 }

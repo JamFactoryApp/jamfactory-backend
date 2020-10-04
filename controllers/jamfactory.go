@@ -110,8 +110,8 @@ func Conductor(jamSession *models.JamSession) {
 				continue
 			}
 
-			jamSession.PlaybackState = state
-			jamSession.CurrentSong = state.Item
+			jamSession.UpdatePlaybackState(state)
+			jamSession.UpdateCurrentSong(state.Item)
 
 			if jamSession.DeviceID == "" && state.Device != (spotify.PlayerDevice{}) {
 				jamSession.DeviceID = state.Device.ID

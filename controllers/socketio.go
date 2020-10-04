@@ -2,10 +2,6 @@ package controllers
 
 import (
 	"errors"
-	engineio "github.com/googollee/go-engine.io"
-	"github.com/googollee/go-engine.io/transport"
-	"github.com/googollee/go-engine.io/transport/polling"
-	"github.com/googollee/go-engine.io/transport/websocket"
 	socketio "github.com/googollee/go-socket.io"
 	log "github.com/sirupsen/logrus"
 	"jamfactory-backend/models"
@@ -27,18 +23,7 @@ const (
 func initSocketIO() {
 	var err error
 
-	pt := polling.Default
-	wt := websocket.Default
-	wt.CheckOrigin = func(req *http.Request) bool {
-		return true
-	}
-
-	Socket, err = socketio.NewServer(&engineio.Options{
-		Transports: []transport.Transport{
-			pt,
-			wt,
-		},
-	})
+	Socket, err = socketio.NewServer(nil)
 	if err != nil {
 		log.Fatalln("Error creating socketio server\n", err)
 	}
@@ -47,7 +32,7 @@ func initSocketIO() {
 		defer utils.CloseProperly(Socket)
 		err := Socket.Serve()
 		if err != nil {
-			log.Panicf("Error serving socket.io server:\n%s\n", err)
+			log.Fatalf("Error serving socket.io server: %s\n", err)
 		}
 	}()
 }
@@ -95,7 +80,7 @@ func socketIOError(s socketio.Conn, err error) {
 }
 
 func socketIODisconnect(s socketio.Conn, reason string) {
-	log.Tracef("Closed Socket.IO connection %s:\n%s\n", s.ID(), reason)
+	log.Tracef("Closed Socket.IO connection %s: %s\n", s.ID(), reason)
 }
 
 func SendToRoom(room string, event string, message interface{}) {

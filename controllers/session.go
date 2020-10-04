@@ -40,7 +40,7 @@ func SaveSession(w http.ResponseWriter, r *http.Request, session *sessions.Sessi
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.WithField("Session", session.ID).Warnf("Could not save session:\n%s\n", err.Error())
+		log.WithField("Session", session.ID).Warnf("Could not save session: %s\n", err.Error())
 	}
 }
 

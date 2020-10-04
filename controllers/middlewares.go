@@ -25,7 +25,7 @@ func (*JamSessionRequiredMiddleware) Handler(next http.Handler) http.Handler {
 
 		if session == nil {
 			http.Error(w, "", http.StatusInternalServerError)
-			log.Panic("Could not get session from context")
+			log.Fatal("Could not get session from context")
 			return
 		}
 
