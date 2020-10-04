@@ -80,14 +80,20 @@ func setPlayback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if body.Playing.Set {
-		jamSession.SetJamSessionState(body.Playing.Value)
-		log.Debug("Set State")
-	}
-
-	if body.DeviceID.Set {
+	if body.DeviceID.Set && body.DeviceID.Value != ""{
 		jamSession.SetClientID(spotify.ID(body.DeviceID.Value))
 		log.Debug("Set ID")
+	}
+
+	if body.Playing.Set {
+		if jamSession.DeviceID != "" {
+			jamSession.SetJamSessionState(body.Playing.Value)
+			log.Debug("Set State")
+		} else {
+			http.Error(w, "User Error: No Playback Device Selected", http.StatusForbidden)
+			log.Debug("User Error: No Playback Device Selected")
+			return
+		}
 	}
 
 	res := types.PutJamPlaybackResponse{

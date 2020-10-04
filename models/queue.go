@@ -80,16 +80,22 @@ func (queue *Queue) SortQueue() {
 	sort.Sort(queue)
 }
 
-func (queue *Queue) GetNextSong(removeSong bool) (*Song, error) {
+func (queue *Queue) GetNextSong() (*Song, error) {
 	if len(queue.Songs) == 0 {
 		return nil, errors.New("no song")
 	}
 	song := queue.Songs[0]
-	if removeSong {
-		queue.Songs = queue.Songs[1:]
-	}
 	return &song, nil
 }
+
+func (queue *Queue) AdvanceQueue() error {
+	if len(queue.Songs) == 0 {
+		return errors.New("no song")
+	}
+	queue.Songs = queue.Songs[1:]
+	return  nil
+}
+
 
 func (queue *Queue) GetSong(id string) (*Song, error) {
 	for _, song := range queue.Songs {

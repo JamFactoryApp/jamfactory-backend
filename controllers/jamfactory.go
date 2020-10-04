@@ -38,6 +38,11 @@ func GenerateNewJamSession(client spotify.Client) (string, error) {
 		PlaybackState: playback,
 		Active:        true,
 	}
+
+	if jamSession.DeviceID == "" {
+		jamSession.Active = false
+	}
+
 	jamSessions = append(jamSessions, &jamSession)
 
 	go Conductor(&jamSession)
@@ -108,7 +113,7 @@ func Conductor(jamSession *models.JamSession) {
 			jamSession.PlaybackState = state
 			jamSession.CurrentSong = state.Item
 
-			if jamSession.Active && jamSession.Queue.Len() > 0 {
+			if jamSession.Active && jamSession.Queue.Len() > 0  && jamSession.DeviceID != ""{
 				if !state.Playing || state.Progress > state.Item.Duration-1000 {
 					log.WithField("Label", jamSession.Label).Debug("Conductor started next song for")
 					jamSession.StartNextSong()

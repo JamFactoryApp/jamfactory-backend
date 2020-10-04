@@ -28,14 +28,12 @@ type JamSessions []*JamSession
 func (jamSession *JamSession) StartNextSong() {
 	log.WithField("JamSession", jamSession.Label).Trace("Model event: Start next song for jamSession")
 
-	song, err := jamSession.Queue.GetNextSong(true)
+	song, err := jamSession.Queue.GetNextSong()
 
 	if err != nil {
 		log.WithField("JamSession", jamSession.Label).Trace("Model event: Queue is empty")
 		return
 	}
-
-	jamSession.CurrentSong = song.Song
 
 	playOptions := spotify.PlayOptions{
 		URIs: []spotify.URI{jamSession.CurrentSong.URI},
@@ -44,7 +42,17 @@ func (jamSession *JamSession) StartNextSong() {
 	err = jamSession.Client.PlayOpt(&playOptions)
 	if err != nil {
 		log.WithField("JamSession", jamSession.Label).Error("Error starting next song: ", err.Error())
+		return
 	}
+
+	jamSession.CurrentSong = song.Song
+	err = jamSession.Queue.AdvanceQueue()
+
+	if err != nil {
+		log.WithField("JamSession", jamSession.Label).Trace("Model event: Could not advance queue")
+		return
+	}
+
 }
 
 func (jamSession *JamSession) SetJamSessionState(state bool) {
@@ -65,7 +73,7 @@ func (jamSession *JamSession) SetJamSessionState(state bool) {
 		log.WithField("JamSession", jamSession.Label).Warn(fmt.Sprintf("Error setting client to %s\n", fragment))
 	}
 
-	jamSession.Active = state //Old Backend has set the value with a delay of 2.5 seconds
+	jamSession.Active = state
 	jamSession.PlaybackState.Playing = state
 }
 
@@ -74,7 +82,7 @@ func (jamSession *JamSession) SetClientID(id spotify.ID) {
 		err := jamSession.Client.TransferPlayback(id, jamSession.Active)
 
 		if err != nil {
-
+			log.Debug("Error setting Device ID: ", err.Error())
 		} else {
 			jamSession.DeviceID = id
 		}
