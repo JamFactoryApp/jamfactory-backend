@@ -36,7 +36,7 @@ func (jamSession *JamSession) StartNextSong() {
 	}
 
 	playOptions := spotify.PlayOptions{
-		URIs: []spotify.URI{jamSession.CurrentSong.URI},
+		URIs: []spotify.URI{song.Song.URI},
 	}
 
 	err = jamSession.Client.PlayOpt(&playOptions)
