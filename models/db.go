@@ -23,7 +23,7 @@ func newRedisPool() *redis.Pool {
 			if err != nil {
 				return nil, err
 			}
-			if password, ok := os.LookupEnv("REDIS_PASSWORD"); ok {
+			if password, ok := os.LookupEnv("REDIS_PASSWORD"); ok && password != "" {
 				if _, err := c.Do("AUTH", password); err != nil {
 					_ = c.Close()
 					return nil, err
