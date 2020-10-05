@@ -3,6 +3,10 @@ package controllers
 import (
 	"errors"
 	socketio "github.com/googollee/go-socket.io"
+	"github.com/googollee/go-socket.io/engineio"
+	"github.com/googollee/go-socket.io/engineio/transport"
+	"github.com/googollee/go-socket.io/engineio/transport/polling"
+	"github.com/googollee/go-socket.io/engineio/transport/websocket"
 	log "github.com/sirupsen/logrus"
 	"jamfactory-backend/models"
 	"jamfactory-backend/utils"
@@ -23,7 +27,18 @@ const (
 func initSocketIO() {
 	var err error
 
-	Socket, err = socketio.NewServer(nil)
+	pt := polling.Default
+	wt := websocket.Default
+	wt.CheckOrigin = func(req *http.Request) bool {
+		return true
+	}
+
+	Socket, err = socketio.NewServer(&engineio.Options{
+		Transports: []transport.Transport{
+			pt,
+			wt,
+		},
+	})
 	if err != nil {
 		log.Fatalln("Error creating socketio server\n", err)
 	}
