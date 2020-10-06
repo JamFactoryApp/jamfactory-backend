@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	storeMaxAge = 3600
+	storeMaxAge = 60 * 60 * 24 * 7
 )
 
 var (
