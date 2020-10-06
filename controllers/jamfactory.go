@@ -121,7 +121,12 @@ func Conductor(jamSession *models.JamSession) {
 				if !state.Playing || state.Progress > state.Item.Duration-1000 {
 					log.WithField("Label", jamSession.Label).Debug("Conductor started next song for")
 					jamSession.StartNextSong()
-					SendToRoom(jamSession.Label, SocketEventQueue, jamSession.Queue.GetObjectWithoutId(""))
+
+					message := types.PutQueuePlaylistsResponse{
+						Queue: jamSession.Queue.GetObjectWithoutId(""),
+					}
+
+					SendToRoom(jamSession.Label, SocketEventQueue, message)
 				}
 			}
 

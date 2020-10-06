@@ -26,6 +26,7 @@ func getQueue(w http.ResponseWriter, r *http.Request) {
 }
 
 func addCollection(w http.ResponseWriter, r *http.Request) {
+	session := utils.SessionFromRequestContext(r)
 	jamSession := utils.JamSessionFromRequestContext(r)
 
 	var body types.PutQueueCollectionRequest
@@ -76,11 +77,20 @@ func addCollection(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unsupported collection type", http.StatusUnprocessableEntity)
 		return
 	}
-	queue := jamSession.Queue.GetObjectWithoutId("")
-	//Socket.BroadcastToRoom(SocketNamespace, jamSession.Label, SocketEventQueue, jamSession.Queue.GetObjectWithoutId(""))
+
+	voteID := session.ID
+	if jamSession.VotingType == types.IpVotingType {
+		voteID = r.RemoteAddr
+	}
+
+	message := types.PutQueuePlaylistsResponse{
+		Queue: jamSession.Queue.GetObjectWithoutId(""),
+	}
+
+	Socket.BroadcastToRoom(SocketNamespace, jamSession.Label, SocketEventQueue, message)
 
 	res := types.PutQueuePlaylistsResponse{
-		Queue: queue,
+		Queue: jamSession.Queue.GetObjectWithoutId(voteID),
 	}
 	utils.EncodeJSONBody(w, res)
 }
@@ -109,7 +119,12 @@ func vote(w http.ResponseWriter, r *http.Request) {
 
 	jamSession.Queue.Vote(voteID, song)
 	queue := jamSession.Queue.GetObjectWithoutId(voteID)
-	Socket.BroadcastToRoom(SocketNamespace, jamSession.Label, SocketEventQueue, jamSession.Queue.GetObjectWithoutId(""))
+
+	message := types.PutQueuePlaylistsResponse{
+		Queue: jamSession.Queue.GetObjectWithoutId(""),
+	}
+
+	Socket.BroadcastToRoom(SocketNamespace, jamSession.Label, SocketEventQueue, message)
 
 	res := types.PutQueueVoteResponse{
 		Queue: queue,
@@ -139,6 +154,12 @@ func deleteSong(w http.ResponseWriter, r *http.Request) {
 	res := types.DeleteQueueSongResponse{
 		Queue: jamSession.Queue.GetObjectWithoutId(voteID),
 	}
-	Socket.BroadcastToRoom(SocketNamespace, jamSession.Label, SocketEventQueue, jamSession.Queue.GetObjectWithoutId(""))
+
+	message := types.PutQueuePlaylistsResponse{
+		Queue: jamSession.Queue.GetObjectWithoutId(""),
+	}
+
+	Socket.BroadcastToRoom(SocketNamespace, jamSession.Label, SocketEventQueue, message)
+
 	utils.EncodeJSONBody(w, res)
 }
