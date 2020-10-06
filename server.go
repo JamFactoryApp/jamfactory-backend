@@ -8,15 +8,16 @@ import (
 	"jamfactory-backend/controllers"
 	"jamfactory-backend/models"
 	"jamfactory-backend/types"
+	"jamfactory-backend/utils"
 	"math/rand"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
 
 const (
-	port         = 3000
 	readTimeout  = time.Second
 	writeTimeout = time.Second
 	idleTimeout  = time.Second
@@ -24,18 +25,19 @@ const (
 
 var (
 	server          *http.Server
+	port            int
 	requiredEnvVars = []string{
-		"ALLOWED_CLIENTS",
-		"ALLOWED_CLIENTS_SEP",
-		"ALLOWED_HEADERS",
-		"ALLOWED_HEADERS_SEP",
-		"CLIENT_ADDRESS",
-		"COOKIE_KEY_PAIRS_COUNT",
-		"SPOTIFY_ID",
-		"SPOTIFY_SECRET",
-		"SPOTIFY_REDIRECT_URL",
-		"REDIS_ADDRESS",
-		"REDIS_DATABASE",
+		"JAM_API_ADDRESS",
+		"JAM_API_PORT",
+		"JAM_CLIENT_ADDRESS",
+		"JAM_CLIENT_PORT",
+		"JAM_SPOTIFY_ID",
+		"JAM_SPOTIFY_SECRET",
+		"JAM_SPOTIFY_REDIRECT_URL",
+		"JAM_REDIS_ADDRESS",
+		"JAM_REDIS_PORT",
+		"JAM_REDIS_DATABASE",
+		"JAM_REDIS_PASSWORD",
 	}
 )
 
@@ -66,12 +68,11 @@ func initLogging() {
 		ForceColors:   true,
 		FullTimestamp: false,
 	})
-	log.SetLevel(log.TraceLevel)
 }
 
 func initEnvironment() {
 	if err := godotenv.Load(); err != nil {
-		log.Warnf("No .env file found: %s\n", err)
+		log.Warn(err)
 	}
 
 	var notDefined []string
@@ -81,16 +82,52 @@ func initEnvironment() {
 		}
 	}
 	if len(notDefined) > 0 {
-		log.Fatalf("The following environment variables are not defined: %v\n", notDefined)
+		log.Fatal("The following environment variables are not defined: ", notDefined)
 	}
 }
 
+func initLogLevel() {
+	var logLevel log.Level
+
+	level, ok := os.LookupEnv("JAM_LOG_LEVEL")
+	if !ok {
+		level = "WARN"
+	}
+
+	switch strings.ToLower(level) {
+	case "panic":
+		logLevel = log.PanicLevel
+	case "fatal":
+		logLevel = log.FatalLevel
+	case "error":
+		logLevel = log.ErrorLevel
+	case "warn":
+		logLevel = log.WarnLevel
+	case "info":
+		logLevel = log.InfoLevel
+	case "debug":
+		logLevel = log.DebugLevel
+	case "trace":
+		logLevel = log.TraceLevel
+	default:
+		log.Fatal("Invalid log level")
+	}
+
+	log.SetLevel(logLevel)
+}
+
 func initHttpServer() {
-	allowedOrigins := handlers.AllowedOrigins(strings.Split(os.Getenv("ALLOWED_CLIENTS"), os.Getenv("ALLOWED_CLIENTS_SEP")))
-	allowedHeaders := handlers.AllowedHeaders(strings.Split(os.Getenv("ALLOWED_HEADERS"), os.Getenv("ALLOWED_HEADERS_SEP")))
+	allowedOrigins := handlers.AllowedOrigins([]string{utils.JamClientAddress()})
+	allowedHeaders := handlers.AllowedHeaders([]string{"Content-Type"})
 	allowedMethods := handlers.AllowedMethods([]string{"GET", "POST", "PUT", "OPTIONS"})
 	allowCredentials := handlers.AllowCredentials()
 	corsHandler := handlers.CORS(allowedOrigins, allowedHeaders, allowedMethods, allowCredentials)(controllers.Router)
+
+	var err error
+	port, err = strconv.Atoi(os.Getenv("JAM_API_PORT"))
+	if err != nil {
+		log.Fatal("Invalid api port")
+	}
 
 	server = &http.Server{
 		Addr:         fmt.Sprintf(":%d", port),
@@ -106,9 +143,8 @@ func main() {
 	setup()
 	log.Info("Setup complete")
 
-	log.Infof("HTTP server is listening on port %v\n", port)
-
+	log.Info("HTTP server is listening on port ", port)
 	if err := server.ListenAndServe(); err != nil {
-		log.Fatalf("Error while listening and serving: %s\n", err)
+		log.Fatal("Error while listening and serving: ", err)
 	}
 }
