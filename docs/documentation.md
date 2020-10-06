@@ -16,21 +16,21 @@
 * [API Reference](#api-reference)
     * [Authorization](#authorization)
         * [Get the User's Authorization Status](#1-get-the-users-authorization-status)
-        * [Logout the User](#2-logout-the-user)
+        * [User logout](#2-user-logout)
         * [Start Spotify Authorization Flow for User](#3-start-spotify-authorization-flow-for-user)
     * [JamSession](#jamsession)
         * [Create a new JamSession](#1-create-a-new-jamsession)
-        * [Get the Information of the User's joined JamSession](#2-get-the-information-of-the-users-joined-jamsession)
-        * [Get the Playback of the User's joined JamSession](#3-get-the-playback-of-the-users-joined-jamsession)
+        * [Get the information of the JamSession joined by the user](#2-get-the-information-of-the-jamsession-joined-by-the-user)
+        * [Get the playback of the JamSession joined by the user](#3-get-the-playback-of-the-jamsession-joined-by-the-user)
         * [Join an existing JamSession](#4-join-an-existing-jamsession)
-        * [Leave the User's currently joined JamSession](#5-leave-the-users-currently-joined-jamsession)
-        * [Set Playback of the current User's JamSession](#6-set-playback-of-the-current-users-jamsession)
-        * [Set the Information of the User's joined JamSession](#7-set-the-information-of-the-users-joined-jamsession)
+        * [Leave the JamSession currently joined by the user](#5-leave-the-jamsession-currently-joined-by-the-user)
+        * [Set playback of the JamSession joined by the user](#6-set-playback-of-the-jamsession-joined-by-the-user)
+        * [Set the information of the JamSession joined by the user](#7-set-the-information-of-the-jamsession-joined-by-the-user)
     * [Queue](#queue)
-        * [Add a Collection to the Queue of the User's joined JamSession](#1-add-a-collection-to-the-queue-of-the-users-joined-jamsession)
-        * [Delete a Song in the Queue of the User's joined JamSession](#2-delete-a-song-in-the-queue-of-the-users-joined-jamsession)
-        * [Get the Queue of the User's joined JamSession](#3-get-the-queue-of-the-users-joined-jamsession)
-        * [Vote for a Song in the Queue of the User's joined JamSession](#4-vote-for-a-song-in-the-queue-of-the-users-joined-jamsession)
+        * [Add a collection to the queue of the JamSession joined by the user](#1-add-a-collection-to-the-queue-of-the-jamsession-joined-by-the-user)
+        * [Delete a song in the queue of the JamSession joined by the user](#2-delete-a-song-in-the-queue-of-the-jamsession-joined-by-the-user)
+        * [Get the queue of the JamSession joined by the user](#3-get-the-queue-of-the-jamsession-joined-by-the-user)
+        * [Vote for a song in the queue of the JamSession joined by the user](#4-vote-for-a-song-in-the-queue-of-the-jamsession-joined-by-the-user)
     * [Spotify](#spotify)
         * [Get the User's Available Spotify Playback Devices](#1-get-the-users-available-spotify-playback-devices)
         * [Get the User's Available Spotify Playlists](#2-get-the-users-available-spotify-playlists)
@@ -47,8 +47,14 @@
 
 ### Overview
 
-JamFactory is a Application which provides the necessary API start a JamSession with your friends. Let your friends vote for the Music 
-your selected Spotify Playback Device will play. Only the Host of a JamSession needs a Spotify Premium Account.
+JamFactory is an application which provides the necessary API to start a JamSession. 
+
+A JamSession is a private party with **one** host to set it up, and many attendees to join in.
+
+Your friends or party guests can vote for the songs they like and want to listen to, and the song with the most votes gets played next.
+The host can select a Spotify playback device on which they wish to play the music.
+
+The host of a JamSession has to have a Spotify premium account, the guests can join the JamSession without a Spotify account.
 
 ### User Types
 
@@ -56,59 +62,58 @@ The following user types are currently available:
 
 | type      | description       
 |----------	|-----------------
-| ``New``   | The User did not join any JamSession as a Guest or created his own.
-| ``Guest`` | The User joined an ongoing JamSession as a Guest. 	       
-| ``Host``  | The User is logged into Spotify and started his own JamSession as a Host.
+| ``New``   | The *User* did not join any *JamSession* as a *Guest* or created his own.
+| ``Guest`` | The *User* joined an ongoing *JamSession* as a *Guest*. 	       
+| ``Host``  | The *User* is logged into Spotify and started his own *JamSession* as a *Host*.
 
-See API Description for information about the required User Type for certain routes.
+See the API description for information on the required user type for certain routes.
 
 ### How voting works
 
-To decide what is played next in ongoing JamSession all Guests and the Host are able to Vote Songs of there choice. Each
-JamSession has a Queue of Songs which are played next based on the number of Votes each Song has. When a User votes for a Song,
-which currently is not in the Queue, the Song will be added to the Queue with the Users initial Vote. If the Song already exists the Vote
-of the User will be added to the Song, resulting in a higher place in the Queue.
+To decide which song will be played next in an ongoing JamSession, all guests, and the host, can vote for songs of their choice. Every
+JamSession has a queue of songs, which is sorted by the number of votes per song. Which song will be played next, is based on the number of votes a song has. The more votes a song has,
+the higher the song is in the queue. If it can't be clearly determined by votes, where the song should be placed in the queue, the order of the queue is dictated by the age of the songs added.
+A song which has been longer in the queue will be placed higher than a more recently added song. When the currently played song ends, the song which is highest in the queue will be played next.
+When a user votes for a song, which currently is not in the queue, the song will automatically be added to the queue with one initial vote of the user that suggested the song. 
+If the song has already previously been added to the queue, that song's votes will be increased by one vote. A song can only exist once in a queue.
 
-If a User votes for the same Song again, the Users Vote will be removed from the Song. If a Song reaches zero Votes it will be deleted
-from the Queue.
+A vote can be retracted from a song in the queue, by voting again. Only the user's own vote can be taken away. When a song reaches zero votes, it will automatically be deleted
+from the queue.
 
-When Song, which is currently playing, ends the Song with the most Votes is played next. To determine which Song has the most Votes all
-Songs in the Queue are ordered by their number of Votes. If Songs have the same number of Votes the older Song will be placed higer in the Queue.
-The first Song in the orderd Queue will be played as the next Song.
-
-To keep Track of which User voted for which Song each Vote has a unique identifier based on the selected voting type of the Jam Session. See
+To keep track of which user voted for which song, each vote has a unique identifier based on the selected voting type of the JamSession. See
 [Voting Types](#available-voting-types).
 
-When starting a new JamSession the Queue can be quite empty. To get the Jam going the Host can decide to add a Collection to the Queue.
-The Songs in the Collection are voted in the queue with a virtual Vote. The User adding the Collection can still Vote for the added Songs. 
-However the virtual Votes for the songs in the Collection are added with a date in the future. Therefore a real Vote of a User always 
-overrules the virtual Vote. If no Songs with real Votes are left the Songs from the added Collection will serve as a Fallback.  
+When a new JamSession is created, the queue will be empty. To get the jam going from the getgo, the host can decide to add a collection to the queue.
+The songs in the collection are voted into the queue with one virtual vote. Although adding the collection to the queue, the host can still vote independently for each song of the collection. 
+
+The virtual votes are added with a date in the future, meaning songs with only virtual votes will be added to the bottom of the queue, because "real" votes have a higher priority.
+The songs with only virtual votes will serve as a fallback, as soon as there are no more songs with user votes left, so the jam never stops.
 
 #### Available voting types
 
 | type                  | description       
 |----------	            |-----------------
-| ``session_voting``    | The Session ID of the User is used as an identifier
-| ``ip_voting``         | The IP Address of the User is used as an identifier	       
+| ``session_voting``    | The *Session ID* of the *User* is used as an identifier
+| ``ip_voting``         | The *IP Address* of the *User* is used as an identifier	       
 
 
 ### JamSession State
 
-To keep the music coming each JamSession has a Conductor who will keep track of the current events. For example the Conductor will
-check if the current Song ended and the next Song should start. He also keeps track of the current Playback of the Session.
+To keep the jam going, each JamSession has its own conductor who will keep track of the current events. The conductor will, for instance,
+check if the current song has ended, and if the next song should start. He also keeps track of the current playback of the session.
 
-Sometimes the Host of the User does not want to Conductor to interfere with his Spotify Playback even if the JamSession is still going.
-The JamSession state will determine if the Conductor has the instruction to control the Spotify Playback.
+It is possible that the host does not want the conductor to interfere with the playback, even if the JamSession is still ongoing.
+The JamSession state will determine if the conductor has the right to control the Spotify playback.
 
-The following event will change the JamSession State
+The following event will change the JamSession state:
 
-| event                                              | result       
-|----------	                                         |-----------------
-| User creates a JamSession                          | active = ``true`` if the user has a selected Playback Device, else inactive = ``false`` 
-| User pauses playback through the JamFactory App    | inactive = ``false``
-| User resumes playback through the JamFactory App   | active = ``true``
-| User pauses playback through Spotify               | inactive = ``false``
-| User resumes/starts playback through Spotify       | inactive = ``false``
+| event                                                  | result       
+|----------	                                             |-----------------
+| *User* creates a *JamSession*                          | active = ``true`` if the user has a selected Playback Device, else inactive = ``false`` 
+| *User* pauses playback through the *JamFactory App*    | inactive = ``false``
+| *User* resumes playback through the *JamFactory App*   | active = ``true``
+| *User* pauses playback through *Spotify*               | inactive = ``false``
+| *User* resumes/starts playback through *Spotify*       | inactive = ``false``
 
 ## Object Model
 
@@ -116,19 +121,19 @@ The following event will change the JamSession State
 
 | type                      | description       
 |----------	                |-----------------
-| ``spotifyTrackFull``      | The Session ID of the User is used as an identifier
-| ``votes``                 | The IP Adress of the User is used as an identifier
+| ``spotifyTrackFull``      | The *Session ID* of the *User* is used as an identifier
+| ``votes``                 | The *IP Address* of the *User* is used as an identifier
 | ``voted``                 | 
 
 ## API Reference
 
 ### Authorization
 
-#### 1. Get the User's Authorization Status
+#### 1. Get the user's authorization status
 
 ***Description***
 
-Get the current User's authorization status.
+Get the user's current authorization status.
 
 ***Endpoint:***
 
@@ -141,11 +146,11 @@ URL: jamfactory.app/api/v1/auth/current
 
 ***Response Body (JSON):***
 
-| key      	    | value type        | value description                                                                                          	|
-|----------	    |-----------------  |------------------------------------------------------------------------------------------------------------	|
-| ``user`` 	    | string 	        | Current User Type. See available [User Types](#user-types)                                      	            |
-| ``label``     | string 	        | JamLabel of the User's currently joined JamSession. Empty if the User is not joined a JamSession              |
-| ``authorized``| boolean 	        | Current Spotify authorization Status. True if the User completed the Spotify authorization process 	        |
+| key      	    | value type        | value description                                                                                          	    |
+|----------	    |-----------------  |------------------------------------------------------------------------------------------------------------	    |
+| ``user`` 	    | string 	        | Current *User* Type. See available [User Types](#user-types)                                      	            |
+| ``label``     | string 	        | *JamLabel* of the currently joined *JamSession* for the *User*. Empty if the *User* has not joined a *JamSession*.|
+| ``authorized``| boolean 	        | Current *Spotify* authorization status. ``True`` if the *User* completed the *Spotify* authorization process.     |
 
 ```json
 {
@@ -155,12 +160,12 @@ URL: jamfactory.app/api/v1/auth/current
 }
 ```
 
-#### 2. Logout the User
+#### 2. User logout
 
 
 ***Description***
 
-Logout the current User. This will remove any session data of the user and remove the spotify authorization. If the User was a Host of a JamSession then the Jam session will also be deleted. It is recommended to first leave any currently joined JamSession before logout.
+Logout the current user. This will remove any session data of the user and remove the Spotify authorization. The JamSession will also be deleted if the user was its host. It is recommended to first leave any joined JamSession before logging out.
 
 ***Endpoint:***
 
@@ -175,7 +180,7 @@ URL: jamfactory.app/api/v1/auth/logout
 
 | key      	    | value type        | value description                                                                                          	|
 |----------	    |-----------------  |------------------------------------------------------------------------------------------------------------	|
-| ``success`` 	| boolean 	        | Feedback if the Logout process was successfull.                                      	                        |
+| ``success`` 	| boolean 	        | Feedback if the logout process was successful.                                      	                        |
 
 ```json
 {
@@ -187,7 +192,7 @@ URL: jamfactory.app/api/v1/auth/logout
 
 ***Description***
 
-Start the Spotify Authorization Process for the current User. Uses the [Authorization Code Flow](https://developer.spotify.com/documentation/general/guides/authorization-guide/#authorization-code-flow) from spotify. Required the User to have a Spotify Premium Account.
+Start the Spotify authorization process for the current user. Uses the [Authorization Code Flow](https://developer.spotify.com/documentation/general/guides/authorization-guide/#authorization-code-flow) from Spotify. Requires the user to have a Spotify premium account.
 
 ***Endpoint:***
 
@@ -202,7 +207,7 @@ URL: jamfactory.app/api/v1/auth/login
 
 | key      	    | value type        | value description                                                                                          	|
 |----------	    |-----------------  |------------------------------------------------------------------------------------------------------------	|
-| ``url`` 	    | string 	        | The Url to the Spotify Account Service for the Authorization. See [Authorization Code Flow](https://developer.spotify.com/documentation/general/guides/authorization-guide/#authorization-code-flow)               	                        |
+| ``url`` 	    | string 	        | The *Url* to the *Spotify Account Service* for authorization. See [Authorization Code Flow](https://developer.spotify.com/documentation/general/guides/authorization-guide/#authorization-code-flow)               	                        |
 
 ```json
 {
@@ -217,7 +222,7 @@ URL: jamfactory.app/api/v1/auth/login
 
 ***Description***
 
-Create a new JamSession. Requires the User to be authorized by Spotify. The user will join the JamSession as Host.
+Create a new JamSession. Requires the user to be authorized by Spotify. The user will join the JamSession as the host.
 
 ***Endpoint:***
 
@@ -232,7 +237,7 @@ URL: jamfactory.app/api/v1/jam/create
 
 | key      	    | value type            | value description                                     |
 |----------	    |-------------------	|---------------------------------------------------    |
-| ``label`` 	| string             	| The JamLabel of the created JamSession                |
+| ``label`` 	| string             	| The *JamLabel* of the created *JamSession*.                |
 
 ```json
 {
@@ -240,11 +245,11 @@ URL: jamfactory.app/api/v1/jam/create
 }
 ```
 
-#### 2. Get the Information of the User's joined JamSession
+#### 2. Get the information of the JamSession joined by the user
 
 ***Description***
 
-Get the Information of the User's currently joined JamSession. Requires the User to be joined a JamSession
+Get the information of the JamSession currently joined by the user. Requires the user to have joined a JamSession.
 
 ***Endpoint:***
 
@@ -259,10 +264,10 @@ URL: jamfactory.app/api/v1/jam
 
 | key      	        | value type        	| value description                                                                                     |
 |----------	        |-------------------	|-------------------------------------------------------------------------------------------------------|
-| ``label``         | string  	            | JamLabel of the User's currently joined JamSession                                       	            |
-| ``name`` 	        | string             	| Name of the User's currently joined JamSession    	                                                |
-| ``active`` 	    | string            	| State of the User's currently joined JamSession. See [JamSession State](#jamsession-state)	|
-| ``voting_type`` 	| string             	| Voting type of the User's currently joined JamSession. See [Avaliable Voting Types](#available-voting-types)	|
+| ``label``         | string  	            | *JamLabel* of the currently joined *JamSession*.                                       	            |
+| ``name`` 	        | string             	| *Name* of the currently joined *JamSession*.    	                                                |
+| ``active`` 	    | string            	| *State* of the currently joined *JamSession*. See [JamSession State](#jamsession-state)	|
+| ``voting_type`` 	| string             	| *Voting type* of the currently joined *JamSession*. See [Available Voting Types](#available-voting-types)	|
 
 ```json
 {
@@ -273,11 +278,11 @@ URL: jamfactory.app/api/v1/jam
 }
 ```
 
-#### 3. Get the Playback of the User's joined JamSession
+#### 3. Get the playback of the JamSession joined by the user
 
 ***Description***
 
-Get the Playback of the User's currently joined JamSession. Requires the User to be joined a JamSession
+Get the playback of the JamSession currently joined by the user. Requires the user to have joined a JamSession.
 
 ***Endpoint:***
 
@@ -290,10 +295,10 @@ URL: jamfactory.app/api/v1/jam/playback
 
 ***Response Body (JSON):***
 
-| key      	        | value type        	                                                                                            | value description                                     |
-|----------	        |-------------------	                                                                                            |---------------------------------------------------    |
-| ``playback``      | [Spotify Playback Object](https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-get-information-about-the-users-current-playback)  	| Playback state                                     	|
-| ``device_id`` 	| string      	                                                                                            | Device ID of the currently selected playback device   |
+| key      	        | value type        	                                                                                                                                        | value description                                     |
+|----------	        |-------------------	                                                                                                                                        |---------------------------------------------------    |
+| ``playback``      | [Spotify Playback Object](https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-get-information-about-the-users-current-playback)  	| *Playback state*                                      |
+| ``device_id`` 	| string      	                                                                                                                                                | *Device ID* of the currently selected playback device.|
 
 ```json
 {
@@ -306,7 +311,7 @@ URL: jamfactory.app/api/v1/jam/playback
 
 ***Description***
 
-Join an existing JamSession. The user will join the JamSession as a Guest.
+Join an existing JamSession. The user will join the JamSession as a guest.
 
 ***Endpoint:***
 
@@ -317,9 +322,9 @@ URL: jamfactory.app/api/v1/jam/join
 
 ***Request Body (JSON):***
 
-| key      	    | value type            | value description                                     |
-|----------	    |-------------------	|---------------------------------------------------    |
-| ``label`` 	| string *required*           	| The JamLable of JamSession the user wants to join              |
+| key      	    | value type            | value description                                             |
+|----------	    |-------------------	|---------------------------------------------------            |
+| ``label`` 	| string *required*     | The *JamLabel* of the *JamSession* the *User* wants to join.  |
 
 ```json
 {
@@ -331,7 +336,7 @@ URL: jamfactory.app/api/v1/jam/join
 
 | key      	    | value type            | value description                                     |
 |----------	    |-------------------	|---------------------------------------------------    |
-| ``label`` 	| string             	| The JamLabel of the joined JamSession                 |
+| ``label`` 	| string             	| The *JamLabel* of the joined *JamSession*.            |
 
 ```json
 {
@@ -339,12 +344,12 @@ URL: jamfactory.app/api/v1/jam/join
 }
 ```
 
-#### 5. Leave the User's currently joined JamSession
+#### 5. Leave the JamSession currently joined by the user
 
 
 ***Description***
 
-Leave the User's currently joined JamSession. If the User is the Host of the JamSession the JamSession will be deleted. Requires the User to be joined an JamSession.
+Leave the JamSession currently joined by the user. If the user is the host of the JamSession, the JamSession will be deleted. Requires the user to have joined a JamSession.
 
 ***Endpoint:***
 
@@ -359,7 +364,7 @@ URL: jamfactory.app/api/v1/jam/leave
 
 | key      	    | value type            | value description                                     |
 |----------	    |-------------------	|---------------------------------------------------    |
-| ``success`` 	| boolean             	| Result of the operation                               |
+| ``success`` 	| boolean             	| Result of the operation.                              |
 
 ```json
 {
@@ -367,12 +372,12 @@ URL: jamfactory.app/api/v1/jam/leave
 }
 ```
 
-#### 6. Set Playback of the current User's JamSession
+#### 6. Set playback of the JamSession joined by the user
 
 
 ***Description***
 
-Set the Playback of the User's currently joined JamSession. Requires the User to be the Host of a JamSession
+Set the playback of the JamSession currently joined by the user. Requires the user to be the host of the JamSession.
 
 ***Endpoint:***
 
@@ -385,8 +390,8 @@ URL: jamfactory.app/api/v1/jam/playback
 
 | key      	        | value type        	| value description                                     |
 |----------	        |-------------------    |---------------------------------------------------    |
-| ``device_id``     | string *optional*     | Device ID of the playback device                      |
-| ``playing`` 	    | boolean *optional*    | Playback state. ``True``= Play ``False`` = Pause      |
+| ``device_id``     | string *optional*     | *Device ID* of the playback device.                   |
+| ``playing`` 	    | boolean *optional*    | *Playback state*. ``True``= Play ``False`` = Pause    |
 
 ```json
 {
@@ -397,10 +402,10 @@ URL: jamfactory.app/api/v1/jam/playback
 
 ***Response Body (JSON):***
 
-| key      	        | value type        	                                                                                            | value description                                     |
-|----------	        |-------------------	                                                                                            |---------------------------------------------------    |
+| key      	        | value type        	                                                                                                                                        | value description                                     |
+|----------	        |-------------------	                                                                                                                                        |---------------------------------------------------    |
 | ``playback``      | [Spotify Playback Object](https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-get-information-about-the-users-current-playback)  	| Playback state                                     	|
-| ``device_id`` 	| string             	                                                                                            | Device ID of the currently selected playback device   |
+| ``device_id`` 	| string             	                                                                                                                                        | *Device ID* of the currently selected playback device.|
 
 ```json
 {
@@ -410,11 +415,11 @@ URL: jamfactory.app/api/v1/jam/playback
 ```
 
 
-#### 7. Set the Information of the User's joined JamSession
+#### 7. Set the information of the JamSession joined by the user
 
 ***Description***
 
-Get the Information of the User's currently joined JamSession. Requires the User to be the Host of a JamSession
+Get the information of the JamSession currently joined by the user. Requires the user to be the host of the JamSession.
 
 ***Endpoint:***
 
@@ -425,15 +430,15 @@ URL: jamfactory.app/api/v1/jam
 
 ***Request Body (JSON):***
 
-| key      	        | value type        	| value description                                                                                     |
-|----------	        |-------------------	|-------------------------------------------------------------------------------------------------------|
-| ``name`` 	        | string *optional*    	| Name of the User's currently joined JamSession    	                                                |
-| ``active`` 	    | boolean *optional*    | State of the User's currently joined JamSession. See [JamSession State](#jamsession-state)	|
-| ``voting_type`` 	| string *optional*    	| Voting type of the User's currently joined JamSession. See [Avaliable Voting Types](#available-voting-types)	|
+| key      	        | value type        	| value description                                                                                                     |
+|----------	        |-------------------	|-----------------------------------------------------------------------------------------------------------------------|
+| ``name`` 	        | string *optional*    	| *Name* of the *JamSession* currently joined by the user.   	                                                        |
+| ``active`` 	    | boolean *optional*    | *State* of the *JamSession* currently joined by the user. See [JamSession State](#jamsession-state)	                |
+| ``voting_type`` 	| string *optional*    	| *Voting type* of the *JamSession* currently joined by the user. See [Available Voting Types](#available-voting-types)	|
 
 ```json
 {
-    "name": "Joes Birthday Party",
+    "name": "Joe's Birthday Party",
     "active": true,
     "voting_type": "ip_voting"
 }
@@ -441,12 +446,12 @@ URL: jamfactory.app/api/v1/jam
 
 ***Response Body (JSON):***
 
-| key      	        | value type        	| value description                                                                                     |
-|----------	        |-------------------	|-------------------------------------------------------------------------------------------------------|
-| ``label``         | string  	            | JamLabel of the User's currently joined JamSession                                       	            |
-| ``name`` 	        | string             	| Name of the User's currently joined JamSession    	                                                |
-| ``active`` 	    | boolean            	| State of the User's currently joined JamSession. See [JamSession State](#jamsession-state)	|
-| ``voting_type`` 	| string             	| Voting type of the User's currently joined JamSession. See [Avaliable Voting Types](#available-voting-types)	|
+| key      	        | value type        	| value description                                                                                                     |
+|----------	        |-------------------	|-----------------------------------------------------------------------------------------------------------------------|
+| ``label``         | string  	            | *JamLabel* of the *JamSession* currently joined by the user.                                       	                |
+| ``name`` 	        | string             	| *Name* of the *JamSession* currently joined by the user.    	                                                        |
+| ``active`` 	    | boolean            	| *State* of the *JamSession* currently joined by the user. See [JamSession State](#jamsession-state)	                |
+| ``voting_type`` 	| string             	| *Voting type* of the *JamSession* currently joined by the user. See [Available Voting Types](#available-voting-types)	|
 
 ```json
 {
@@ -459,13 +464,17 @@ URL: jamfactory.app/api/v1/jam
 
 ### Queue
 
-#### 1. Add a Collection to the Queue of the User's joined JamSession
+#### 1. Add a collection to the queue of the JamSession joined by the user
 
 ***Description***
 
-Add a Spotify Collection (Playlist or Album) the the Current Queue of the User's joined JamSession. This can be used to add fallback music to a JamSession. The Songs in the Collection are voted in the queue with a virtual Vote. The User adding the Collection can still Vote for the added Songs. Note that the virtual Votes for the songs in the playlist is added with a date in the future. Therefore a real Vote of a User overrules the virtual Vote. For more details see [How voting works](#how-voting-works)
+Add a Spotify collection (playlist or album) to the current queue of the JamSession joined by the user. 
+This can be used to add fallback music to a JamSession. The songs in the collection are voted in the queue with a virtual vote. 
+The user adding the collection can still vote for the added songs. 
+**Note** that the virtual votes, for the songs in the playlist, are added with a date in the future. A real vote of a user will overrule the virtual vote and therefore be listed higher up in the queue. 
+For more details see [How voting works](#how-voting-works).
 
-Requires the Uses to be the Host of a JamSession.
+Requires the user to be the host of the JamSession.
 
 ***Endpoint:***
 
@@ -476,10 +485,10 @@ URL: jamfactory.app/api/v1/queue/collection
 
 ***Request Body (JSON):***
 
-| key      	        | value type            | value description                                              |
-|----------	        |-------------------	|---------------------------------------------------             |
-| ``collection`` 	| string *required*   	| Spotify ID of the collection.  |
-| ``type`` 	        | string *required*   	| Type of he collection. <br> ``playlist`` for a playlist <br> ``album`` for an album  |
+| key      	        | value type            | value description                                                                      |
+|----------	        |-------------------	|----------------------------------------------------------------------------------------|
+| ``collection`` 	| string *required*   	| *Spotify ID* of the collection.                                                        |
+| ``type`` 	        | string *required*   	| *Type* of the collection. <br> ``playlist`` for a playlist <br> ``album`` for an album |
 
 ```json
 {
@@ -490,9 +499,9 @@ URL: jamfactory.app/api/v1/queue/collection
 
 ***Response Body (JSON):***
 
-| key      	    | value type            | value description                                              |
-|----------	    |-------------------	|---------------------------------------------------             |
-| ``queue`` 	| array             	| Array of the Songs in the current Queue. See [Queue Song](#queue-song). The Queue Song Objects are personalized to the User requesting the Queue. |
+| key      	    | value type            | value description                                                                                                                                         |
+|----------	    |-------------------	|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ``queue`` 	| array             	| Array of the songs in the current *queue*. See [Queue Song](#queue-song). The *queue song objects* are personalized to the *user* requesting the *queue*. |
 
 ```json
 {
@@ -500,14 +509,14 @@ URL: jamfactory.app/api/v1/queue/collection
 }
 ```
 
-#### 2. Delete a Song in the Queue of the User's joined JamSession
+#### 2. Delete a song in the queue of the JamSession joined by the user
 
 
 ***Description***
 
-Delete a Song in the Current Queue of the User's joined JamSession. Only songs wich are currently in the Queue can be deleted. This deletes all existing Votes for the Song but does not prevent a new Vote for the same Song.
+Delete a song in the queue of the JamSession joined by the user. Only songs which are currently in the queue can be deleted. This deletes all existing votes for a song, but does not prevent a new vote for that song.
 
-Requires the User to be Host of a JamSession.
+Requires the user to be the host of the JamSession.
 
 ***Endpoint:***
 
@@ -520,7 +529,7 @@ URL: jamfactory.app/api/v1/queue/delete
 
 | key      	    | value type            | value description                                              |
 |----------	    |-------------------	|---------------------------------------------------             |
-| ``track`` 	| string *required*   	| Spotify ID of the track which should be deleted. See [Spotify Track Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#track-object-full)  |
+| ``track`` 	| string *required*   	| *Spotify ID* of the track which should be deleted. See [Spotify Track Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#track-object-full)  |
 
 ```json
 {
@@ -532,7 +541,7 @@ URL: jamfactory.app/api/v1/queue/delete
 
 | key      	    | value type            | value description                                              |
 |----------	    |-------------------	|---------------------------------------------------             |
-| ``queue`` 	| array             	| Array of the Songs in the current Queue. See [Queue Song](#queue-song). The Queue Song Objects are personalized to the User requesting the Queue. |
+| ``queue`` 	| array             	| Array of the songs in the current *queue*. See [Queue Song](#queue-song). The *queue song objects* are personalized to the *user* requesting the *queue*. |
 
 ```json
 {
@@ -540,12 +549,16 @@ URL: jamfactory.app/api/v1/queue/delete
 }
 ```
 
-#### 3. Get the Queue of the User's joined JamSession
+#### 3. Get the queue of the JamSession joined by the user
 
 
 ***Description***
 
-Returns the Queue of the Users's joined JamSession. Don't query this endpoint on a regular basis. To get updates on chages of the queue use the provided Socket. See [Socket Reference](#socket-reference). Requires the User to be joined a JamSession.
+Returns the queue of the JamSession joined by the user. 
+_**Don't query this endpoint on a regular basis.**_ 
+To get updates on changes to the queue use the provided socket. See [Socket Reference](#socket-reference). 
+
+Requires the user to have joined the JamSession.
 
 ***Endpoint:***
 
@@ -560,7 +573,7 @@ URL: jamfactory.app/api/v1/queue
 
 | key      	    | value type            | value description                                              |
 |----------	    |-------------------	|---------------------------------------------------             |
-| ``queue`` 	| array             	| Array of the Songs in the current Queue. See [Queue Song](#queue-song). The Queue Song Objects are personalized to the User requesting the Queue. |
+| ``queue`` 	| array             	| Array of the songs in the current *queue*. See [Queue Song](#queue-song). The *queue song objects* are personalized to the *user* requesting the *queue*. |
 
 ```json
 {
@@ -568,14 +581,14 @@ URL: jamfactory.app/api/v1/queue
 }
 ```
 
-#### 4. Vote for a Song in the Queue of the User's joined JamSession
+#### 4. Vote for a song in the queue of the JamSession joined by the user
 
 
 ***Description***
 
-Add a Vote from the User to a Song in the User's joined JamSession. If the Song does not exists in the queue, it will be added with the Users inital vote. If the User already Voted for the Song, the User's Vote will be removed. If a Song reaches zero Votes, the Song will be removed from the Queue. See [How voting works](#how-voting-works) for a more detailed description on how voting works.
+Add or remove a vote from the user to a song in the JamSession joined by the user. See [How voting works](#how-voting-works) for a more detailed description on how voting works.
 
-Requires the User to be joined a JamSession.
+Requires the user to have joined the JamSession.
 
 ***Endpoint:***
 
@@ -588,7 +601,7 @@ URL: jamfactory.app/api/v1/queue/vote
 
 | key      	    | value type            | value description                                              |
 |----------	    |-------------------	|---------------------------------------------------             |
-| ``track`` 	| string *required*   	| Spotify ID of the track. See [Spotify Track Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#track-object-full)  |
+| ``track`` 	| string *required*   	| *Spotify ID* of the track. See [Spotify Track Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#track-object-full)  |
 
 ```json
 {
@@ -600,7 +613,7 @@ URL: jamfactory.app/api/v1/queue/vote
 
 | key      	    | value type            | value description                                              |
 |----------	    |-------------------	|---------------------------------------------------             |
-| ``queue`` 	| array             	| Array of the Songs in the current Queue. See [Queue Song](#queue-song). The Queue Song Objects are personalized to the User requesting the Queue. |
+| ``queue`` 	| array             	| Array of the songs in the current *queue*. See [Queue Song](#queue-song). The *queue song objects* are personalized to the *user* requesting the *queue*. |
 
 ```json
 {
@@ -610,12 +623,12 @@ URL: jamfactory.app/api/v1/queue/vote
 
 ### Spotify
 
-#### 1. Get the User's Available Spotify Playback Devices
+#### 1. Get the User's available Spotify playback devices
 
 
 ***Description***
 
-Get information about the current user’s available devices. Requires the current user to be a JamSession Host.
+Get information about the current available devices of the user. Requires the current user to be a JamSession host.
 
 ***Endpoint:***
 
@@ -630,7 +643,7 @@ URL: jamfactory.app/api/v1/spotify/devices
 
 | key      	    | value type        	| value description                                                                                          	|
 |----------	    |-------------------	|------------------------------------------------------------------------------------------------------------	|
-| ``devices``   | array 	            | Array of the available Spotify Playback Devices of the User. See [Spotify Device Object](https://developer.spotify.com/documentation/web-api/reference/player/get-a-users-available-devices/#device-object)                                    	|
+| ``devices``   | array 	            | Array of the available *Spotify playback devices* of the *User*. See [Spotify Device Object](https://developer.spotify.com/documentation/web-api/reference/player/get-a-users-available-devices/#device-object)                                    	|
 
 ```json
 {
@@ -638,12 +651,12 @@ URL: jamfactory.app/api/v1/spotify/devices
 }
 ```
 
-#### 2. Get the User's Available Spotify Playlists
+#### 2. Get the User's available Spotify playlists
 
 
 ***Description***
 
-Get a list of the Spotify playlists owned or followed by the current user. Requires the current user to be a JamSession Host.
+Get a list of all Spotify playlists owned or followed by the current user. Requires the current user to be a JamSession host.
 
 ***Endpoint:***
 
@@ -658,7 +671,7 @@ URL: jamfactory.app/api/v1/spotify/playlists
 
 | key      	        | value type        	| value description                                                                                          	|
 |----------	        |-------------------	|------------------------------------------------------------------------------------------------------------	|
-| ``playlists`` 	| [Spotify Paging Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#paging-object) 	| Array of the Users avaliable Spotify Playlists as [Spotify Simplified Playlist Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#playlist-object-simplified) wrapped in a [Spotify Paging Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#paging-object)
+| ``playlists`` 	| [Spotify Paging Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#paging-object) 	| Array of the *users* available Spotify playlists as [Spotify Simplified Playlist Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#playlist-object-simplified) wrapped in a [Spotify Paging Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#paging-object)
 
 ```json
 {
@@ -666,12 +679,12 @@ URL: jamfactory.app/api/v1/spotify/playlists
 }
 ```
 
-#### 3. Search for an Item on Spotify
+#### 3. Search for an item on Spotify
 
 
 ***Description***
 
-Get Spotify Catalog information about playlists and tracks that match a keyword string. Requires the current user to be joined a JamSession.
+Get Spotify catalog information about playlists and tracks that match a keyword string. Requires the current user to have joined the JamSession.
 
 ***Endpoint:***
 
@@ -685,7 +698,7 @@ URL: jamfactory.app/api/v1/spotify/search
 | key      	| value type        	| value description                                                                                          	|
 |----------	|-------------------	|------------------------------------------------------------------------------------------------------------	|
 | ``text`` 	| string *required* 	| Search text. All search texts are completed with a ``*`` for autofill.                                       	|
-| ``type`` 	| string *required* 	| Type of the searched item. Available:<br>``track`` for spotify track,<br>``playlist`` for spotify playlist 	|
+| ``type`` 	| string *required* 	| Type of the searched item. Available:<br>``track`` for Spotify tracks,<br>``playlist`` for Spotify playlists 	|
 
 ```json
 {
@@ -698,10 +711,10 @@ URL: jamfactory.app/api/v1/spotify/search
 
 | key      	        | value type        	| value description                                                                                          	|
 |----------	        |-------------------	|------------------------------------------------------------------------------------------------------------	|
-| ``artists`` 	    | [Spotify Paging Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#paging-object) 	| Spotify Artists found with the submitted search as [Spotify Simplified Artists Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#artist-object-simplified) wrapped in a [Spotify Paging Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#paging-object) |
-| ``albums`` 	    | [Spotify Paging Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#paging-object) 	| Spotify Albums found with the submitted search as [Spotify Simplified Album Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#album-object-simplified) wrapped in a [Spotify Paging Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#paging-object) |
-| ``playlists`` 	| [Spotify Paging Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#paging-object) 	| Spotify Playlists found with the submitted search as [Spotify Simplified Playlist Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#playlist-object-simplified) wrapped in a [Spotify Paging Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#paging-object) |
-| ``tracks`` 	    | [Spotify Paging Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#paging-object) 	| Spotify Tracks found with the submitted search as [Spotify Simplified Track Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#track-object-simplified) wrapped in a [Spotify Paging Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#paging-object) |
+| ``artists`` 	    | [Spotify Paging Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#paging-object) 	| Spotify artists found with the submitted search term as [Spotify Simplified Artists Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#artist-object-simplified) wrapped in a [Spotify Paging Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#paging-object) |
+| ``albums`` 	    | [Spotify Paging Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#paging-object) 	| Spotify albums found with the submitted search term as [Spotify Simplified Album Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#album-object-simplified) wrapped in a [Spotify Paging Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#paging-object) |
+| ``playlists`` 	| [Spotify Paging Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#paging-object) 	| Spotify playlists found with the submitted search term as [Spotify Simplified Playlist Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#playlist-object-simplified) wrapped in a [Spotify Paging Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#paging-object) |
+| ``tracks`` 	    | [Spotify Paging Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#paging-object) 	| Spotify tracks found with the submitted search term as [Spotify Simplified Track Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#track-object-simplified) wrapped in a [Spotify Paging Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#paging-object) |
 
 ```json
 {
@@ -713,43 +726,43 @@ URL: jamfactory.app/api/v1/spotify/search
 ```
 
 # Socket Reference
-JamFactory supports [Socket.IO](https://socket.io/) Websockets to update the Users information at certain events.
+JamFactory supports [Socket.IO](https://socket.io/) Websockets to update the user's information at certain events.
 **Currently only Socket.IO Version <= 1.4 is supported**
-When the a User has joined a JamSession as a Host or as a Guest, he can connect to the Socket.IO room created by the JamSession.
-The connection will automatically join the right room based on the Session Cookie. 
+When the user has joined a JamSession as a host or as a guest, he can connect to the Socket.IO room created by the JamSession.
+The connection will automatically join the right room, based on the session cookie. 
 The client only needs to open or close the connection and listen for the events.
 
 ***Example:***
 
-Connect to the Socket
+Connect to the socket
 ```js
     import * as io from 'socket.io-client';
     this.socket = io.connect('http://jamfactory.app:3000');
 ```
 
-Listen to events
+Listen for events
 ```js
      this.socket.on('<EventName>', (message: any) => {
           // <Code to handle the message>
      });
 ```
 
-Close the connection if the User Leaves
+Close the connection if the user leaves
 ```js
      this.socket.close();
 ```
 
-## Socket Events
+## Socket events
 
 ### Event: ``queue`` 
 
-The Queue of the Users joined JamSession has changed.
+The queue of the JamSession joined by the user has changed.
 
 ***Message (JSON):***
 
 | key      	    | value type            | value description                                              |
 |----------	    |-------------------	|---------------------------------------------------             |
-| ``queue`` 	| array             	| Array of the Songs in the current Queue. See [Queue Song](#queue-song). The Queue Song Objects are **not** personalized to the User requesting the Queue. |
+| ``queue`` 	| array             	| Array of the songs in the current *queue*. See [Queue Song](#queue-song). The *queue song objects* are **not** personalized to the *user* requesting the *queue*. |
 
 ```json
 {
@@ -759,14 +772,14 @@ The Queue of the Users joined JamSession has changed.
 
 ### Event: ``playback`` 
 
-Update on the current Playback State of the JamSession. This event is triggeredapproximately every second.
+Update on the current playback state of the JamSession. This event is triggered approximately every second.
 
 ***Message (JSON):***
 
 | key      	        | value type        	                                                                                            | value description                                     |
 |----------	        |-------------------	                                                                                            |---------------------------------------------------    |
 | ``playback``      | [Spotify Playback Object](https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-get-information-about-the-users-current-playback)  	| Playback state                                     	|
-| ``device_id`` 	| string             	                                                                                            | Device ID of the currently selected playback device   |
+| ``device_id`` 	| string             	                                                                                            | *Device ID* of the currently selected playback device   |
 
 ```json
 {
@@ -785,8 +798,8 @@ Reason why the JamSession was closed.
 
 | Reason      	    | Description       
 |----------	        |-------------------
-| ``host``          | The Host closed the JamSession
-| ``inactive`` 	    | The JamSession was closed due to inactivity 
+| ``host``          | The *host* closed the *JamSession*.
+| ``inactive`` 	    | The *JamSession+ was closed due to inactivity. 
 
 ---
 [Back to top](#jamfactory)
