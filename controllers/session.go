@@ -24,7 +24,7 @@ func initSessionStore() {
 	if conn.Err() != nil {
 		log.Fatal("Connection to redis could not be established!")
 	}
-	cookieKeyPairsCount, err := strconv.Atoi(os.Getenv("COOKIE_KEY_PAIRS_COUNT"))
+	cookieKeyPairsCount, err := strconv.Atoi(os.Getenv("JAM_COOKIE_KEY_PAIRS_COUNT"))
 	if err != nil {
 		log.Fatal(err)
 	}

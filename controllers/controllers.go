@@ -2,7 +2,7 @@ package controllers
 
 import (
 	log "github.com/sirupsen/logrus"
-	"os"
+	"jamfactory-backend/utils"
 )
 
 var (
@@ -33,5 +33,5 @@ func Setup() {
 }
 
 func initVars() {
-	afterCallbackRedirect = os.Getenv("CLIENT_ADDRESS")
+	afterCallbackRedirect = utils.JamClientAddress()
 }

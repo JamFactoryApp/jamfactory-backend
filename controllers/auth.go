@@ -21,8 +21,8 @@ var (
 )
 
 func initSpotifyAuthenticator() {
-	spotifyAuthenticator = spotify.NewAuthenticator(os.Getenv("SPOTIFY_REDIRECT_URL"), spotifyScopes...)
-	spotifyAuthenticator.SetAuthInfo(os.Getenv("SPOTIFY_ID"), os.Getenv("SPOTIFY_SECRET"))
+	spotifyAuthenticator = spotify.NewAuthenticator(os.Getenv("JAM_SPOTIFY_REDIRECT_URL"), spotifyScopes...)
+	spotifyAuthenticator.SetAuthInfo(os.Getenv("JAM_SPOTIFY_ID"), os.Getenv("JAM_SPOTIFY_SECRET"))
 }
 
 func callback(w http.ResponseWriter, r *http.Request) {
