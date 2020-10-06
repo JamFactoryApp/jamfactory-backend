@@ -799,7 +799,7 @@ Reason why the JamSession was closed.
 | Reason      	    | Description       
 |----------	        |-------------------
 | ``host``          | The *host* closed the *JamSession*.
-| ``inactive`` 	    | The *JamSession+ was closed due to inactivity. 
+| ``inactive`` 	    | The *JamSession* was closed due to inactivity. 
 
 ---
 [Back to top](#jamfactory)
