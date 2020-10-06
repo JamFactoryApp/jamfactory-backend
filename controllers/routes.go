@@ -49,10 +49,12 @@ var (
 
 	socketRouter *mux.Router
 
+	loggingMiddleware            = LoggingMiddleware{}
 	sessionRequiredMiddleware    = SessionRequiredMiddleware{}
 	jamSessionRequiredMiddleware = JamSessionRequiredMiddleware{}
 	hostRequiredMiddleware       = UserTypeRequiredMiddleware{UserType: models.UserTypeHost}
 
+	logging            alice.Chain
 	sessionRequired    alice.Chain
 	jamSessionRequired alice.Chain
 	hostRequired       alice.Chain
@@ -81,7 +83,8 @@ func initRoutes() {
 }
 
 func initMiddleWares() {
-	sessionRequired = alice.New(sessionRequiredMiddleware.Handler)
+	logging = alice.New(loggingMiddleware.Handler)
+	sessionRequired = logging.Append(sessionRequiredMiddleware.Handler)
 	jamSessionRequired = sessionRequired.Append(jamSessionRequiredMiddleware.Handler)
 	hostRequired = jamSessionRequired.Append(hostRequiredMiddleware.Handler)
 }

@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"jamfactory-backend/utils"
 	"net/http"
@@ -11,12 +12,21 @@ type Middleware interface {
 	Handler(http.Handler) http.Handler
 }
 
+type LoggingMiddleware struct{}
+
 type JamSessionRequiredMiddleware struct{}
 
 type SessionRequiredMiddleware struct{}
 
 type UserTypeRequiredMiddleware struct {
 	UserType string
+}
+
+func (*LoggingMiddleware) Handler(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("Hi")
+		next.ServeHTTP(w, r)
+	})
 }
 
 func (*JamSessionRequiredMiddleware) Handler(next http.Handler) http.Handler {

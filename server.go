@@ -45,21 +45,22 @@ func setup() {
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	initLogging()
+	log.Debug("Initialized loglevel")
 
 	initEnvironment()
-	log.Info("Initialized environment")
+	log.Debug("Initialized environment")
 
 	types.RegisterGobTypes()
-	log.Info("Initialized types")
+	log.Debug("Initialized types")
 
 	models.Setup()
-	log.Info("Initialized models")
+	log.Debug("Initialized models")
 
 	controllers.Setup()
-	log.Info("Initialized controllers")
+	log.Debug("Initialized controllers")
 
 	initHttpServer()
-	log.Info("Initialized HTTP server")
+	log.Debug("Initialized HTTP server")
 }
 
 func initLogging() {
@@ -72,7 +73,7 @@ func initLogging() {
 
 func initEnvironment() {
 	if err := godotenv.Load(); err != nil {
-		log.Warn(err)
+		log.Warn("Did not load .env: ", err)
 	}
 
 	var notDefined []string
@@ -84,6 +85,8 @@ func initEnvironment() {
 	if len(notDefined) > 0 {
 		log.Fatal("The following environment variables are not defined: ", notDefined)
 	}
+
+	initLogLevel()
 }
 
 func initLogLevel() {
@@ -110,7 +113,7 @@ func initLogLevel() {
 	case "trace":
 		logLevel = log.TraceLevel
 	default:
-		log.Fatal("Invalid log level")
+		log.Fatal("Invalid log level: ", level)
 	}
 
 	log.SetLevel(logLevel)
@@ -126,7 +129,7 @@ func initHttpServer() {
 	var err error
 	port, err = strconv.Atoi(os.Getenv("JAM_API_PORT"))
 	if err != nil {
-		log.Fatal("Invalid api port")
+		log.Fatal("Invalid api port: ", port)
 	}
 
 	server = &http.Server{
