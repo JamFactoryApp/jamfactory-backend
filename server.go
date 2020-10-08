@@ -92,7 +92,7 @@ func initLogLevel() {
 
 	level, ok := os.LookupEnv("JAM_LOG_LEVEL")
 	if !ok {
-		level = "WARN"
+		level = "INFO"
 	}
 
 	switch strings.ToLower(level) {
