@@ -2,10 +2,10 @@ package controllers
 
 import (
 	"context"
+	"github.com/jamfactoryapp/jamfactory-backend/models"
+	"github.com/jamfactoryapp/jamfactory-backend/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
-	"jamfactory-backend/models"
-	"jamfactory-backend/types"
 	"math/rand"
 	"strings"
 	"time"

@@ -1,4 +1,4 @@
-module jamfactory-backend
+module github.com/jamfactoryapp/jamfactory-backend
 
 go 1.14
 

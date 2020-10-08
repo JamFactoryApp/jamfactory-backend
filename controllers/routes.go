@@ -3,9 +3,9 @@ package controllers
 import (
 	"github.com/googollee/go-socket.io"
 	"github.com/gorilla/mux"
+	"github.com/jamfactoryapp/jamfactory-backend/models"
+	"github.com/jamfactoryapp/jamfactory-backend/utils"
 	"github.com/justinas/alice"
-	"jamfactory-backend/models"
-	"jamfactory-backend/utils"
 )
 
 const (

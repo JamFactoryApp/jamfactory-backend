@@ -2,7 +2,7 @@ package utils
 
 import (
 	"github.com/gorilla/sessions"
-	"jamfactory-backend/models"
+	"github.com/jamfactoryapp/jamfactory-backend/models"
 	"net/http"
 )
 

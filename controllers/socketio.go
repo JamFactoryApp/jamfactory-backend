@@ -7,9 +7,9 @@ import (
 	"github.com/googollee/go-socket.io/engineio/transport"
 	"github.com/googollee/go-socket.io/engineio/transport/polling"
 	"github.com/googollee/go-socket.io/engineio/transport/websocket"
+	"github.com/jamfactoryapp/jamfactory-backend/models"
+	"github.com/jamfactoryapp/jamfactory-backend/utils"
 	log "github.com/sirupsen/logrus"
-	"jamfactory-backend/models"
-	"jamfactory-backend/utils"
 	"net/http"
 )
 

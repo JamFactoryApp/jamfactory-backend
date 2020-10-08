@@ -1,8 +1,8 @@
 package models
 
 import (
+	"github.com/jamfactoryapp/jamfactory-backend/types"
 	"github.com/zmb3/spotify"
-	"jamfactory-backend/types"
 	"time"
 )
 

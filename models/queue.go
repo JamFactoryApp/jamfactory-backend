@@ -3,9 +3,9 @@ package models
 import (
 	"errors"
 	"fmt"
+	"github.com/jamfactoryapp/jamfactory-backend/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
-	"jamfactory-backend/types"
 	"sort"
 	"time"
 )

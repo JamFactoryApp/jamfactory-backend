@@ -1,11 +1,11 @@
 package controllers
 
 import (
+	"github.com/jamfactoryapp/jamfactory-backend/models"
+	"github.com/jamfactoryapp/jamfactory-backend/types"
+	"github.com/jamfactoryapp/jamfactory-backend/utils"
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
-	"jamfactory-backend/models"
-	"jamfactory-backend/types"
-	"jamfactory-backend/utils"
 	"net/http"
 	"os"
 )

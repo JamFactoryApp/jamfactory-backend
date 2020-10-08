@@ -1,8 +1,8 @@
 package controllers
 
 import (
+	"github.com/jamfactoryapp/jamfactory-backend/utils"
 	log "github.com/sirupsen/logrus"
-	"jamfactory-backend/utils"
 )
 
 var (

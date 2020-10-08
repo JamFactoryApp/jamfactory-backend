@@ -2,9 +2,9 @@ package controllers
 
 import (
 	"github.com/gorilla/sessions"
+	"github.com/jamfactoryapp/jamfactory-backend/models"
+	"github.com/jamfactoryapp/jamfactory-backend/utils"
 	log "github.com/sirupsen/logrus"
-	"jamfactory-backend/models"
-	"jamfactory-backend/utils"
 	"net/http"
 	"os"
 	"strconv"
