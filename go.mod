@@ -12,9 +12,8 @@ require (
 	github.com/gorilla/sessions v1.2.0
 	github.com/joho/godotenv v1.3.0
 	github.com/justinas/alice v1.2.0
-	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
-	github.com/sirupsen/logrus v1.4.2
+	github.com/sirupsen/logrus v1.6.0
 	github.com/zmb3/spotify v0.0.0-20200525010707-bc712583571e
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
