@@ -6,12 +6,14 @@ import (
 	"errors"
 	"github.com/gomodule/redigo/redis"
 	log "github.com/sirupsen/logrus"
+	"sync"
 )
 
 type RedisCache struct {
 	client    redis.Conn
 	keyPrefix RedisKey
 	maxAge    int
+	mux       sync.Mutex
 }
 
 type sourceFunc func(string) (interface{}, error)
@@ -27,8 +29,11 @@ func NewRedisCache(client redis.Conn, keyPrefix RedisKey, maxAge int) *RedisCach
 }
 
 func (cache *RedisCache) Query(key RedisKey, index string, source sourceFunc) (interface{}, error) {
+	cache.Lock()
+	defer cache.Unlock()
 
 	reply, err := cache.client.Do("GET", cache.keyPrefix.AppendKey(key).Append(index))
+
 	var data interface{}
 	if err != nil {
 		log.Debug("RedisCache: could not query cache" + err.Error())
@@ -85,4 +90,12 @@ func (cache *RedisCache) deserialize(serializeddata []byte, data *interface{}) e
 	buffer := bytes.NewBuffer(serializeddata)
 	decoder := gob.NewDecoder(buffer)
 	return decoder.Decode(&data)
+}
+
+func (cache *RedisCache) Lock() {
+	cache.mux.Lock()
+}
+
+func (cache *RedisCache) Unlock() {
+	cache.mux.Unlock()
 }
