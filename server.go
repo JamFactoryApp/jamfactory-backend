@@ -83,6 +83,8 @@ func initEnvironment() {
 	if len(notDefined) > 0 {
 		log.Fatal("The following environment variables are not defined: ", notDefined)
 	}
+
+	initLogLevel()
 }
 
 func initLogLevel() {

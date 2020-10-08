@@ -33,9 +33,9 @@ func setJamSession(w http.ResponseWriter, r *http.Request) {
 
 	if body.VotingType.Set && body.VotingType.Valid {
 		switch body.VotingType.Value {
-		case string(types.SessionVotingType):
+		case types.SessionVotingType:
 			jamSession.VotingType = types.SessionVotingType
-		case string(types.IpVotingType):
+		case types.IpVotingType:
 			jamSession.VotingType = types.IpVotingType
 		default:
 			http.Error(w, "Not supported voting type", http.StatusUnprocessableEntity)
