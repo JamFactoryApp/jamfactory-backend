@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"github.com/googollee/go-socket.io"
 	"github.com/gorilla/mux"
 	"github.com/jamfactoryapp/jamfactory-backend/models"
 	"github.com/jamfactoryapp/jamfactory-backend/utils"
@@ -35,19 +34,18 @@ const (
 	spotifyPlaylistPath = "/playlists"
 	spotifySearchPath   = "/search"
 
-	socketIOPath = "/socket.io"
+	websocketPath = "/ws"
 )
 
 var (
 	Router *mux.Router
-	Socket *socketio.Server
 
 	authRouter       *mux.Router
 	jamSessionRouter *mux.Router
 	queueRouter      *mux.Router
 	spotifyRouter    *mux.Router
 
-	socketRouter *mux.Router
+	websocketRouter *mux.Router
 
 	sessionRequiredMiddleware    = SessionRequiredMiddleware{}
 	jamSessionRequiredMiddleware = JamSessionRequiredMiddleware{}
@@ -68,14 +66,14 @@ func initRoutes() {
 	queueRouter = Router.PathPrefix(apiPath + queuePath).Subrouter()
 	spotifyRouter = Router.PathPrefix(apiPath + spotifyPath).Subrouter()
 
-	socketRouter = Router.PathPrefix(socketIOPath).Subrouter()
+	websocketRouter = Router.PathPrefix(websocketPath).Subrouter()
 
 	registerAuthRoutes()
 	registerQueueRoutes()
 	registerJamSessionRoutes()
 	registerSpotifyRoutes()
 
-	registerSocketIORoutes()
+	registerWebsocketRoutes()
 
 	cache = utils.NewRedisCache(models.RedisPool.Get(), utils.RedisKey{}.Append("cache"), 30)
 }
@@ -116,10 +114,6 @@ func registerSpotifyRoutes() {
 	spotifyRouter.Handle(spotifySearchPath, jamSessionRequired.ThenFunc(search)).Methods("PUT")
 }
 
-func registerSocketIORoutes() {
-	Socket.OnConnect(SocketNamespace, socketIOConnect)
-	Socket.OnError(SocketNamespace, socketIOError)
-	Socket.OnDisconnect(SocketNamespace, socketIODisconnect)
-
-	socketRouter.Handle(SocketNamespace, Socket)
+func registerWebsocketRoutes() {
+	websocketRouter.Handle("", jamSessionRequired.ThenFunc(websocketHandler)).Methods("GET")
 }

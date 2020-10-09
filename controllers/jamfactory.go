@@ -3,137 +3,59 @@ package controllers
 import (
 	"context"
 	"github.com/jamfactoryapp/jamfactory-backend/models"
-	"github.com/jamfactoryapp/jamfactory-backend/types"
-	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
 	"math/rand"
-	"strings"
-	"time"
 )
 
-var jamSessions models.JamSessions
+var jamSessions map[string]*models.JamSession
 
 func initFactory() {
-	jamSessions = make(models.JamSessions, 0)
+	jamSessions = make(map[string]*models.JamSession)
 }
 
-func GenerateNewJamSession(client spotify.Client) (string, error) {
-	queue := models.Queue{}
-	user, err := client.CurrentUser()
-	playback, err := client.PlayerState()
-
+func GenerateNewJamSession(client spotify.Client) (*models.JamSession, error) {
+	label := GenerateJamLabel()
+	jamSession, err := models.NewJamSession(client, label)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	jamSession := models.JamSession{
-		Label:         GenerateRandomLabel(),
-		Name:          strings.Join([]string{user.DisplayName, "'s Jam Session"}, ""),
-		Queue:         &queue,
-		VotingType:    types.SessionVotingType,
-		Client:        client,
-		Context:       context.Background(),
-		DeviceID:      playback.Device.ID,
-		CurrentSong:   nil,
-		PlaybackState: playback,
-		Active:        true,
-	}
+	jamSessions[jamSession.Label] = jamSession
 
-	if jamSession.DeviceID == "" {
-		jamSession.Active = false
-	}
-
-	jamSessions = append(jamSessions, &jamSession)
-
-	go Conductor(&jamSession)
-	return jamSession.Label, nil
+	go jamSession.Conductor()
+	return jamSession, nil
 }
 
-func GenerateRandomLabel() string {
-	labelSlice := make([]string, 5)
-	possibleChars := "ABCDEFGHJKLMNOPQRSTUVWXYZ123456789"
-
+func GenerateJamLabel() string {
+	labelSlice := make([]byte, 5)
 	for i := 0; i < 5; i++ {
-		labelSlice[i] = string(possibleChars[rand.Intn(len(possibleChars))])
+		labelSlice[i] = models.JamLabelChars[rand.Intn(len(models.JamLabelChars))]
 	}
+	label := string(labelSlice)
 
-	label := strings.Join(labelSlice, "")
-
-	exists := false
 	for _, jamSession := range jamSessions {
 		if jamSession.Label == label {
-			exists = true
-			break
+			return GenerateJamLabel()
 		}
-	}
-
-	if exists {
-		return GenerateRandomLabel()
 	}
 
 	return label
 }
 
 func GetJamSession(label string) *models.JamSession {
-	for i := range jamSessions {
-		if jamSessions[i].Label == label {
-			return jamSessions[i]
-		}
+	if jamSession, exists := jamSessions[label]; exists {
+		return jamSession
 	}
 	return nil
 }
 
 func DeleteJamSession(label string) {
-	for i := range jamSessions {
-		if jamSessions[i].Label == label {
-			jamSessions[i].SetJamSessionState(false)
-			ctx, cancel := context.WithCancel(jamSessions[i].Context)
-			jamSessions[i].Context = ctx
-			jamSessions = append(jamSessions[:i], jamSessions[i+1:]...)
-			cancel()
-		}
-	}
-}
+	if jamSession, exists := jamSessions[label]; exists {
+		ctx, cancel := context.WithCancel(jamSession.Context)
+		defer cancel()
 
-func Conductor(jamSession *models.JamSession) {
-	for {
-		select {
-		case <-jamSession.Context.Done():
-			log.Debug("Conductors leaves the jam session")
-			return
-		default:
-			time.Sleep(time.Second)
-			state, err := jamSession.Client.PlayerState()
-
-			if err != nil {
-				log.WithField("Label", jamSession.Label).Debug("Conductor couldn't get state for")
-				continue
-			}
-
-			jamSession.UpdatePlaybackState(state)
-			jamSession.UpdateCurrentSong(state.Item)
-
-			if jamSession.DeviceID == "" && state.Device != (spotify.PlayerDevice{}) {
-				jamSession.DeviceID = state.Device.ID
-			}
-
-			if jamSession.Active && jamSession.Queue.Len() > 0 && jamSession.DeviceID != "" {
-				if !state.Playing || state.Progress > state.Item.Duration-1000 {
-					log.WithField("Label", jamSession.Label).Debug("Conductor started next song for")
-					jamSession.StartNextSong()
-
-					message := types.PutQueuePlaylistsResponse{
-						Queue: jamSession.Queue.GetObjectWithoutId(""),
-					}
-
-					SendToRoom(jamSession.Label, SocketEventQueue, message)
-				}
-			}
-
-			res := types.SocketPlaybackState{
-				Playback: *jamSession.PlaybackState,
-			}
-			SendToRoom(jamSession.Label, SocketEventPlayback, res)
-		}
+		jamSession.Context = ctx
+		jamSession.SetJamSessionState(false)
+		delete(jamSessions, label)
 	}
 }

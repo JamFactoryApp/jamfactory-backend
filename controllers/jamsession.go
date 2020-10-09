@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"github.com/jamfactoryapp/jamfactory-backend/models"
+	"github.com/jamfactoryapp/jamfactory-backend/notifications"
 	"github.com/jamfactoryapp/jamfactory-backend/types"
 	"github.com/jamfactoryapp/jamfactory-backend/utils"
 	log "github.com/sirupsen/logrus"
@@ -137,17 +138,18 @@ func createJamSession(w http.ResponseWriter, r *http.Request) {
 
 	client := spotifyAuthenticator.NewClient(token)
 
-	label, err := GenerateNewJamSession(client)
+	jamSession, err := GenerateNewJamSession(client)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Printf("@%s Couldn't create jamSession: %s", session.ID, err.Error())
+		return
 	}
 
-	session.Values[utils.SessionLabelTypeKey] = label
+	session.Values[utils.SessionLabelTypeKey] = jamSession.Label
 	session.Values[utils.SessionUserTypeKey] = models.UserTypeHost
 	SaveSession(w, r, session)
 
-	res := types.GetJamCreateResponse{Label: label}
+	res := types.GetJamCreateResponse{Label: jamSession.Label}
 	utils.EncodeJSONBody(w, res)
 }
 
@@ -193,8 +195,14 @@ func leaveJamSession(w http.ResponseWriter, r *http.Request) {
 				CurrentSong: jamSession.CurrentSong,
 				State:       jamSession.PlaybackState,
 			}
-			Socket.BroadcastToRoom(SocketNamespace, jamSession.Label, SocketEventPlayback, body)
-			Socket.BroadcastToRoom(SocketNamespace, jamSession.Label, SocketEventClose, CloseTypeHostLeft)
+			jamSession.NotifyClients(&notifications.Message{
+				Event:   notifications.Playback,
+				Message: body,
+			})
+			jamSession.NotifyClients(&notifications.Message{
+				Event:   notifications.Close,
+				Message: notifications.HostLeft,
+			})
 			DeleteJamSession(label)
 		}
 	}
