@@ -57,9 +57,7 @@ func (*SessionRequiredMiddleware) Handler(next http.Handler) http.Handler {
 		session, err := GetSession(r, "user-session")
 
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			log.Debug("Could not get session for request")
-			return
+			log.Debug("Could not get session for request: ", err)
 		}
 
 		ctx := context.WithValue(r.Context(), utils.SessionContextKey, session)
