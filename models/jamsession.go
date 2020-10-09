@@ -28,6 +28,26 @@ type JamSessions []*JamSession
 func (jamSession *JamSession) StartNextSong() {
 	log.WithField("JamSession", jamSession.Label).Trace("Model event: Start next song for jamSession")
 
+	devices, err := jamSession.Client.PlayerDevices()
+	if err != nil {
+		log.WithField("JamSession", jamSession.Label).Error("Error starting next song: ", err.Error())
+	}
+
+	activeDeviceAvailable := false
+	for _, d := range devices {
+		if d.Active {
+			activeDeviceAvailable = true
+			break
+		}
+	}
+
+	if !activeDeviceAvailable {
+		log.WithField("JamSession", jamSession.Label).Debug("No active device found, setting inactive")
+		jamSession.SetClientID("")
+		jamSession.SetJamSessionState(false)
+		return
+	}
+
 	song, err := jamSession.Queue.GetNextSong()
 
 	if err != nil {
