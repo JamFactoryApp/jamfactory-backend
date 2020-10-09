@@ -1,11 +1,10 @@
-version: '3.1'
+version: '3'
 
 services:
-
   jamfactory:
     build: ./Dockerfile-prod
     ports:
-      - 3000:3000
+      - $JAM_API_PORT:3000
     env_file:
       - .env
     depends_on:
@@ -14,8 +13,3 @@ services:
   redis:
     image: redis
     restart: always
-
-networks:
-  default:
-    external:
-      name: jamfactory

@@ -1,11 +1,10 @@
-version: '3.1'
+version: '3'
 
 services:
-
   jamfactory:
     build: .
     ports:
-      - 3000:3000
+      - $JAM_API_PORT:3000
     env_file:
       - .env
     depends_on:
@@ -14,11 +13,5 @@ services:
   redis:
     image: redis
     restart: always
-    command: redis-server --requirepass $JAM_REDIS_PASSWORD
     ports:
       - 6379:6379
-
-networks:
-  default:
-    external:
-      name: jamfactory

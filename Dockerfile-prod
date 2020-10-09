@@ -1,12 +1,10 @@
-# golang:1.15.0-alpine
-FROM golang@sha256:59eae48746048266891b7839f7bb9ac54a05cec6170f17ed9f4fd60b331b644b as builder
+# golang:1.14-alpine
+FROM golang@sha256:032054b7b190502c52862bb51e2f6d7e71f4cd47e2d03ce82b4980c6cf212cf0 as builder
 
 RUN apk update && apk add --no-cache git tzdata ca-certificates
 
 ENV USER=appuser
 ENV UID=10001
-
-# See https://stackoverflow.com/a/55757473/12429735
 RUN adduser \
     --disabled-password \
     --gecos "" \
@@ -15,16 +13,14 @@ RUN adduser \
     --no-create-home \
     --uid "${UID}" \
     "${USER}"
-WORKDIR $GOPATH/src/jamfactory-backend
+WORKDIR $GOPATH/src/github.com/jamfactoryapp/jamfactory-backend
 
 COPY go.mod .
-
 ENV GO111MODULE=on
 RUN go mod download
 RUN go mod verify
 
 COPY . .
-
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-w -s -extldflags "-static"' -a -o /go/bin/jamfactory-backend .
 
 ############################
