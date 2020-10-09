@@ -9,8 +9,8 @@ import (
 	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
-	log "github.com/sirupsen/logrus"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -63,23 +63,18 @@ func (store *RedisStore) New(r *http.Request, name string) (*sessions.Session, e
 	session.Options = &opts
 	session.IsNew = true
 
-	cookie, err := r.Cookie(name)
-	if err != nil {
-		return &sessions.Session{}, err
+	var err error
+	if cookie, errCookie := r.Cookie(name); errCookie == nil {
+		err = securecookie.DecodeMulti(name, cookie.Value, &session.ID, store.codecs...)
+		if err == nil {
+			err = store.load(session)
+			if err == nil {
+				session.IsNew = false
+			}
+		}
 	}
 
-	err = securecookie.DecodeMulti(name, cookie.Value, &session.ID, store.codecs...)
-	if err != nil {
-		return &sessions.Session{}, err
-	}
-
-	err = store.load(session)
-	if err != nil {
-		return &sessions.Session{}, err
-	}
-
-	session.IsNew = false
-	return session, nil
+	return session, err
 }
 
 func (store *RedisStore) Save(r *http.Request, w http.ResponseWriter, session *sessions.Session) error {
