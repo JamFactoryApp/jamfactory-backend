@@ -1,12 +1,11 @@
 version: '3'
 
 services:
-  jamfactory:
+  app:
     build: .
-    ports:
-      - $JAM_API_PORT:3000
     env_file:
       - .env
+    restart: always
     depends_on:
       - redis
 

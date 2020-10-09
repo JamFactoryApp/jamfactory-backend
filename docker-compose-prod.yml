@@ -1,12 +1,15 @@
 version: '3'
 
 services:
-  jamfactory:
-    build: ./Dockerfile-prod
-    ports:
-      - $JAM_API_PORT:3000
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile-prod
     env_file:
       - .env
+    ports:
+      - $JAM_API_PORT:$JAM_API_PORT
+    restart: always
     depends_on:
       - redis
 
