@@ -6,6 +6,8 @@ services:
     env_file:
       - .env
     restart: always
+    ports:
+      - $JAM_API_PORT:$JAM_API_PORT
     depends_on:
       - redis
 
