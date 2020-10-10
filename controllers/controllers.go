@@ -19,9 +19,6 @@ func Setup() {
 	initSpotifyAuthenticator()
 	log.Info("Initialized Spotify authenticator")
 
-	initSocketIO()
-	log.Info("Initialized socket.io server")
-
 	initMiddleWares()
 	log.Info("Initialized middlewares")
 

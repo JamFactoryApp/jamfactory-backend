@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"github.com/jamfactoryapp/jamfactory-backend/models"
+	"github.com/jamfactoryapp/jamfactory-backend/notifications"
 	"github.com/jamfactoryapp/jamfactory-backend/types"
 	"github.com/jamfactoryapp/jamfactory-backend/utils"
 	log "github.com/sirupsen/logrus"
@@ -86,8 +87,10 @@ func addCollection(w http.ResponseWriter, r *http.Request) {
 	message := types.PutQueuePlaylistsResponse{
 		Queue: jamSession.Queue.GetObjectWithoutId(""),
 	}
-
-	Socket.BroadcastToRoom(SocketNamespace, jamSession.Label, SocketEventQueue, message)
+	jamSession.NotifyClients(&notifications.Message{
+		Event:   notifications.Queue,
+		Message: message,
+	})
 
 	res := types.PutQueuePlaylistsResponse{
 		Queue: jamSession.Queue.GetObjectWithoutId(voteID),
@@ -120,11 +123,13 @@ func vote(w http.ResponseWriter, r *http.Request) {
 	jamSession.Queue.Vote(voteID, song)
 	queue := jamSession.Queue.GetObjectWithoutId(voteID)
 
-	message := types.PutQueuePlaylistsResponse{
+	message := types.PutQueueVoteResponse{
 		Queue: jamSession.Queue.GetObjectWithoutId(""),
 	}
-
-	Socket.BroadcastToRoom(SocketNamespace, jamSession.Label, SocketEventQueue, message)
+	jamSession.NotifyClients(&notifications.Message{
+		Event:   notifications.Queue,
+		Message: message,
+	})
 
 	res := types.PutQueueVoteResponse{
 		Queue: queue,
@@ -151,15 +156,16 @@ func deleteSong(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := types.DeleteQueueSongResponse{
-		Queue: jamSession.Queue.GetObjectWithoutId(voteID),
-	}
-
 	message := types.PutQueuePlaylistsResponse{
 		Queue: jamSession.Queue.GetObjectWithoutId(""),
 	}
+	jamSession.NotifyClients(&notifications.Message{
+		Event:   notifications.Queue,
+		Message: message,
+	})
 
-	Socket.BroadcastToRoom(SocketNamespace, jamSession.Label, SocketEventQueue, message)
-
+	res := types.DeleteQueueSongResponse{
+		Queue: jamSession.Queue.GetObjectWithoutId(voteID),
+	}
 	utils.EncodeJSONBody(w, res)
 }
