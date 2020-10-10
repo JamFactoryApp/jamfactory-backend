@@ -23,7 +23,7 @@ func NewClient(room *Room, conn *websocket.Conn) *Client {
 	return &Client{
 		Room: room,
 		Conn: conn,
-		Send: make(chan *Message, 16),
+		Send: make(chan *Message, 1),
 	}
 }
 
@@ -95,18 +95,6 @@ func (c *Client) Write() {
 
 			if _, err := w.Write(data); err != nil {
 				log.Error("Error writing message: ", err)
-			}
-
-			n := len(c.Send)
-			for i := 0; i < n; i++ {
-				message := <-c.Send
-				data, err := message.Serialize()
-				if err != nil {
-					log.Error("Failed to serialize message: ", err)
-				}
-				if _, err := w.Write(data); err != nil {
-					log.Error("Error writing message: ", err)
-				}
 			}
 
 			if err := w.Close(); err != nil {

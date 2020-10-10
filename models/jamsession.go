@@ -86,10 +86,9 @@ func (jamSession *JamSession) Conductor() {
 					log.WithField("Label", jamSession.Label).Debug("Conductor started next song for")
 					jamSession.StartNextSong()
 
-					message := types.PutQueuePlaylistsResponse{
+					message := types.GetQueueResponse{
 						Queue: jamSession.Queue.GetObjectWithoutId(""),
 					}
-
 					jamSession.NotifyClients(&notifications.Message{
 						Event:   notifications.Queue,
 						Message: message,
@@ -97,12 +96,12 @@ func (jamSession *JamSession) Conductor() {
 				}
 			}
 
-			res := types.SocketPlaybackState{
+			message := types.SocketPlaybackState{
 				Playback: *jamSession.PlaybackState,
 			}
 			jamSession.NotifyClients(&notifications.Message{
 				Event:   notifications.Playback,
-				Message: res,
+				Message: message,
 			})
 		}
 	}
@@ -221,5 +220,7 @@ func (jamSession *JamSession) IntroduceClient(conn *websocket.Conn) {
 }
 
 func (jamSession *JamSession) NotifyClients(msg *notifications.Message) {
-	jamSession.Room.Broadcast <- msg
+	if len(jamSession.Room.Clients) > 0 {
+		jamSession.Room.Broadcast <- msg
+	}
 }

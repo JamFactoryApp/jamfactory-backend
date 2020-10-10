@@ -2,17 +2,17 @@ package notifications
 
 import (
 	"bytes"
-	"encoding/gob"
+	"encoding/json"
 )
 
 type Message struct {
-	Event   WebsocketEvent
-	Message interface{}
+	Event   WebsocketEvent `json:"event"`
+	Message interface{}    `json:"message"`
 }
 
 func (m *Message) Serialize() ([]byte, error) {
 	var buffer bytes.Buffer
-	encoder := gob.NewEncoder(&buffer)
+	encoder := json.NewEncoder(&buffer)
 	err := encoder.Encode(m)
 	if err != nil {
 		return nil, err
@@ -23,7 +23,7 @@ func (m *Message) Serialize() ([]byte, error) {
 
 func (m *Message) Deserialize(data []byte) error {
 	buffer := bytes.NewBuffer(data)
-	decoder := gob.NewDecoder(buffer)
+	decoder := json.NewDecoder(buffer)
 	return decoder.Decode(&m)
 }
 
