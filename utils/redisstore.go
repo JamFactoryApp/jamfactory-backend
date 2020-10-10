@@ -24,7 +24,7 @@ const (
 
 	MinCookieKeyPairsCount = 4
 	CookieKeyLength        = 32
-	CookieKeyPairsFile     = "./.keypairs"
+	CookieKeyPairsFile     = "/go/data/.keypairs"
 )
 
 type RedisStore struct {
@@ -43,7 +43,7 @@ func NewRedisStore(client redis.Conn, keyPrefix RedisKey, maxAge int, keyPairsCo
 		options: &sessions.Options{
 			Path:     "/",
 			MaxAge:   maxAge,
-			Secure:   false,
+			Secure:   true,
 			SameSite: http.SameSiteLaxMode,
 		},
 		keyPairsCount: keyPairsCount,

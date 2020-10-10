@@ -51,7 +51,7 @@ func callback(w http.ResponseWriter, r *http.Request) {
 	session.Values[utils.SessionUserTypeKey] = models.UserTypeNew
 
 	SaveSession(w, r, session)
-	http.Redirect(w, r, afterCallbackRedirect, http.StatusSeeOther)
+	http.Redirect(w, r, "https://jamfactory.app", http.StatusSeeOther)
 }
 
 func login(w http.ResponseWriter, r *http.Request) {

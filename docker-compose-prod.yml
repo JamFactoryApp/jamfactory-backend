@@ -10,6 +10,8 @@ services:
     ports:
       - $JAM_API_PORT:$JAM_API_PORT
     restart: always
+    volumes:
+      - './data:/go/data'
     depends_on:
       - redis
 
