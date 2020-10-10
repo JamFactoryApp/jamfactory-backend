@@ -26,7 +26,7 @@ func (queue *Queue) Less(i, j int) bool {
 	if queue.Songs[i].VoteCount() != queue.Songs[j].VoteCount() {
 		return queue.Songs[i].VoteCount() > queue.Songs[j].VoteCount()
 	} else {
-		return queue.Songs[i].Date.Before(queue.Songs[j].Date)
+		return queue.Songs[i].Date.After(queue.Songs[j].Date)
 	}
 }
 
