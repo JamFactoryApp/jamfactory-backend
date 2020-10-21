@@ -9,8 +9,8 @@ import (
 	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
+	log "github.com/sirupsen/logrus"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -24,27 +24,27 @@ const (
 
 	MinCookieKeyPairsCount = 4
 	CookieKeyLength        = 32
-	CookieKeyPairsFile     = "/go/data/.keypairs"
+	CookieKeyPairsFile     = "./.keypairs"
 )
 
 type RedisStore struct {
-	client        redis.Conn
+	sync.Mutex
+	pool          *redis.Pool
 	keyPrefix     RedisKey
 	options       *sessions.Options
 	codecs        []securecookie.Codec
 	keyPairsCount int
-	mux           sync.Mutex
 }
 
-func NewRedisStore(client redis.Conn, keyPrefix RedisKey, maxAge int, keyPairsCount int) *RedisStore {
+func NewRedisStore(pool *redis.Pool, keyPrefix RedisKey, maxAge int, keyPairsCount int) *RedisStore {
 	redisStore := &RedisStore{
-		client:    client,
+		pool:      pool,
 		keyPrefix: keyPrefix,
 		options: &sessions.Options{
 			Path:     "/",
 			MaxAge:   maxAge,
-			Secure:   true,
-			SameSite: http.SameSiteLaxMode,
+			Secure:   false,
+			SameSite: http.SameSiteNoneMode,
 		},
 		keyPairsCount: keyPairsCount,
 	}
@@ -67,10 +67,8 @@ func (store *RedisStore) New(r *http.Request, name string) (*sessions.Session, e
 	if cookie, errCookie := r.Cookie(name); errCookie == nil {
 		err = securecookie.DecodeMulti(name, cookie.Value, &session.ID, store.codecs...)
 		if err == nil {
-			err = store.load(session)
-			if err == nil {
-				session.IsNew = false
-			}
+			ok, err := store.load(session)
+			session.IsNew = !(err == nil && ok)
 		}
 	}
 
@@ -89,6 +87,7 @@ func (store *RedisStore) Save(r *http.Request, w http.ResponseWriter, session *s
 	if session.ID == "" {
 		session.ID = store.idGen()
 	}
+
 	if err := store.save(session); err != nil {
 		return err
 	}
@@ -183,35 +182,39 @@ func (store *RedisStore) generateCookieKeyPairs() [][]byte {
 	return keyPairs
 }
 
-func (store *RedisStore) load(session *sessions.Session) error {
-	store.mux.Lock()
-	reply, err := store.client.Do("GET", store.keyPrefix.Append(session.ID))
-	store.mux.Unlock()
+func (store *RedisStore) load(session *sessions.Session) (bool, error) {
+	store.Lock()
+	defer store.Unlock()
+	conn := store.pool.Get()
+	reply, err := conn.Do("GET", store.keyPrefix.Append(session.ID))
 	if err != nil {
-		return err
+		return false, err
 	}
 	if reply == nil {
-		return errors.New("RedisStore: session not found")
+		return false, errors.New("RedisStore: session not found")
 	}
 	if data, ok := reply.([]byte); ok {
 		err = store.deserializeSession(data, session)
 	} else {
 		err = errors.New("RedisStore: Failed to convert session data from interface{} to []bytes")
 	}
-	return err
+	return true, err
 }
 
 func (store *RedisStore) save(session *sessions.Session) error {
+	conn := store.pool.Get()
 	serialized, err := store.serializeSession(session)
 	if err != nil {
 		return err
 	}
-	_, err = store.client.Do("SET", store.keyPrefix.Append(session.ID), serialized)
+	reply, err := conn.Do("SET", store.keyPrefix.Append(session.ID), serialized)
+	log.Trace("redis reply (DO SET): ", reply, " with err: ", err)
 	return err
 }
 
 func (store *RedisStore) delete(session *sessions.Session) error {
-	_, err := store.client.Do("DEL", store.keyPrefix.Append(session.ID))
+	conn := store.pool.Get()
+	_, err := conn.Do("DEL", store.keyPrefix.Append(session.ID))
 	return err
 }
 

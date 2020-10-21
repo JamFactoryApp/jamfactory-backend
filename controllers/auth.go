@@ -51,17 +51,13 @@ func callback(w http.ResponseWriter, r *http.Request) {
 	session.Values[utils.SessionUserTypeKey] = models.UserTypeNew
 
 	SaveSession(w, r, session)
-	http.Redirect(w, r, "https://jamfactory.app", http.StatusSeeOther)
+	http.Redirect(w, r, utils.JamClientAddress(), http.StatusSeeOther)
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
 	log.Trace("Controller call: auth.login")
 
 	session := utils.SessionFromRequestContext(r)
-
-	if session.IsNew {
-		SaveSession(w, r, session)
-	}
 
 	state := session.ID
 	url := spotifyAuthenticator.AuthURL(state)

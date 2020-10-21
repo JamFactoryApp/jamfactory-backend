@@ -54,12 +54,14 @@ func (*JamSessionRequiredMiddleware) Handler(next http.Handler) http.Handler {
 
 func (*SessionRequiredMiddleware) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		session, err := GetSession(r, "user-session")
+		session := GetSession(r, "user-session")
 
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			log.Debug("Could not get session for request")
-			return
+		if session.IsNew {
+			if err := session.Save(r, w); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				log.Debug("Could not save session")
+				return
+			}
 		}
 
 		ctx := context.WithValue(r.Context(), utils.SessionContextKey, session)
