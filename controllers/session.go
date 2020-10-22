@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -33,7 +34,10 @@ func initSessionStore() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	store = utils.NewRedisStore(models.RedisPool, storeRedisKey, storeMaxAge, cookieKeyPairsCount)
+
+	secureCookies := strings.ToLower(os.Getenv("JAM_PRODUCTION")) == "production"
+
+	store = utils.NewRedisStore(models.RedisPool, storeRedisKey, storeMaxAge, cookieKeyPairsCount, secureCookies)
 }
 
 func tryRedisConn() error {

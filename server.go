@@ -26,8 +26,10 @@ const (
 var (
 	server          *http.Server
 	port            int
+	production		bool
 	requiredEnvVars = []string{
 		"JAM_API_ADDRESS",
+		"JAM_PRODUCTION",
 		"JAM_API_PORT",
 		"JAM_CLIENT_ADDRESS",
 		"JAM_CLIENT_PORT",
@@ -82,6 +84,14 @@ func initEnvironment() {
 	}
 	if len(notDefined) > 0 {
 		log.Fatal("The following environment variables are not defined: ", notDefined)
+	}
+
+	prod, ok := os.LookupEnv("JAM_PRODUCTION")
+	if ok && strings.ToLower(prod) == "production" {
+		production = true
+	} else {
+		production = false
+		log.Warn("You are running JamFactory in the development environment")
 	}
 
 	initLogLevel()

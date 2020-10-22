@@ -36,15 +36,16 @@ type RedisStore struct {
 	keyPairsCount int
 }
 
-func NewRedisStore(pool *redis.Pool, keyPrefix RedisKey, maxAge int, keyPairsCount int) *RedisStore {
+func NewRedisStore(pool *redis.Pool, keyPrefix RedisKey, maxAge int, keyPairsCount int, secureCookies bool) *RedisStore {
+	log.Warn(secureCookies)
 	redisStore := &RedisStore{
 		pool:      pool,
 		keyPrefix: keyPrefix,
 		options: &sessions.Options{
 			Path:     "/",
 			MaxAge:   maxAge,
-			Secure:   false,
-			SameSite: http.SameSiteNoneMode,
+			Secure:   secureCookies,
+			SameSite: http.SameSiteLaxMode,
 		},
 		keyPairsCount: keyPairsCount,
 	}
