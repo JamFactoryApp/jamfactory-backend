@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"errors"
-	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/sessions"
 	"github.com/jamfactoryapp/jamfactory-backend/models"
 	"github.com/jamfactoryapp/jamfactory-backend/utils"
@@ -10,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -25,7 +25,7 @@ var (
 )
 
 func initSessionStore() {
-	conn, err := tryRedisConn()
+	err := tryRedisConn()
 	if err != nil {
 		log.Fatal("Failed to connect to redis: ", err)
 	}
@@ -34,24 +34,28 @@ func initSessionStore() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	store = utils.NewRedisStore(conn, storeRedisKey, storeMaxAge, cookieKeyPairsCount)
+
+	secureCookies := strings.ToLower(os.Getenv("JAM_PRODUCTION")) == "production"
+
+	store = utils.NewRedisStore(models.RedisPool, storeRedisKey, storeMaxAge, cookieKeyPairsCount, secureCookies)
 }
 
-func tryRedisConn() (redis.Conn, error) {
+func tryRedisConn() error {
 	for i := 0; i < redisConnRetries; i++ {
 		conn := models.RedisPool.Get()
 		if conn.Err() != nil {
 			log.Warn("Connection to redis could not be established: ", conn.Err(), " Retrying in ", redisConnRetryInterval, " seconds")
 			time.Sleep(redisConnRetryInterval)
 		} else {
-			return conn, nil
+			return nil
 		}
 	}
-	return nil, errors.New("max retries exceeded")
+	return errors.New("max retries exceeded")
 }
 
-func GetSession(r *http.Request, name string) (*sessions.Session, error) {
-	return store.Get(r, name)
+func GetSession(r *http.Request, name string) *sessions.Session {
+	session, _ := store.Get(r, name)
+	return session
 }
 
 func SaveSession(w http.ResponseWriter, r *http.Request, session *sessions.Session) {
