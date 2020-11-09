@@ -8,15 +8,16 @@ RUN apk update \
 WORKDIR $GOPATH/src/github.com/jamfactoryapp/jamfactory-backend
 
 COPY go.mod .
+COPY go.sum .
 RUN go mod download
 RUN go mod verify
 
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -ldflags='-w -s -extldflags "-static"' \
-    -a -o /go/bin/jamfactory-backend .
+    -a -o /go/bin/jamfactory \
+    ./cmd/jamfactory/main.go
 
-# scratch
 FROM scratch
 
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
@@ -24,6 +25,6 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /etc/group /etc/group
 
-COPY --from=builder /go/bin/jamfactory-backend /go/bin/jamfactory-backend
+COPY --from=builder /go/bin/jamfactory /go/bin/jamfactory
 
-ENTRYPOINT ["/go/bin/jamfactory-backend"]
+ENTRYPOINT ["/go/bin/jamfactory"]

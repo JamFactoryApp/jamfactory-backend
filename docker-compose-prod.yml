@@ -5,13 +5,15 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-prod
+    environment:
+      - "JAM_PRODUCTION=PRODUCTION"
     env_file:
       - .env
     ports:
-      - $JAM_API_PORT:$JAM_API_PORT
+      - "$JAM_API_PORT:$JAM_API_PORT"
     restart: always
     volumes:
-      - './data:/go/data'
+      - '$JAM_DATA_DIR:$JAM_DATA_DIR'
     depends_on:
       - redis
 

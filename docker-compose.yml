@@ -5,14 +5,14 @@ services:
     build: .
     env_file:
       - .env
-    restart: always
     ports:
-      - $JAM_API_PORT:$JAM_API_PORT
+      - "$JAM_API_PORT:$JAM_API_PORT"
+    volumes:
+    - '$JAM_DATA_DIR:$JAM_DATA_DIR'
     depends_on:
       - redis
 
   redis:
     image: redis
-    restart: always
     ports:
       - 6379:6379
