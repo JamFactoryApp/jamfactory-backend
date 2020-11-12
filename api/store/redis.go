@@ -15,7 +15,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path"
 	"strings"
 	"sync"
 )
@@ -38,7 +37,7 @@ type RedisStore struct {
 	keyPairsFile  string
 }
 
-func NewRedis(pool *redis.Pool, sameSite http.SameSite, secure bool) *RedisStore {
+func NewRedis(pool *redis.Pool, keyPairsFile string, sameSite http.SameSite, secure bool) *RedisStore {
 	redisStore := &RedisStore{
 		pool:     pool,
 		redisKey: pkgredis.Key{}.Append(defaultRedisSessionKey),
@@ -49,7 +48,7 @@ func NewRedis(pool *redis.Pool, sameSite http.SameSite, secure bool) *RedisStore
 			Secure:   secure,
 		},
 		keyPairsCount: defaultCookieKeyPairsCount,
-		keyPairsFile:  path.Join(os.Getenv("JAM_DATA_DIR"), ".keypairs"),
+		keyPairsFile:  keyPairsFile,
 	}
 
 	redisStore.MaxAge(redisStore.options.MaxAge)

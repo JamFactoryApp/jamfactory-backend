@@ -12,6 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"os"
+	"path"
 	"time"
 )
 
@@ -51,7 +52,7 @@ func run() error {
 		return err
 	}
 
-	st := store.NewRedis(pool, conf.CookieSameSite, conf.CookieSecure)
+	st := store.NewRedis(pool, path.Join(conf.DataDir, ".keypairs"), conf.CookieSameSite, conf.CookieSecure)
 	ca := cache.NewRedis(pool)
 	ja := jamfactory.NewSpotify(ca, conf.SpotifyRedirectURL, conf.SpotifyID, conf.SpotifySecret)
 
