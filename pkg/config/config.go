@@ -13,6 +13,7 @@ type Config struct {
 	APIAddress         string
 	CookieSameSite     http.SameSite
 	CookieSecure       bool
+	DataDir            string
 	LogLevel           log.Level
 	RedisAddress       string
 	RedisPort          int
@@ -36,6 +37,8 @@ func New() *Config {
 	} else {
 		c.APIAddress = fmt.Sprintf("%s:%d", apiAddress, apiPort)
 	}
+
+	c.DataDir = os.Getenv("JAM_DATA_DIR")
 
 	var logLevel log.Level
 	ll, err := log.ParseLevel(os.Getenv("JAM_LOG_LEVEL"))

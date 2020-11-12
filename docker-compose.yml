@@ -8,7 +8,7 @@ services:
     ports:
       - "$JAM_API_PORT:$JAM_API_PORT"
     volumes:
-    - '$JAM_DATA_DIR:$JAM_DATA_DIR'
+    - './data:$JAM_DATA_DIR'
     depends_on:
       - redis
 

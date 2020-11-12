@@ -40,6 +40,12 @@ func run() error {
 
 	log.SetLevel(conf.LogLevel)
 
+	if _, err := os.Stat(conf.DataDir); os.IsNotExist(err) {
+		if err := os.Mkdir(conf.DataDir, 0700); err != nil {
+			return err
+		}
+	}
+
 	pool, err := pkgredis.NewPool(conf.RedisAddress, conf.RedisPort, conf.RedisPassword, conf.RedisDatabase)
 	if err != nil {
 		return err

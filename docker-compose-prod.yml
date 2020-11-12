@@ -13,7 +13,7 @@ services:
       - "$JAM_API_PORT:$JAM_API_PORT"
     restart: always
     volumes:
-      - '$JAM_DATA_DIR:$JAM_DATA_DIR'
+      - './data:$JAM_DATA_DIR'
     depends_on:
       - redis
 
