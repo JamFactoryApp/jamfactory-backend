@@ -65,12 +65,11 @@ func New() *Config {
 
 	switch strings.ToLower(environment) {
 	case "production":
-		c.CookieSameSite = http.SameSiteLaxMode
 		c.CookieSecure = true
 	default:
-		c.CookieSameSite = http.SameSiteNoneMode
 		c.CookieSecure = false
 	}
+	c.CookieSameSite = http.SameSiteLaxMode
 
 	return c
 }
