@@ -54,7 +54,7 @@ func (s *Server) callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if st := r.FormValue("state"); st != session.ID {
+	if state := r.FormValue("state"); state != session.ID {
 		s.errNotFound(w, apierrors.ErrTokenMismatch, log.DebugLevel)
 		return
 	}
@@ -67,5 +67,5 @@ func (s *Server) callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, utils.JamRedirectURL(), http.StatusSeeOther)
+	http.Redirect(w, r, s.jamFactory.ClientAddress(), http.StatusSeeOther)
 }

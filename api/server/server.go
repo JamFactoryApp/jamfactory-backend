@@ -3,6 +3,7 @@ package server
 import (
 	"crypto/tls"
 	"encoding/gob"
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/gorilla/websocket"
@@ -12,6 +13,7 @@ import (
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -71,8 +73,8 @@ func (s *Server) RunTLS(certFile string, keyFile string) error {
 	return s.server.ListenAndServeTLS(certFile, keyFile)
 }
 
-func (s *Server) WithAddress(address string) *Server {
-	s.server.Addr = address
+func (s *Server) WithAddress(address *url.URL) *Server {
+	s.server.Addr = fmt.Sprintf(":%s", address.Port())
 	return s
 }
 

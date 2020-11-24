@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/jamfactoryapp/jamfactory-backend/api/server"
 	"github.com/jamfactoryapp/jamfactory-backend/api/store"
 	pkgredis "github.com/jamfactoryapp/jamfactory-backend/internal/redis"
@@ -17,13 +16,6 @@ import (
 )
 
 func main() {
-	if err := run(); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "%s\n", err)
-		os.Exit(1)
-	}
-}
-
-func run() error {
 	rand.Seed(time.Now().UnixNano())
 
 	log.SetLevel(log.WarnLevel)
@@ -43,29 +35,30 @@ func run() error {
 
 	if _, err := os.Stat(conf.DataDir); os.IsNotExist(err) {
 		if err := os.Mkdir(conf.DataDir, 0700); err != nil {
-			return err
+			log.Fatal("JAM_DATA_DIR could not be created: ", err)
 		}
 	}
-
-	pool, err := pkgredis.NewPool(conf.RedisAddress, conf.RedisPort, conf.RedisPassword, conf.RedisDatabase)
+	pool, err := pkgredis.NewPool(conf.RedisAddress, conf.RedisPassword, conf.RedisDatabase)
 	if err != nil {
-		return err
+		log.Fatal("could not connect to redis")
 	}
 	log.Debug("Initialized connection to redis")
 
-	st := store.NewRedis(pool, path.Join(conf.DataDir, ".keypairs"), conf.CookieSameSite, conf.CookieSecure)
+	redisStore := store.NewRedis(pool, path.Join(conf.DataDir, ".keypairs"), conf.CookieSameSite, conf.CookieSecure)
 	log.Debug("Initialized redis cookie store")
 
-	ca := cache.NewRedis(pool)
+	redisCache := cache.NewRedis(pool)
 	log.Debug("Initialized redis cache")
 
-	ja := jamfactory.NewSpotify(ca, conf.SpotifyRedirectURL, conf.SpotifyID, conf.SpotifySecret)
+	spotifyJamFactory := jamfactory.NewSpotify(redisCache, conf.SpotifyRedirectURL, conf.SpotifyID, conf.SpotifySecret, conf.ClientAddress.String())
 	log.Debug("Initialized JamFactory")
 
-	se := server.NewServer("/", st, ja).
+	httpServer := server.NewServer("/", redisStore, spotifyJamFactory).
 		WithAddress(conf.APIAddress).
-		WithCache(ca)
+		WithCache(redisCache)
 
 	log.Infof("HTTP server is listening on %s\n", conf.APIAddress)
-	return se.Run()
+	if err := httpServer.Run(); err != nil {
+		log.Fatal("HTTP server failed to listen: ", err)
+	}
 }

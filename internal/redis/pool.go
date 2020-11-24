@@ -9,12 +9,12 @@ import (
 const maxIdle = 3
 const idleTimeout = 240 * time.Second
 
-func NewPool(address string, port int, password string, database string) (*redis.Pool, error) {
+func NewPool(address string, password string, database string) (*redis.Pool, error) {
 	pool := &redis.Pool{
 		MaxIdle:     maxIdle,
 		IdleTimeout: idleTimeout,
 		Dial: func() (redis.Conn, error) {
-			c, err := redis.Dial("tcp", fmt.Sprintf("%s:%d", address, port))
+			c, err := redis.Dial("tcp", fmt.Sprintf("%s", address))
 			if err != nil {
 				return nil, err
 			}

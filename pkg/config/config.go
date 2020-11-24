@@ -1,22 +1,21 @@
 package config
 
 import (
-	"fmt"
 	log "github.com/sirupsen/logrus"
 	"net/http"
+	"net/url"
 	"os"
-	"strconv"
 	"strings"
 )
 
 type Config struct {
-	APIAddress         string
+	APIAddress         *url.URL
+	ClientAddress      *url.URL
 	CookieSameSite     http.SameSite
 	CookieSecure       bool
 	DataDir            string
 	LogLevel           log.Level
 	RedisAddress       string
-	RedisPort          int
 	RedisPassword      string
 	RedisDatabase      string
 	SpotifyRedirectURL string
@@ -25,41 +24,56 @@ type Config struct {
 }
 
 func New() *Config {
+	var err error
 	c := &Config{}
 
-	apiAddress := strings.TrimPrefix(strings.TrimPrefix(os.Getenv("JAM_API_ADDRESS"), "https://"), "http://")
-	apiPort, err := strconv.Atoi(os.Getenv("JAM_API_PORT"))
-	if err != nil {
-		log.Fatal(err)
+	apiAddress := os.Getenv("JAM_API_ADDRESS")
+	if apiAddress == "" {
+		log.Fatal("JAM_API_ADDRESS is empty")
 	}
-	if apiPort == 80 {
-		c.APIAddress = apiAddress
-	} else {
-		c.APIAddress = fmt.Sprintf("%s:%d", apiAddress, apiPort)
+	c.APIAddress, err = url.Parse(apiAddress)
+	if err != nil {
+		log.Fatal("failed to parse JAM_API_ADDRESS: ", err)
+	}
+
+	clientAddress := os.Getenv("JAM_CLIENT_ADDRESS")
+	if clientAddress == "" {
+		log.Fatal("JAM_CLIENT_ADDRESS is empty")
+	}
+	c.ClientAddress, err = url.Parse(clientAddress)
+	if err != nil {
+		log.Fatal("failed to parse JAM_CLIENT_ADDRESS: ", err)
 	}
 
 	c.DataDir = os.Getenv("JAM_DATA_DIR")
 
 	var logLevel log.Level
-	ll, err := log.ParseLevel(os.Getenv("JAM_LOG_LEVEL"))
+	parsedLogLevel, err := log.ParseLevel(os.Getenv("JAM_LOG_LEVEL"))
+	if parsedLogLevel == logLevel {
+		logLevel = log.WarnLevel
+	}
 	if err == nil {
-		logLevel = ll
+		logLevel = parsedLogLevel
 	}
 	c.LogLevel = logLevel
 
 	c.RedisAddress = os.Getenv("JAM_REDIS_ADDRESS")
 
-	redisPort, err := strconv.Atoi(os.Getenv("JAM_REDIS_PORT"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	c.RedisPort = redisPort
-
 	c.RedisPassword = os.Getenv("JAM_REDIS_PASSWORD")
 	c.RedisDatabase = os.Getenv("JAM_REDIS_DATABASE")
-	c.SpotifyRedirectURL = os.Getenv("JAM_SPOTIFY_REDIRECT_URL")
+
 	c.SpotifyID = os.Getenv("JAM_SPOTIFY_ID")
+	if c.SpotifyID == "" {
+		log.Fatal("JAM_SPOTIFY_ID cannot be empty")
+	}
 	c.SpotifySecret = os.Getenv("JAM_SPOTIFY_SECRET")
+	if c.SpotifySecret == "" {
+		log.Fatal("JAM_SPOTIFY_SECRET cannot be empty")
+	}
+	c.SpotifyRedirectURL = os.Getenv("JAM_SPOTIFY_REDIRECT_URL")
+	if c.SpotifyRedirectURL == "" {
+		log.Fatal("JAM_SPOTIFY_REDIRECT_URL cannot be empty")
+	}
 
 	environment := os.Getenv("JAM_PRODUCTION")
 

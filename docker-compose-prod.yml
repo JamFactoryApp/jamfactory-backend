@@ -10,7 +10,7 @@ services:
     env_file:
       - .env
     ports:
-      - "$JAM_API_PORT:$JAM_API_PORT"
+      - '3000:3000'
     restart: always
     volumes:
       - './data:$JAM_DATA_DIR'
