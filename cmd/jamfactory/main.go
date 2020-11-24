@@ -51,14 +51,21 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	log.Debug("Initialized connection to redis")
 
 	st := store.NewRedis(pool, path.Join(conf.DataDir, ".keypairs"), conf.CookieSameSite, conf.CookieSecure)
+	log.Debug("Initialized redis cookie store")
+
 	ca := cache.NewRedis(pool)
+	log.Debug("Initialized redis cache")
+
 	ja := jamfactory.NewSpotify(ca, conf.SpotifyRedirectURL, conf.SpotifyID, conf.SpotifySecret)
+	log.Debug("Initialized JamFactory")
 
 	se := server.NewServer("/", st, ja).
 		WithAddress(conf.APIAddress).
 		WithCache(ca)
 
+	log.Infof("HTTP server is listening on %s\n", conf.APIAddress)
 	return se.Run()
 }
