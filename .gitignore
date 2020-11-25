@@ -1,6 +1,7 @@
 .idea/
 .env
 .keypairs
+data
 
 # Binaries for programs and plugins
 *.exe
