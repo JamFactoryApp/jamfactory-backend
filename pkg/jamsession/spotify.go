@@ -78,7 +78,7 @@ func (s *SpotifyJamSession) Conductor() {
 				so, err := s.queue.GetNext()
 				switch err {
 				case nil:
-					if playerState.Playing && playerState.Progress > playerState.Item.Duration-1000 {
+					if (!playerState.Playing && playerState.Progress == 0) || playerState.Progress > playerState.Item.Duration-1000 {
 						if err := s.Play(playerState.Device, so); err != nil {
 							log.Error(err)
 							continue
