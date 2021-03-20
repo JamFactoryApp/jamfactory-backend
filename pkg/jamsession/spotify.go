@@ -84,7 +84,7 @@ func (s *SpotifyJamSession) Conductor() {
 							continue
 						}
 
-						message := types.GetQueueResponse{Queue: s.Queue().Songs()}
+						message := types.GetQueueResponse{Tracks: s.Queue().Tracks()}
 						s.NotifyClients(&notifications.Message{
 							Event:   notifications.Queue,
 							Message: message,
@@ -238,10 +238,10 @@ func (s *SpotifyJamSession) Delete() error {
 }
 
 func (s *SpotifyJamSession) CurrentSong() *spotify.FullTrack {
-	if len(s.queue.Songs()) == 0 {
+	if len(s.queue.Tracks()) == 0 {
 		return nil
 	}
-	return s.queue.Songs()[0].Song.(*spotify.FullTrack)
+	return s.queue.Tracks()[0].Song.(*spotify.FullTrack)
 }
 
 func (s *SpotifyJamSession) NotifyClients(msg *notifications.Message) {
@@ -306,7 +306,7 @@ func (s *SpotifyJamSession) AddCollection(collectionType string, collectionID st
 	s.NotifyClients(&notifications.Message{
 		Event: notifications.Queue,
 		Message: types.PutQueuePlaylistsResponse{
-			Queue: s.Queue().Songs(),
+			Tracks: s.Queue().Tracks(),
 		},
 	})
 	return nil
@@ -334,7 +334,7 @@ func (s *SpotifyJamSession) Vote(songID string, voteID string) error {
 	s.NotifyClients(&notifications.Message{
 		Event: notifications.Queue,
 		Message: types.PutQueueVoteResponse{
-			Queue: s.Queue().Songs(),
+			Tracks: s.Queue().Tracks(),
 		},
 	})
 
@@ -373,7 +373,7 @@ func (s *SpotifyJamSession) DeleteSong(songID string) error {
 	s.NotifyClients(&notifications.Message{
 		Event: notifications.Queue,
 		Message: types.PutQueuePlaylistsResponse{
-			Queue: s.Queue().Songs(),
+			Tracks: s.Queue().Tracks(),
 		},
 	})
 	return nil

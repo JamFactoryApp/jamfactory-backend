@@ -15,8 +15,8 @@ var (
 // Queue holds an ordered list of songs
 type Queue interface {
 	sort.Interface
-	// Songs returns the ordered list of songs
-	Songs() []types.Song
+	// Tracks returns the ordered list of songs
+	Tracks() []types.Song
 	// For returns the ordered list of songs from a specific user's perspective
 	For(voteID string) []types.Song
 	// Advance removes the first song in this Queue

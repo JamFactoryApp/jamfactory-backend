@@ -61,7 +61,7 @@ type GetJamLeaveResponse struct {
 // queue controller
 
 type GetQueueResponse struct {
-	Queue []Song `json:"queue"`
+	Tracks []Song `json:"tracks"`
 }
 
 type PutQueuePlaylistsResponse GetQueueResponse

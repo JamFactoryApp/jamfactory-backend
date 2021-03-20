@@ -10,10 +10,10 @@ import (
 func (s *Server) getQueue(w http.ResponseWriter, r *http.Request) {
 	jamSession := s.CurrentJamSession(r)
 	voteID := s.CurrentVoteID(r)
-	queue := jamSession.Queue().For(voteID)
+	tracks := jamSession.Queue().For(voteID)
 
 	utils.EncodeJSONBody(w, types.GetQueueResponse{
-		Queue: queue,
+		Tracks: tracks,
 	})
 }
 
@@ -32,10 +32,10 @@ func (s *Server) addCollection(w http.ResponseWriter, r *http.Request) {
 	}
 
 	voteID := s.CurrentVoteID(r)
-	queue := jamSession.Queue().For(voteID)
+	tracks := jamSession.Queue().For(voteID)
 
 	utils.EncodeJSONBody(w, types.PutQueuePlaylistsResponse{
-		Queue: queue,
+		Tracks: tracks,
 	})
 }
 
@@ -53,10 +53,10 @@ func (s *Server) vote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queue := jamSession.Queue().For(voteID)
+	tracks := jamSession.Queue().For(voteID)
 
 	utils.EncodeJSONBody(w, types.PutQueueVoteResponse{
-		Queue: queue,
+		Tracks: tracks,
 	})
 }
 
@@ -74,9 +74,9 @@ func (s *Server) deleteSong(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queue := jamSession.Queue().For(voteID)
+	tracks := jamSession.Queue().For(voteID)
 
 	utils.EncodeJSONBody(w, types.DeleteQueueSongResponse{
-		Queue: queue,
+		Tracks: tracks,
 	})
 }

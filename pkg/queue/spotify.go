@@ -33,7 +33,7 @@ func (q *SpotifyQueue) Swap(i, j int) {
 	q.songs[i], q.songs[j] = q.songs[j], q.songs[i]
 }
 
-func (q *SpotifyQueue) Songs() []types.Song {
+func (q *SpotifyQueue) Tracks() []types.Song {
 	songs := make([]types.Song, len(q.songs))
 	for i, s := range q.songs {
 		songs[i] = types.Song{
