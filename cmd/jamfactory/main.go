@@ -40,7 +40,7 @@ func main() {
 	}
 	pool, err := pkgredis.NewPool(conf.RedisAddress, conf.RedisPassword, conf.RedisDatabase)
 	if err != nil {
-		log.Fatal("could not connect to redis")
+		log.Fatal("could not connect to redis", err)
 	}
 	log.Debug("Initialized connection to redis")
 
