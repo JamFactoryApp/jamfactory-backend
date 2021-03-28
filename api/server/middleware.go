@@ -56,7 +56,7 @@ func (s *Server) jamSessionRequired(next http.Handler) http.Handler {
 
 		jamSession, err := s.jamFactory.GetJamSession(jamLabel)
 		if err != nil {
-			s.errNotFound(w, err, log.DebugLevel)
+			s.errUnauthorized(w, err, log.TraceLevel)
 			return
 		}
 

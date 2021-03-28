@@ -173,8 +173,9 @@ func (s *Server) leaveJamSession(w http.ResponseWriter, r *http.Request) {
 	userType := s.CurrentUserType(r)
 
 	if userType == types.UserTypeHost {
-		jamLabel := s.CurrentJamLabel(r)
-		if err := s.jamFactory.DeleteJamSession(jamLabel); err != nil {
+		jamSession := s.CurrentJamSession(r)
+		jamSession.SetState(false)
+		if err := s.jamFactory.DeleteJamSession(jamSession.JamLabel()); err != nil {
 			s.errInternalServerError(w, err, log.DebugLevel)
 			return
 		}
