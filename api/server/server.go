@@ -25,7 +25,7 @@ func init() {
 
 const (
 	readTimeout  = time.Second
-	writeTimeout = time.Second
+	writeTimeout = 5 * time.Second
 	idleTimeout  = time.Second
 )
 
