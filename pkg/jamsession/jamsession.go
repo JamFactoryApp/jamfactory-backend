@@ -9,6 +9,7 @@ import (
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/song"
 	"github.com/pkg/errors"
 	"github.com/zmb3/spotify"
+	"time"
 )
 
 var (
@@ -31,6 +32,10 @@ type JamSession interface {
 	Active() bool
 	// SetActive activates or deactivates this JamSession
 	SetActive(active bool)
+	// Timestamp returns the last timestamp set for the JamSession
+	Timestamp() time.Time
+	// SetTimestamp updates the timestamp of the JamSession
+	SetTimestamp(time.Time)
 	// VotingType returns this JamSession's voting type
 	VotingType() types.VotingType
 	// SetVotingType updates this JamSession's voting type

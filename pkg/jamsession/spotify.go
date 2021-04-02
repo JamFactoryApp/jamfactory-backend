@@ -26,14 +26,17 @@ var (
 
 type SpotifyJamSession struct {
 	sync.Mutex
-	jamLabel   string
-	name       string
-	active     bool
-	votingType types.VotingType
+	jamLabel        string
+	name            string
+	active          bool
+	lastTimestamp   time.Time
 	client     spotify.Client
-	queue      *queue.SpotifyQueue
-	room       *notifications.Room
-	quit       chan bool
+	votingType      types.VotingType
+	client          spotify.Client
+	player          *spotify.PlayerState
+	queue           *queue.SpotifyQueue
+	room            *notifications.Room
+	quit            chan bool
 }
 
 func NewSpotify(client spotify.Client, label string) (JamSession, error) {
@@ -48,14 +51,17 @@ func NewSpotify(client spotify.Client, label string) (JamSession, error) {
 	}
 
 	s := &SpotifyJamSession{
-		jamLabel:   label,
-		name:       fmt.Sprintf("%s's JamSession", u.DisplayName),
-		active:     playerState.Device.ID != "",
-		votingType: types.SessionVoting,
+		jamLabel:        label,
+		name:            fmt.Sprintf("%s's JamSession", u.DisplayName),
+		active:          playerState.Device.ID != "",
+		lastTimestamp:   time.Now(),
 		client:     client,
-		queue:      queue.NewSpotify(),
-		room:       notifications.NewRoom(),
-		quit:       make(chan bool),
+		votingType:      types.SessionVoting,
+		client:          client,
+		player:          playerState,
+		queue:           queue.NewSpotify(),
+		room:            notifications.NewRoom(),
+		quit:            make(chan bool),
 	}
 
 	go s.room.OpenDoors()
@@ -83,7 +89,7 @@ func (s *SpotifyJamSession) Conductor() {
 							log.Error(err)
 							continue
 						}
-
+						s.SetTimestamp(time.Now())
 						message := types.GetQueueResponse{Tracks: s.Queue().Tracks()}
 						s.NotifyClients(&notifications.Message{
 							Event:   notifications.Queue,
@@ -145,6 +151,10 @@ func (s *SpotifyJamSession) Active() bool {
 	return s.active
 }
 
+func (s *SpotifyJamSession) Timestamp() time.Time {
+	return s.lastTimestamp
+}
+
 func (s *SpotifyJamSession) VotingType() types.VotingType {
 	return s.votingType
 }
@@ -175,6 +185,12 @@ func (s *SpotifyJamSession) SetActive(active bool) {
 	s.Lock()
 	defer s.Unlock()
 	s.active = active
+}
+
+func (s *SpotifyJamSession) SetTimestamp(time time.Time) {
+	s.Lock()
+	defer s.Unlock()
+	s.lastTimestamp = time
 }
 
 func (s *SpotifyJamSession) PlayerState() (*spotify.PlayerState, error) {

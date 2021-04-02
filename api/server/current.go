@@ -8,6 +8,7 @@ import (
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/jamsession"
 	"golang.org/x/oauth2"
 	"net/http"
+	"time"
 )
 
 func (s *Server) CurrentSession(r *http.Request) *sessions.Session {
@@ -32,6 +33,7 @@ func (s *Server) CurrentJamSession(r *http.Request) jamsession.JamSession {
 	if err != nil {
 		panic(err)
 	}
+	jamSession.SetTimestamp(time.Now())
 	return jamSession
 }
 
