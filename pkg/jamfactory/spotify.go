@@ -62,12 +62,12 @@ func (s *SpotifyJamFactory) Housekeeper() {
 			for jamLabel, jamSession := range s.jamSessions {
 				if time.Now().After(jamSession.Timestamp().Add(inactiveTime)) {
 					log.Debug(jamLabel, ": inactive, closing")
-					jamSession.SetActive(false)
-					if err := s.labelManager.Delete(jamLabel); err != nil {
+					jamSession.NotifyClients(&notifications.Message{
+						Event:   notifications.Close,
+						Message: notifications.Inactive,
+					})
+					if err := s.DeleteJamSession(jamLabel); err != nil {
 						s.log.Debug(err)
-					}
-					if err := jamSession.Deconstruct(); err != nil {
-						log.Debug(err)
 					}
 				}
 			}
@@ -92,11 +92,6 @@ func (s *SpotifyJamFactory) DeleteJamSession(jamLabel string) error {
 	if err := s.labelManager.Delete(jamLabel); err != nil {
 		s.log.Debug(err)
 	}
-
-	jamSession.NotifyClients(&notifications.Message{
-		Event:   notifications.Close,
-		Message: notifications.HostLeft,
-	})
 
 	if err := jamSession.Deconstruct(); err != nil {
 		return err

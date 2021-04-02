@@ -5,6 +5,7 @@ import (
 	"github.com/jamfactoryapp/jamfactory-backend/api/sessions"
 	"github.com/jamfactoryapp/jamfactory-backend/api/types"
 	"github.com/jamfactoryapp/jamfactory-backend/api/utils"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/notifications"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 )
@@ -174,7 +175,10 @@ func (s *Server) leaveJamSession(w http.ResponseWriter, r *http.Request) {
 
 	if userType == types.UserTypeHost {
 		jamSession := s.CurrentJamSession(r)
-		jamSession.SetState(false)
+		jamSession.NotifyClients(&notifications.Message{
+			Event:   notifications.Close,
+			Message: notifications.HostLeft,
+		})
 		if err := s.jamFactory.DeleteJamSession(jamSession.JamLabel()); err != nil {
 			s.errInternalServerError(w, err, log.DebugLevel)
 			return
