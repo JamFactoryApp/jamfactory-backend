@@ -42,8 +42,8 @@ type JamSession interface {
 	SetVotingType(votingType string) error
 	// SetState updates this JamSession's playback state
 	SetState(state bool) error
-	// Delete deletes this JamSession
-	Delete() error
+	// Deconstruct this JamSession
+	Deconstruct() error
 	// NotifyClients notifies this JamSession's guests using websockets
 	NotifyClients(msg *notifications.Message)
 	// Queue returns this JamSession's queue

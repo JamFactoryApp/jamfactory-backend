@@ -98,9 +98,11 @@ func (s *SpotifyJamFactory) DeleteJamSession(jamLabel string) error {
 		Message: notifications.HostLeft,
 	})
 
-	if err := jamSession.Delete(); err != nil {
+	if err := jamSession.Deconstruct(); err != nil {
 		return err
 	}
+
+	delete(s.jamSessions, jamLabel)
 
 	return nil
 }

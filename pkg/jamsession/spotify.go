@@ -248,7 +248,7 @@ func (s *SpotifyJamSession) SetState(state bool) error {
 	return nil
 }
 
-func (s *SpotifyJamSession) Delete() error {
+func (s *SpotifyJamSession) Deconstruct() error {
 	s.quit <- true
 	return nil
 }
