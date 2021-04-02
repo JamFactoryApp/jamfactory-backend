@@ -36,8 +36,8 @@
         * [Get the User's Available Spotify Playlists](#2-get-the-users-available-spotify-playlists)
         * [Search for an Item on Spotify](#3-search-for-an-item-on-spotify)
 
-* [Socket Reference](#socket-reference)
-    * [Socket Events](#socket-events)
+* [Websocket Reference](#socket-reference)
+    * [Events](#socket-events)
         * [Event: ``queue`` ](#event-queue)
         * [Event: ``playback`` ](#event-playback)
         * [Event: ``close`` ](#event-close)
@@ -725,34 +725,28 @@ URL: jamfactory.app/api/v1/spotify/search
 }
 ```
 
-# Socket Reference
-JamFactory supports [Socket.IO](https://socket.io/) Websockets to update the user's information at certain events.
-**Currently only Socket.IO Version <= 1.4 is supported**
-When the user has joined a JamSession as a host or as a guest, he can connect to the Socket.IO room created by the JamSession.
-The connection will automatically join the right room, based on the session cookie. 
+# Websocket Reference
+JamFactory provides Websockets to notify the user at certain events and regularly update the playback status.
+
+When the user has joined a JamSession as a host or as a guest, he can connect to the corresponding Websocket created by the JamSession.
+The connection is automatically made to the correct Websocket, based on the session cookie.
 The client only needs to open or close the connection and listen for the events.
 
-***Example:***
+***Websocket Endpoint:***
+The endpoint where the websocket connection is available is:
 
-Connect to the socket
-```js
-    import * as io from 'socket.io-client';
-    this.socket = io.connect('http://jamfactory.app:3000');
+```
+ws://jamfactory.app/ws
 ```
 
-Listen for events
-```js
-     this.socket.on('<EventName>', (message: any) => {
-          // <Code to handle the message>
-     });
-```
+A message provided by the websocket is formatted in JSON and has the following form
 
-Close the connection if the user leaves
-```js
-     this.socket.close();
-```
+| key      	    | value type            | value description                                              |
+|----------	    |-------------------	|---------------------------------------------------             |
+| ``event`` 	| string             	| Event type of the Message. See all available Websocket [Events](#events) |
+| ``message`` 	| JSON Object           | The message corresponding to the event |
 
-## Socket events
+## Events
 
 ### Event: ``queue`` 
 
