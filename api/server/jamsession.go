@@ -56,21 +56,9 @@ func (s *Server) setJamSession(w http.ResponseWriter, r *http.Request) {
 func (s *Server) getPlayback(w http.ResponseWriter, r *http.Request) {
 	jamSession := s.CurrentJamSession(r)
 
-	playerState, err := jamSession.PlayerState()
-	if err != nil {
-		s.errInternalServerError(w, err, log.DebugLevel)
-		return
-	}
-
-	deviceID, err := jamSession.DeviceID()
-	if err != nil {
-		s.errInternalServerError(w, err, log.DebugLevel)
-		return
-	}
-
 	utils.EncodeJSONBody(w, types.GetJamPlaybackResponse{
-		Playback: playerState,
-		DeviceID: deviceID,
+		Playback: jamSession.GetPlayerState(),
+		DeviceID: jamSession.GetDeviceID(),
 	})
 }
 
@@ -88,21 +76,20 @@ func (s *Server) setPlayback(w http.ResponseWriter, r *http.Request) {
 			s.errInternalServerError(w, err, log.DebugLevel)
 			return
 		}
+		playerState := jamSession.GetPlayerState()
+		playerState.Playing = body.Playing.Value
+		jamSession.SetPlayerState(playerState)
 	}
 
 	if body.DeviceID.Set && body.DeviceID.Valid {
 		if err := jamSession.SetDevice(body.DeviceID.Value); err != nil {
 			s.errInternalServerError(w, err, log.DebugLevel)
 		}
-	}
-
-	playerState, err := jamSession.PlayerState()
-	if err != nil {
-		s.errInternalServerError(w, err, log.DebugLevel)
+		jamSession.SetDevice(body.DeviceID.Value)
 	}
 
 	utils.EncodeJSONBody(w, types.PutJamPlaybackResponse{
-		Playback: playerState,
+		Playback: jamSession.GetPlayerState(),
 	})
 }
 

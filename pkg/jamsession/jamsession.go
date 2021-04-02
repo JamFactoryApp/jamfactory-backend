@@ -67,10 +67,14 @@ type JamSession interface {
 	GetSong(songID string) (song.Song, error)
 	// CurrentSong TODO
 	CurrentSong() *spotify.FullTrack
-	// PlayerState TODO
-	PlayerState() (*spotify.PlayerState, error)
-	// DeviceID TODO
-	DeviceID() (spotify.ID, error)
+	// GetPlayerState TODO
+	GetPlayerState() *spotify.PlayerState
+	// SetPlayerState TODO
+	SetPlayerState(*spotify.PlayerState)
+	// GetDeviceID TODO
+	GetDeviceID() spotify.ID
+	// SetDeviceID TODO
+	SetDeviceID(spotify.ID)
 	// SetDevice TODO
 	SetDevice(id string) error
 }

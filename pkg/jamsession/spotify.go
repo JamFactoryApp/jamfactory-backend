@@ -87,7 +87,6 @@ func (s *SpotifyJamSession) Conductor() {
 				continue
 			}
 			s.player = playerState
-
 			// Check if no start or end of song is near
 			if playerState.Progress > 10000 && playerState.Progress < playerState.Item.Duration-10000 {
 				// Conductor can relax a little
@@ -216,17 +215,20 @@ func (s *SpotifyJamSession) SetTimestamp(time time.Time) {
 	s.lastTimestamp = time
 }
 
-func (s *SpotifyJamSession) PlayerState() (*spotify.PlayerState, error) {
-	return s.client.PlayerState()
+func (s *SpotifyJamSession) GetPlayerState() *spotify.PlayerState {
+	return s.player
 }
 
-func (s *SpotifyJamSession) DeviceID() (spotify.ID, error) {
-	playerState, err := s.client.PlayerState()
-	if err != nil {
-		return "", err
-	}
+func (s *SpotifyJamSession) SetPlayerState(state *spotify.PlayerState)  {
+	s.player = state
+}
 
-	return playerState.Device.ID, nil
+func (s *SpotifyJamSession) GetDeviceID() spotify.ID {
+	return s.player.Device.ID
+}
+
+func (s *SpotifyJamSession) SetDeviceID(id spotify.ID) {
+	s.player.Device.ID = id
 }
 
 func (s *SpotifyJamSession) SetDevice(id string) error {
