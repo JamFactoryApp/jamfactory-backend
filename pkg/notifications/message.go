@@ -39,5 +39,5 @@ type WebsocketCloseType string
 
 const (
 	HostLeft WebsocketCloseType = "host"
-	//JamSessionInactive                    = "inactive"
+	Inactive                    = "inactive"
 )

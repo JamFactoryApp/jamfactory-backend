@@ -14,6 +14,7 @@ import (
 	"golang.org/x/oauth2"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type SpotifyJamFactory struct {
@@ -24,6 +25,10 @@ type SpotifyJamFactory struct {
 	clientAddress string
 	log           *log.Logger
 }
+
+const (
+	inactiveTime = 2 * time.Hour
+)
 
 var (
 	scopes = []string{
@@ -37,13 +42,36 @@ var (
 func NewSpotify(ca *cache.RedisCache, redirectURL string, clientID string, secretKey string, clientAddress string) server.JamFactory {
 	a := spotify.NewAuthenticator(redirectURL, scopes...)
 	a.SetAuthInfo(clientID, secretKey)
-	return &SpotifyJamFactory{
+	spotifyJamFactory := &SpotifyJamFactory{
 		authenticator: a,
 		cache:         ca,
 		labelManager:  jamlabel.NewDefault(),
 		jamSessions:   make(map[string]jamsession.JamSession),
 		clientAddress: clientAddress,
 		log:           logutils.NewDefault(),
+	}
+	go spotifyJamFactory.Housekeeper()
+	return spotifyJamFactory
+}
+
+func (s *SpotifyJamFactory) Housekeeper() {
+	for {
+		tick := time.Tick(time.Second)
+		select {
+		case <-tick:
+			for jamLabel, jamSession := range s.jamSessions {
+				if time.Now().After(jamSession.Timestamp().Add(inactiveTime)) {
+					log.Debug(jamLabel, ": inactive, closing")
+					jamSession.NotifyClients(&notifications.Message{
+						Event:   notifications.Close,
+						Message: notifications.Inactive,
+					})
+					if err := s.DeleteJamSession(jamLabel); err != nil {
+						s.log.Debug(err)
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -65,14 +93,11 @@ func (s *SpotifyJamFactory) DeleteJamSession(jamLabel string) error {
 		s.log.Debug(err)
 	}
 
-	jamSession.NotifyClients(&notifications.Message{
-		Event:   notifications.Close,
-		Message: notifications.HostLeft,
-	})
-
-	if err := jamSession.Delete(); err != nil {
+	if err := jamSession.Deconstruct(); err != nil {
 		return err
 	}
+
+	delete(s.jamSessions, jamLabel)
 
 	return nil
 }

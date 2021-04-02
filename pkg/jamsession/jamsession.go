@@ -9,6 +9,7 @@ import (
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/song"
 	"github.com/pkg/errors"
 	"github.com/zmb3/spotify"
+	"time"
 )
 
 var (
@@ -31,14 +32,18 @@ type JamSession interface {
 	Active() bool
 	// SetActive activates or deactivates this JamSession
 	SetActive(active bool)
+	// Timestamp returns the last timestamp set for the JamSession
+	Timestamp() time.Time
+	// SetTimestamp updates the timestamp of the JamSession
+	SetTimestamp(time.Time)
 	// VotingType returns this JamSession's voting type
 	VotingType() types.VotingType
 	// SetVotingType updates this JamSession's voting type
 	SetVotingType(votingType string) error
 	// SetState updates this JamSession's playback state
 	SetState(state bool) error
-	// Delete deletes this JamSession
-	Delete() error
+	// Deconstruct this JamSession
+	Deconstruct() error
 	// NotifyClients notifies this JamSession's guests using websockets
 	NotifyClients(msg *notifications.Message)
 	// Queue returns this JamSession's queue
@@ -62,10 +67,14 @@ type JamSession interface {
 	GetSong(songID string) (song.Song, error)
 	// CurrentSong TODO
 	CurrentSong() *spotify.FullTrack
-	// PlayerState TODO
-	PlayerState() (*spotify.PlayerState, error)
-	// DeviceID TODO
-	DeviceID() (spotify.ID, error)
+	// GetPlayerState TODO
+	GetPlayerState() *spotify.PlayerState
+	// SetPlayerState TODO
+	SetPlayerState(*spotify.PlayerState)
+	// GetDeviceID TODO
+	GetDeviceID() spotify.ID
+	// SetDeviceID TODO
+	SetDeviceID(spotify.ID)
 	// SetDevice TODO
 	SetDevice(id string) error
 }
