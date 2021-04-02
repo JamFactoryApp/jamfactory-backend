@@ -27,7 +27,7 @@ type SpotifyJamFactory struct {
 }
 
 const (
-	inactiveTime = 30 * time.Second
+	inactiveTime = 2 * time.Hour
 )
 
 var (
