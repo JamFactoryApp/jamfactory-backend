@@ -16,7 +16,7 @@ const (
 func (s *Server) corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if origin := r.Header.Get("Origin"); origin != "" {
-			w.Header().Add("Access-Control-Allow-Origin", "http://localhost:4200")
+			w.Header().Add("Access-Control-Allow-Origin", "http://192.168.178.38:4200")
 			w.Header().Add("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 			w.Header().Add("Access-Control-Allow-Methods", "GET, PUT, DELETE, OPTIONS")
 			w.Header().Add("Access-Control-Allow-Credentials", "true")

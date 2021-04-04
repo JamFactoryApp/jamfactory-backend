@@ -3,14 +3,13 @@ package config
 import (
 	log "github.com/sirupsen/logrus"
 	"net/http"
-	"net/url"
 	"os"
+	"strconv"
 	"strings"
 )
 
 type Config struct {
-	APIAddress         *url.URL
-	ClientAddress      *url.URL
+	Port               int
 	CookieSameSite     http.SameSite
 	CookieSecure       bool
 	DataDir            string
@@ -27,23 +26,15 @@ func New() *Config {
 	var err error
 	c := &Config{}
 
-	apiAddress := os.Getenv("JAM_API_ADDRESS")
-	if apiAddress == "" {
-		log.Fatal("JAM_API_ADDRESS is empty")
+	portVal := os.Getenv("JAM_PORT")
+	if portVal == "" {
+		log.Fatal("JAM_PORT is empty")
 	}
-	c.APIAddress, err = url.Parse(apiAddress)
+	port, err := strconv.Atoi(portVal)
 	if err != nil {
-		log.Fatal("failed to parse JAM_API_ADDRESS: ", err)
+		log.Fatal("failed to parse JAM_PORT: ", err)
 	}
-
-	clientAddress := os.Getenv("JAM_CLIENT_ADDRESS")
-	if clientAddress == "" {
-		log.Fatal("JAM_CLIENT_ADDRESS is empty")
-	}
-	c.ClientAddress, err = url.Parse(clientAddress)
-	if err != nil {
-		log.Fatal("failed to parse JAM_CLIENT_ADDRESS: ", err)
-	}
+	c.Port = port
 
 	c.DataDir = os.Getenv("JAM_DATA_DIR")
 
@@ -75,7 +66,7 @@ func New() *Config {
 		log.Fatal("JAM_SPOTIFY_REDIRECT_URL cannot be empty")
 	}
 
-	environment := os.Getenv("JAM_PRODUCTION")
+	environment := os.Getenv("JAM_ENV")
 
 	switch strings.ToLower(environment) {
 	case "production":
