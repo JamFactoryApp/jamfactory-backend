@@ -86,21 +86,24 @@ func (s *SpotifyJamSession) Conductor() {
 			if err != nil {
 				continue
 			}
-			s.player = playerState
+			s.SetPlayerState(playerState)
 			// Check if no start or end of song is near
-			if playerState.Progress > 10000 && playerState.Progress < playerState.Item.Duration-10000 {
-				// Conductor can relax a little
-				s.updateIntervall = 5 * time.Second
-			} else if !s.active {
-				s.updateIntervall = 10 * time.Second
-			} else if playerState.Progress > playerState.Item.Duration-10000 {
-				s.updateIntervall = time.Second
+			if s.player.Item != nil {
+				if playerState.Progress > 10000 && playerState.Progress < playerState.Item.Duration-10000 {
+					// Conductor can relax a little
+					s.updateIntervall = 5 * time.Second
+				} else if !s.active {
+					s.updateIntervall = 10 * time.Second
+				} else if playerState.Progress > playerState.Item.Duration-10000 {
+					s.updateIntervall = time.Second
+				}
 			}
 			playbackUpdate = time.Tick(s.updateIntervall)
 			s.NotifyClients(&notifications.Message{
 				Event: notifications.Playback,
 				Message: types.SocketPlaybackState{
-					Playback: s.player,
+					Playback: s.GetPlayerState(),
+					Device: s.GetDeviceID(),
 				},
 			})
 
@@ -243,6 +246,7 @@ func (s *SpotifyJamSession) SetDevice(id string) error {
 			return err
 		}
 	}
+	s.SetDeviceID(deviceID)
 	return nil
 }
 
