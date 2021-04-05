@@ -9,4 +9,5 @@ type SocketJamState struct {
 
 type SocketPlaybackState struct {
 	Playback *spotify.PlayerState `json:"playback"`
+	Device   spotify.ID           `json:"device_id"`
 }

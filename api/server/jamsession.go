@@ -90,6 +90,7 @@ func (s *Server) setPlayback(w http.ResponseWriter, r *http.Request) {
 
 	utils.EncodeJSONBody(w, types.PutJamPlaybackResponse{
 		Playback: jamSession.GetPlayerState(),
+		DeviceID: jamSession.GetDeviceID(),
 	})
 }
 
