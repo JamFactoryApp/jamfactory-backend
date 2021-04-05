@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: jamfactory
+  name: jamfactory-backend
+  labels:
+    name: jamfactory-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: jamfactory-backend
+  template:
+    metadata:
+      labels:
+        name: jamfactory-backend
+    spec:
+      restartPolicy: Always
+      containers:
+        - image: jamfactory-backend:latest
+          name: jamfactory-backend
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: jamfactory-env
+          env:
+            - name: JAM_PORT
+              value: "3000"
+            - name: JAM_DATA_DIR
+              value: "/data"
+            - name: JAM_REDIS_ADDRESS
+              value: "jamfactory-redis:6379"
+            - name: JAM_REDIS_DATABASE
+              value: "0"
+            - name: JAM_SPOTIFY_ID
+              valueFrom:
+                secretKeyRef:
+                  key: spotify-id
+                  name: jamfactory-secrets
+            - name: JAM_SPOTIFY_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: spotify-secret
+                  name: jamfactory-secrets

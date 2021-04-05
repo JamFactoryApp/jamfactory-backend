@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: jamfactory
+  name: jamfactory-redis
+  labels:
+    name: jamfactory-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: jamfactory-redis
+  template:
+    metadata:
+      labels:
+        name: jamfactory-redis
+    spec:
+      restartPolicy: Always
+      containers:
+        - image: redis:latest
+          name: jamfactory-redis
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: redis
+              containerPort: 6379

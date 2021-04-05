@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: jamfactory
+  name: jamfactory-web
+  labels:
+    name: jamfactory-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: jamfactory-web
+  template:
+    metadata:
+      labels:
+        name: jamfactory-web
+    spec:
+      restartPolicy: Always
+      containers:
+        - image: jamfactory-web:latest
+          name: jamfactory-web
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
