@@ -50,7 +50,7 @@ func main() {
 	redisCache := cache.NewRedis(pool)
 	log.Debug("Initialized redis cache")
 
-	spotifyJamFactory := jamfactory.NewSpotify(redisCache, conf.SpotifyRedirectURL, conf.SpotifyID, conf.SpotifySecret)
+	spotifyJamFactory := jamfactory.NewSpotify(redisCache, conf.SpotifyRedirectURL, conf.SpotifyID, conf.SpotifySecret, conf.ClientAddress.String())
 	log.Debug("Initialized JamFactory")
 
 	httpServer := server.NewServer("/", redisStore, spotifyJamFactory).

@@ -3,6 +3,7 @@ package config
 import (
 	log "github.com/sirupsen/logrus"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -10,6 +11,7 @@ import (
 
 type Config struct {
 	Port               int
+	ClientAddress      *url.URL
 	CookieSameSite     http.SameSite
 	CookieSecure       bool
 	DataDir            string
@@ -35,6 +37,15 @@ func New() *Config {
 		log.Fatal("failed to parse JAM_PORT: ", err)
 	}
 	c.Port = port
+
+	clientAddress := os.Getenv("JAM_CLIENT_ADDRESS")
+	if clientAddress == "" {
+		log.Fatal("JAM_CLIENT_ADDRESS is empty")
+	}
+	c.ClientAddress, err = url.Parse(clientAddress)
+	if err != nil {
+		log.Fatal("failed to parse JAM_CLIENT_ADDRESS: ", err)
+	}
 
 	c.DataDir = os.Getenv("JAM_DATA_DIR")
 

@@ -22,6 +22,7 @@ type SpotifyJamFactory struct {
 	cache         cache.Cache
 	labelManager  jamlabel.Manager
 	jamSessions   map[string]jamsession.JamSession
+	clientAddress string
 	log           *log.Logger
 }
 
@@ -38,7 +39,7 @@ var (
 	}
 )
 
-func NewSpotify(ca *cache.RedisCache, redirectURL string, clientID string, secretKey string) server.JamFactory {
+func NewSpotify(ca *cache.RedisCache, redirectURL string, clientID string, secretKey string, clientAdress string) server.JamFactory {
 	a := spotify.NewAuthenticator(redirectURL, scopes...)
 	a.SetAuthInfo(clientID, secretKey)
 	spotifyJamFactory := &SpotifyJamFactory{
@@ -46,6 +47,7 @@ func NewSpotify(ca *cache.RedisCache, redirectURL string, clientID string, secre
 		cache:         ca,
 		labelManager:  jamlabel.NewDefault(),
 		jamSessions:   make(map[string]jamsession.JamSession),
+		clientAddress: clientAdress,
 		log:           logutils.NewDefault(),
 	}
 	go spotifyJamFactory.Housekeeper()
@@ -152,4 +154,8 @@ func (s *SpotifyJamFactory) Search(jamSession jamsession.JamSession, t string, t
 	}
 
 	return result, nil
+}
+
+func (s *SpotifyJamFactory) ClientAddress() string {
+	return s.clientAddress
 }

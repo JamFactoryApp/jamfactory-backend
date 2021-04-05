@@ -20,4 +20,6 @@ type JamFactory interface {
 	NewJamSession(*oauth2.Token) (jamsession.JamSession, error)
 	// Search yields search results from the music streaming provider
 	Search(jamSession jamsession.JamSession, t string, text string) (interface{}, error)
+	// ClientAddress returns the address this JamFactory's client listens on
+	ClientAddress() string
 }
