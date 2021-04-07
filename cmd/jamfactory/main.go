@@ -40,7 +40,7 @@ func main() {
 	}
 	pool, err := pkgredis.NewPool(conf.RedisAddress, conf.RedisPassword, conf.RedisDatabase)
 	if err != nil {
-		log.Fatal("could not connect to redis", err)
+		log.Fatal("could not connect to redis: ", err)
 	}
 	log.Debug("Initialized connection to redis")
 
@@ -54,10 +54,10 @@ func main() {
 	log.Debug("Initialized JamFactory")
 
 	httpServer := server.NewServer("/", redisStore, spotifyJamFactory).
-		WithAddress(conf.APIAddress).
+		WithPort(conf.Port).
 		WithCache(redisCache)
 
-	log.Infof("HTTP server is listening on %s\n", conf.APIAddress)
+	log.Infof("HTTP server is listening on :%d\n", conf.Port)
 	if err := httpServer.Run(); err != nil {
 		log.Fatal("HTTP server failed to listen: ", err)
 	}

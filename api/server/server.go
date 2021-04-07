@@ -13,7 +13,6 @@ import (
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"
 	"net/http"
-	"net/url"
 	"time"
 )
 
@@ -60,7 +59,7 @@ func NewServer(pattern string, store sessions.Store, jamFactory JamFactory) *Ser
 	}
 
 	s.initRoutes()
-	http.Handle(pattern, s.corsMiddleware(s.router))
+	http.Handle(pattern, s.corsMiddleware(s.router, jamFactory.ClientAddress()))
 
 	return s
 }
@@ -73,8 +72,8 @@ func (s *Server) RunTLS(certFile string, keyFile string) error {
 	return s.server.ListenAndServeTLS(certFile, keyFile)
 }
 
-func (s *Server) WithAddress(address *url.URL) *Server {
-	s.server.Addr = fmt.Sprintf(":%s", address.Port())
+func (s *Server) WithPort(port int) *Server {
+	s.server.Addr = fmt.Sprintf(":%d", port)
 	return s
 }
 

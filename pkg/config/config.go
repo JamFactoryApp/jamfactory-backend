@@ -5,11 +5,12 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 )
 
 type Config struct {
-	APIAddress         *url.URL
+	Port               int
 	ClientAddress      *url.URL
 	CookieSameSite     http.SameSite
 	CookieSecure       bool
@@ -27,14 +28,15 @@ func New() *Config {
 	var err error
 	c := &Config{}
 
-	apiAddress := os.Getenv("JAM_API_ADDRESS")
-	if apiAddress == "" {
-		log.Fatal("JAM_API_ADDRESS is empty")
+	portVal := os.Getenv("JAM_PORT")
+	if portVal == "" {
+		log.Fatal("JAM_PORT is empty")
 	}
-	c.APIAddress, err = url.Parse(apiAddress)
+	port, err := strconv.Atoi(portVal)
 	if err != nil {
-		log.Fatal("failed to parse JAM_API_ADDRESS: ", err)
+		log.Fatal("failed to parse JAM_PORT: ", err)
 	}
+	c.Port = port
 
 	clientAddress := os.Getenv("JAM_CLIENT_ADDRESS")
 	if clientAddress == "" {
@@ -75,7 +77,7 @@ func New() *Config {
 		log.Fatal("JAM_SPOTIFY_REDIRECT_URL cannot be empty")
 	}
 
-	environment := os.Getenv("JAM_PRODUCTION")
+	environment := os.Getenv("JAM_ENV")
 
 	switch strings.ToLower(environment) {
 	case "production":

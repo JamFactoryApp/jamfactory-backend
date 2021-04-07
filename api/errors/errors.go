@@ -21,4 +21,6 @@ var (
 	ErrUserTypeMalformed     = errors.New("malformed user type")
 	ErrUserTypeMissing       = errors.New("missing user type")
 	ErrInvalidVotingType     = errors.New("invalid voting type")
+	ErrOriginMissing         = errors.New("missing origin")
+	ErrOriginMalformed       = errors.New("malformed origin")
 )

@@ -16,6 +16,7 @@ const (
 	jamLabelKey = "Label"
 	tokenKey    = "CurrentToken"
 	userTypeKey = "User"
+	originKey   = "Origin"
 )
 
 func NewContext(ctx context.Context, session *sessions.Session) context.Context {
@@ -74,6 +75,18 @@ func UserType(session *sessions.Session) (types.UserType, error) {
 	return userType, nil
 }
 
+func Origin(session *sessions.Session) (string, error) {
+	originVal := session.Values[originKey]
+	if originVal == nil {
+		return "", errors.ErrOriginMissing
+	}
+	origin, ok := originVal.(string)
+	if !ok {
+		return "", errors.ErrOriginMalformed
+	}
+	return origin, nil
+}
+
 func SetJamLabel(session *sessions.Session, jamLabel string) {
 	session.Values[jamLabelKey] = jamLabel
 }
@@ -84,4 +97,8 @@ func SetToken(session *sessions.Session, token *oauth2.Token) {
 
 func SetUserType(session *sessions.Session, userType types.UserType) {
 	session.Values[userTypeKey] = userType
+}
+
+func SetOrigin(session *sessions.Session, origin string) {
+	session.Values[originKey] = origin
 }

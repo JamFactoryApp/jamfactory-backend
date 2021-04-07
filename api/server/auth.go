@@ -26,6 +26,13 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 	state := session.ID
 	url := s.jamFactory.CallbackURL(state)
 
+	sessions.SetOrigin(session, r.Header.Get("Referer"))
+
+	if err := session.Save(r, w); err != nil {
+		s.errSessionSave(w, err)
+		return
+	}
+
 	utils.EncodeJSONBody(w, types.GetAuthLoginResponse{
 		URL: url,
 	})
@@ -67,5 +74,7 @@ func (s *Server) callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, s.jamFactory.ClientAddress(), http.StatusSeeOther)
+	origin, err := sessions.Origin(session)
+
+	http.Redirect(w, r, origin, http.StatusSeeOther)
 }
