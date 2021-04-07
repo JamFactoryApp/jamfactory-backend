@@ -13,7 +13,7 @@ require (
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.6.0
-	github.com/zmb3/spotify v1.1.1
+	github.com/zmb3/spotify v1.1.2-0.20210407153121-db261801914e
 	golang.org/x/net v0.0.0-20201021035429-f5854403a974 // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
