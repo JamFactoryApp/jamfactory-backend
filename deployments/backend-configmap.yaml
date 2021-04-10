@@ -8,5 +8,5 @@ metadata:
 data:
   JAM_ENV: "PRODUCTION"
   JAM_LOG_EVEL: "INFO"
-  JAM_CLIENT_ADDRESS: "https://jam.local"
-  JAM_SPOTIFY_REDIRECT_URL: "https://jam.local/api/v1/auth/callback"
+  JAM_CLIENT_ADDRESS: "https://jam.jole.dev"
+  JAM_SPOTIFY_REDIRECT_URL: "https://jam.jole.dev/api/v1/auth/callback"

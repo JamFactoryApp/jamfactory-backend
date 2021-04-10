@@ -16,8 +16,10 @@ spec:
         name: jamfactory-backend
     spec:
       restartPolicy: Always
+      imagePullSecrets:
+        - name: regcred
       containers:
-        - image: https://ghcr.io/drjole/jamfactory-backend:latest
+        - image: registry.jole.dev/jamfactory/jamfactory/jamfactory-backend:latest
           name: jamfactory-backend
           imagePullPolicy: IfNotPresent
           ports:

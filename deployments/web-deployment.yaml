@@ -16,8 +16,10 @@ spec:
         name: jamfactory-web
     spec:
       restartPolicy: Always
+      imagePullSecrets:
+        - name: regcred
       containers:
-        - image: https://ghcr.io/drjole/jamfactory-web:latest
+        - image: registry.jole.dev/jamfactory/jamfactory/jamfactory-web:latest
           name: jamfactory-web
           imagePullPolicy: IfNotPresent
           ports:

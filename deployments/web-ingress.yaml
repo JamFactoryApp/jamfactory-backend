@@ -4,10 +4,16 @@ metadata:
   namespace: jamfactory
   name: jamfactory-web-ingress
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+    # cert-manager.io/cluster-issuer: "letsencrypt-production"
 spec:
+  tls:
+    - hosts:
+        - jam.jole.dev
+      secretName: jamfactory-tls
   rules:
-    - host: jam.local
+    - host: jam.jole.dev
       http:
         paths:
           - path: /

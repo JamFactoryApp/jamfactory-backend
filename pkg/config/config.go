@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"net/url"
@@ -49,8 +48,6 @@ func New() *Config {
 		CookieSameSite: http.SameSiteLaxMode,
 		CookieSecure:   true,
 	}
-
-	fmt.Println(os.Getenv("JAM_SPOTIFY_ID"))
 
 	// Set c.DataDir
 	dataDirVal := os.Getenv("JAM_DATA_DIR")
