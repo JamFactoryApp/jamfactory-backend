@@ -23,7 +23,7 @@ jobs:
         id: docker_build
         uses: docker/build-push-action@v2
         with:
-          file: { context }/Dockerfile-prod
+          file: $ {{ context }}/Dockerfile-prod
           push: true
           tags: drjole/jamfactory-backend:latest
       - name: Image digest
