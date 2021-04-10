@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: jamfactory
+  name: jamfactory-redis
+  labels:
+    name: jamfactory-redis
+spec:
+  type: ClusterIP
+  ports:
+    - port: 6379
+  selector:
+    name: jamfactory-redis

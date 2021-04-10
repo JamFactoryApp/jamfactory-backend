@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: jamfactory
+  name: jamfactory-backend-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /api
+spec:
+  rules:
+    - host: jam.local
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: jamfactory-backend
+                port:
+                  number: 3000
