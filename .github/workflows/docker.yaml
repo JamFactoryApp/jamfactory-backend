@@ -25,6 +25,6 @@ jobs:
         with:
           file: Dockerfile-prod
           push: true
-          tags: DrJoLe/jamfactory-backend:latest
+          tags: drjoLe/jamfactory-backend:latest
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
