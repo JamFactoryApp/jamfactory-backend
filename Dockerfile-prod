@@ -1,5 +1,5 @@
-# golang:1.14-alpine
-FROM golang@sha256:032054b7b190502c52862bb51e2f6d7e71f4cd47e2d03ce82b4980c6cf212cf0 as builder
+# golang:1.16-alpine
+FROM golang@sha256:734250bcdf5b6578e9596bf1e52824306469c7f55923b2e13a29e7c03ccd411e as builder
 
 RUN apk update \
     && apk add --no-cache git ca-certificates tzdata \

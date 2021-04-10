@@ -1,18 +1,23 @@
-version: '3'
+version: "3"
 
 services:
   app:
     build: .
-    env_file:
-      - .env
+    env_file: .env
+    environment:
+      JAM_DATA_DIR: /data
+      JAM_REDIS_ADDRESS: redis:6379
     ports:
       - "3000:3000"
     volumes:
-    - './data:$JAM_DATA_DIR'
+      - "jam-data:/data"
     depends_on:
       - redis
 
   redis:
-    image: redis
+    image: redis:latest
     ports:
-      - 6379:6379
+      - "6379:6379"
+
+volumes:
+  jam-data:

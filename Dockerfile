@@ -1,4 +1,4 @@
-FROM golang:1.14-alpine as builder
+FROM golang:1.16-alpine as builder
 
 WORKDIR $GOPATH/src/github.com/jamfactoryapp/jamfactory-backend
 

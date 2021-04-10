@@ -1,22 +1,27 @@
-version: '3'
+version: "3"
 
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile-prod
+    env_file: .env
     environment:
-      - "JAM_PRODUCTION=PRODUCTION"
-    env_file:
-      - .env
+      JAM_DATA_DIR: /data
+      JAM_REDIS_ADDRESS: redis:6379
     ports:
       - '3000:3000'
-    restart: always
     volumes:
-      - './data:$JAM_DATA_DIR'
+      - "jam-data:/data"
+    restart: always
     depends_on:
       - redis
 
   redis:
-    image: redis
+    image: redis:latest
+    ports:
+      - "6379:6379"
     restart: always
+
+volumes:
+  jam-data:
