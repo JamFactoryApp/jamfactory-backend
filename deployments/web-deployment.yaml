@@ -17,7 +17,7 @@ spec:
     spec:
       restartPolicy: Always
       containers:
-        - image: jamfactory-web:latest
+        - image: https://ghcr.io/drjole/jamfactory-web:latest
           name: jamfactory-web
           imagePullPolicy: IfNotPresent
           ports:
