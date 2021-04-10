@@ -26,14 +26,12 @@ spec:
             - configMapRef:
                 name: jamfactory-env
           env:
-            - name: JAM_PORT
-              value: "3000"
             - name: JAM_DATA_DIR
               value: "/data"
+            - name: JAM_USE_HTTPS
+              value: "false"
             - name: JAM_REDIS_ADDRESS
               value: "jamfactory-redis:6379"
-            - name: JAM_REDIS_DATABASE
-              value: "0"
             - name: JAM_SPOTIFY_ID
               valueFrom:
                 secretKeyRef:

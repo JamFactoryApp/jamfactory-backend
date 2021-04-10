@@ -6,7 +6,7 @@ metadata:
   labels:
     app: jamfactory
 data:
-  JAM_LOG_LEVEL: "INFO"
   JAM_ENV: "PRODUCTION"
+  JAM_LOG_EVEL: "INFO"
   JAM_CLIENT_ADDRESS: "https://jam.local"
-  JAM_SPOTIFY_REDIRECT_URL: "https://api.jam.local/api/v1/auth/callback"
+  JAM_SPOTIFY_REDIRECT_URL: "https://jam.local/api/v1/auth/callback"

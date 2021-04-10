@@ -1,10 +1,12 @@
 package config
 
 import (
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 )
@@ -46,6 +48,18 @@ func New() *Config {
 		RedisPassword:  "",
 		CookieSameSite: http.SameSiteLaxMode,
 		CookieSecure:   true,
+	}
+
+	fmt.Println(os.Getenv("JAM_SPOTIFY_ID"))
+
+	// Set c.DataDir
+	dataDirVal := os.Getenv("JAM_DATA_DIR")
+	if dataDirVal != "" {
+		c.DataDir = dataDirVal
+		c.CertFile = path.Join(c.DataDir, "cert.pem")
+		c.KeyFile = path.Join(c.DataDir, "key.pem")
+	} else {
+		log.Debug("JAM_DATA_DIR is empty. Using ", c.DataDir)
 	}
 
 	// Set HTTPS related settings
@@ -120,14 +134,6 @@ func New() *Config {
 		c.ClientAddress = clientAddress
 	} else {
 		log.Debug("JAM_CLIENT_ADDRESS is empty. Using ", c.ClientAddress)
-	}
-
-	// Set c.DataDir
-	dataDirVal := os.Getenv("JAM_DATA_DIR")
-	if dataDirVal != "" {
-		c.DataDir = dataDirVal
-	} else {
-		log.Debug("JAM_DATA_DIR is empty. Using ", c.DataDir)
 	}
 
 	// Set c.LogLevel

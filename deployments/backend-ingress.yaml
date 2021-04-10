@@ -4,13 +4,13 @@ metadata:
   namespace: jamfactory
   name: jamfactory-backend-ingress
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/rewrite-target: /api
 spec:
   rules:
-    - host: api.jam.local
+    - host: jam.local
       http:
         paths:
-          - path: /
+          - path: /api
             pathType: Prefix
             backend:
               service:
