@@ -16,15 +16,15 @@ jobs:
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v1
         with:
-          registry: registry.jole.dev
-          username: ${{ secrets.GITLAB_USER }}
-          password: ${{ secrets.GITLAB_PAT }}
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push
         id: docker_build
         uses: docker/build-push-action@v2
         with:
           file: Dockerfile-prod
           push: true
-          tags: registry.jole.dev/jamfactory/jamfactory/jamfactory-backend:latest
+          tags: ghcr.io/jamfactory/jamfactory-backend:latest
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
