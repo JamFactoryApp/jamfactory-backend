@@ -103,7 +103,7 @@ func (s *SpotifyJamSession) Conductor() {
 				Event: notifications.Playback,
 				Message: types.SocketPlaybackState{
 					Playback: s.GetPlayerState(),
-					Device: s.GetDeviceID(),
+					Device:   s.GetDeviceID(),
 				},
 			})
 
@@ -222,7 +222,7 @@ func (s *SpotifyJamSession) GetPlayerState() *spotify.PlayerState {
 	return s.player
 }
 
-func (s *SpotifyJamSession) SetPlayerState(state *spotify.PlayerState)  {
+func (s *SpotifyJamSession) SetPlayerState(state *spotify.PlayerState) {
 	s.player = state
 }
 
