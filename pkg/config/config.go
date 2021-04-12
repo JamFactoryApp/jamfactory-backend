@@ -32,9 +32,9 @@ type Config struct {
 
 func New() *Config {
 	// Set some default configs
-	clientAddress, _ := url.Parse("https://localhost:4200")
+	clientAddress, _ := url.Parse("http://localhost:4200")
 	c := &Config{
-		UseHttps:       true,
+		UseHttps:       false,
 		GenCerts:       false,
 		CertFile:       "./data/cert.pem",
 		KeyFile:        "./data/key.pem",
