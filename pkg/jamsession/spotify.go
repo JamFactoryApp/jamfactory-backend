@@ -279,6 +279,7 @@ func (s *SpotifyJamSession) SetState(state bool) error {
 
 func (s *SpotifyJamSession) Deconstruct() error {
 	s.SetActive(false)
+	s.room.Evacuate()
 	s.quit <- true
 	return nil
 }
