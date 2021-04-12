@@ -46,3 +46,9 @@ func (r *Room) OpenDoors() {
 		}
 	}
 }
+
+func (r *Room) Evacuate() {
+	for client := range r.Clients {
+		r.Unregister <- client
+	}
+}
