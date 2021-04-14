@@ -21,7 +21,8 @@ import (
 
 const (
 	cookieKeyLength            = 32
-	cookieMaxAge               = 7 * 24 * 60 * 60
+	cookieMaxAge			   = 60 * 60 * 24 * 7 // Cookie can last for 7 days
+	sessionMaxAge         	   = 60 * 60 * 24 * 2 // Session can last for 2 days
 	defaultRedisSessionKey     = "session"
 	defaultCookieKeyPairsCount = 4
 	minCookieKeyPairsCount     = 4
@@ -143,6 +144,11 @@ func (s *RedisStore) load(session *sessions.Session) (bool, error) {
 	} else {
 		err = errors.New("RedisStore: Failed to convert session data from interface{} to []bytes")
 	}
+
+	if reply, err = conn.Do("EXPIRE", s.redisKey.Append(session.ID), sessionMaxAge); err != nil {
+		log.Error("RedisStore: Failed to update expiry")
+	}
+
 	return true, err
 }
 
@@ -152,7 +158,7 @@ func (s *RedisStore) save(session *sessions.Session) error {
 	if err != nil {
 		return err
 	}
-	reply, err := conn.Do("SET", s.redisKey.Append(session.ID), serialized)
+	reply, err := conn.Do("SET", s.redisKey.Append(session.ID), serialized, "EX", sessionMaxAge)
 	log.Trace("redis reply (DO SET): ", reply, " with err: ", err)
 	return err
 }

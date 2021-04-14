@@ -20,21 +20,21 @@ var (
 
 const (
 	defaultKeyPrefix = "cache"
-	defaultMaxAge    = 30
+	defaultTTL       = 60 * 60 * 24 // Cache entries should update every day
 )
 
 type RedisCache struct {
 	sync.Mutex
 	pool      *redis.Pool
 	keyPrefix pkgredis.Key
-	maxAge    int
+	ttl       int
 }
 
 func NewRedis(pool *redis.Pool) *RedisCache {
 	redisCache := &RedisCache{
 		pool:      pool,
 		keyPrefix: pkgredis.Key{}.Append(defaultKeyPrefix),
-		maxAge:    defaultMaxAge,
+		ttl:       defaultTTL,
 	}
 
 	return redisCache
@@ -73,7 +73,7 @@ func (c *RedisCache) Query(key pkgredis.Key, index string, source SourceFunc) (i
 	if err != nil {
 		return nil, errors.Wrap(err, ErrSerializeData.Error())
 	}
-	reply, err = conn.Do("SETEX", c.keyPrefix.AppendKey(key).Append(index), c.maxAge, serializeddata)
+	reply, err = conn.Do("SETEX", c.keyPrefix.AppendKey(key).Append(index), c.ttl, serializeddata)
 	if err != nil {
 		return nil, errors.Wrap(err, ErrSaveIndex.Error())
 	}
