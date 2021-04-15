@@ -21,8 +21,8 @@ import (
 
 const (
 	cookieKeyLength            = 32
-	cookieMaxAge			   = 60 * 60 * 24 * 7 // Cookie can last for 7 days
-	sessionMaxAge         	   = 60 * 60 * 24 * 2 // Session can last for 2 days
+	cookieMaxAge               = 60 * 60 * 24 * 7 // Cookie can last for 7 days
+	sessionMaxAge              = 60 * 60 * 24 * 2 // Session can last for 2 days
 	defaultRedisSessionKey     = "session"
 	defaultCookieKeyPairsCount = 4
 	minCookieKeyPairsCount     = 4
