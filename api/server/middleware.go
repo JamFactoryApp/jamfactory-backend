@@ -79,3 +79,16 @@ func (s *Server) hostRequired(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+func (s *Server) notHostRequired(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		userType := s.CurrentUserType(r)
+
+		if userType == types.UserTypeHost {
+			s.errUnauthorized(w, apierrors.ErrAlreadyHost, log.DebugLevel)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}

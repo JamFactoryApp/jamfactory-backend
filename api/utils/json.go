@@ -13,7 +13,7 @@ import (
 func DecodeJSONBody(w http.ResponseWriter, r *http.Request, dst interface{}) error {
 	if r.Header.Get("Content-Type") != "" {
 		value := r.Header.Get("Content-Type")
-		if !strings.Contains(value, "application/json")  {
+		if !strings.Contains(value, "application/json") {
 			msg := "Content-Type header does not contain application/json"
 			http.Error(w, msg, http.StatusInternalServerError)
 			return errors.New(msg)
