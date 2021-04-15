@@ -23,5 +23,5 @@ var (
 	ErrInvalidVotingType     = errors.New("invalid voting type")
 	ErrOriginMissing         = errors.New("missing origin")
 	ErrOriginMalformed       = errors.New("malformed origin")
-	ErrAlreadyHost			 = errors.New("already host")
+	ErrAlreadyHost           = errors.New("already host")
 )
