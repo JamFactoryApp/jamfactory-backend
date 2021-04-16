@@ -91,6 +91,7 @@ func (s *SpotifyJamSession) Conductor() {
 			// Check if the user started a song
 			if s.player.Item != nil && s.currentSong != nil && s.player.Item.ID != s.currentSong.ID {
 				s.SetActive(false)
+				s.currentSong = nil
 				s.SocketJamUpdate()
 			}
 			// Check if no start or end of song is near
