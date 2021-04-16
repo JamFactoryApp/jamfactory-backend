@@ -809,7 +809,7 @@ Update on the current playback state of the JamSession. This event is triggered 
 
 ### Event: ``close`` 
 
-The JamSession was closed.
+The JamSession was or will be closed.
 
 ***Message (String):***
 
@@ -818,6 +818,7 @@ Reason why the JamSession was closed.
 | Reason      	    | Description       
 |----------	        |-------------------
 | ``host``          | The *host* closed the *JamSession*.
+| ``warning``       | The *JamSession* will be closed due to inactivity shortly
 | ``inactive`` 	    | The *JamSession* was closed due to inactivity. 
 
 ---

@@ -28,6 +28,7 @@ type SpotifyJamFactory struct {
 
 const (
 	inactiveTime = 2 * time.Hour
+	inactiveWarning = 1 * time.Hour + 30 * time.Minute
 )
 
 var (
@@ -60,6 +61,13 @@ func (s *SpotifyJamFactory) Housekeeper() {
 		select {
 		case <-tick:
 			for jamLabel, jamSession := range s.jamSessions {
+				if time.Now().After(jamSession.Timestamp().Add(inactiveWarning)) {
+					jamSession.NotifyClients(&notifications.Message{
+						Event:   notifications.Close,
+						Message: notifications.Warning,
+					})
+				}
+
 				if time.Now().After(jamSession.Timestamp().Add(inactiveTime)) {
 					log.Debug(jamLabel, ": inactive, closing")
 					jamSession.NotifyClients(&notifications.Message{

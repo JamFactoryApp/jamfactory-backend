@@ -40,4 +40,5 @@ type WebsocketCloseType string
 const (
 	HostLeft WebsocketCloseType = "host"
 	Inactive                    = "inactive"
+	Warning                     = "warning"
 )
