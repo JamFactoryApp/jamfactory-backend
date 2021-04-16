@@ -76,6 +76,12 @@ type JamSession interface {
 	GetDevice() spotify.PlayerDevice
 	// SetDeviceID TODO
 	SetDevice(string) error
+	// SocketJamUpdate updates the JamSession through the Websocket connection
+	SocketJamUpdate()
+	// SocketQueueUpdate updates the Queue through the Websocket connection
+	SocketQueueUpdate()
+	// SocketPlaybackUpdate updates the Playback through the Websocket connection
+	SocketPlaybackUpdate()
 }
 
 type contextKey string
