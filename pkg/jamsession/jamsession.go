@@ -56,7 +56,8 @@ type JamSession interface {
 	Vote(songID string, voteID string) error
 	// DeleteSong removes a song from this JamSession's queue
 	DeleteSong(songID string) error
-
+	// Play plays a song
+	Play(device spotify.PlayerDevice, song song.Song) error
 	// Search TODO
 	Search(index string, searchType spotify.SearchType, options *spotify.Options) (interface{}, error)
 	// Playlists TODO
@@ -72,11 +73,9 @@ type JamSession interface {
 	// SetPlayerState TODO
 	SetPlayerState(*spotify.PlayerState)
 	// GetDeviceID TODO
-	GetDeviceID() spotify.ID
+	GetDevice() spotify.PlayerDevice
 	// SetDeviceID TODO
-	SetDeviceID(spotify.ID)
-	// SetDevice TODO
-	SetDevice(id string) error
+	SetDevice(string) error
 }
 
 type contextKey string

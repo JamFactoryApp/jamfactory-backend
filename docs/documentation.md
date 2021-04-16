@@ -107,13 +107,16 @@ The JamSession state will determine if the conductor has the right to control th
 
 The following event will change the JamSession state:
 
-| event                                                  | result       
+| event                                                  | change to       
 |----------	                                             |-----------------
-| *User* creates a *JamSession*                          | active = ``true`` if the user has a selected Playback Device, else inactive = ``false`` 
-| *User* pauses playback through the *JamFactory App*    | inactive = ``false``
-| *User* resumes playback through the *JamFactory App*   | active = ``true``
-| *User* pauses playback through *Spotify*               | inactive = ``false``
-| *User* resumes/starts playback through *Spotify*       | inactive = ``false``
+| *User* creates a *JamSession*                          | inactive
+| *User* sets the *JamSession to active                  | active
+| *User* sets the *JamSession to inactive                | inactive
+| *User* pauses playback through the *JamFactory App*    | no change
+| *User* resumes playback through the *JamFactory App*   | no change
+| *User* pauses playback through *Spotify*               | no change
+| *User* resumes playback through *Spotify*              | no change
+| *User* starts playback through *Spotify*               | inactive
 
 ## Object Model
 

@@ -24,4 +24,6 @@ var (
 	ErrOriginMissing         = errors.New("missing origin")
 	ErrOriginMalformed       = errors.New("malformed origin")
 	ErrAlreadyHost           = errors.New("already host")
+	ErrQueueEmpty            = errors.New("queue empty")
+	ErrNoDevice              = errors.New("no playbackdevice")
 )
