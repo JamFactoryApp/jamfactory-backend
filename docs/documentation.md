@@ -524,7 +524,7 @@ Requires the user to be the host of the JamSession.
 ***Endpoint:***
 
 ```bash
-Method: DELETE
+Method: PUT
 URL: jamfactory.app/api/v1/queue/delete
 ```
 

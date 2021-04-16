@@ -72,7 +72,7 @@ func (s *Server) registerQueueRoutes(r *mux.Router) {
 	r.Handle(queueIndexPath, s.jamSessionRequired(http.HandlerFunc(s.getQueue))).Methods("GET")
 	r.Handle(queueCollectionPath, s.jamSessionRequired(s.hostRequired(http.HandlerFunc(s.addCollection)))).Methods("PUT")
 	r.Handle(queueVotePath, s.jamSessionRequired(http.HandlerFunc(s.vote))).Methods("PUT")
-	r.Handle(queueDeletePath, s.jamSessionRequired(s.hostRequired(http.HandlerFunc(s.deleteSong)))).Methods("DELETE")
+	r.Handle(queueDeletePath, s.jamSessionRequired(s.hostRequired(http.HandlerFunc(s.deleteSong)))).Methods("PUT")
 }
 
 func (s *Server) registerSpotifyRoutes(r *mux.Router) {
