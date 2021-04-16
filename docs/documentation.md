@@ -748,6 +748,28 @@ A message provided by the websocket is formatted in JSON and has the following f
 
 ## Events
 
+### Event: ``jam`` 
+
+The setting of the JamSession changed.
+
+***Message (JSON):***
+
+| key      	        | value type        	| value description                                                                                                     |
+|----------	        |-------------------	|-----------------------------------------------------------------------------------------------------------------------|
+| ``label``         | string  	            | *JamLabel* of the *JamSession* currently joined by the user.                                       	                |
+| ``name`` 	        | string             	| *Name* of the *JamSession* currently joined by the user.    	                                                        |
+| ``active`` 	    | boolean            	| *State* of the *JamSession* currently joined by the user. See [JamSession State](#jamsession-state)	                |
+| ``voting_type`` 	| string             	| *Voting type* of the *JamSession* currently joined by the user. See [Available Voting Types](#available-voting-types)	|
+
+```json
+{
+    "label": "KWXBZ",
+    "name": "Joe's Birthday Party",
+    "active": true,
+    "voting_type": "ip_voting"
+}
+```
+
 ### Event: ``queue`` 
 
 The queue of the JamSession joined by the user has changed.

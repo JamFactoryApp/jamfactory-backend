@@ -99,7 +99,7 @@ func (s *SpotifyJamSession) Conductor() {
 				}
 			}
 			playbackUpdate = time.Tick(s.updateIntervall)
-			s.NotifyClients(&notifications.Message{
+			s.socketPlaybackUpdate()
 				Event: notifications.Playback,
 				Message: types.SocketPlaybackState{
 					Playback: s.GetPlayerState(),
@@ -121,7 +121,7 @@ func (s *SpotifyJamSession) Conductor() {
 						}
 						s.SetTimestamp(time.Now())
 						s.updateIntervall = time.Second
-						message := types.GetQueueResponse{Tracks: s.Queue().Tracks()}
+						s.socketQueueUpdate()
 						s.NotifyClients(&notifications.Message{
 							Event:   notifications.Queue,
 							Message: message,
@@ -188,6 +188,7 @@ func (s *SpotifyJamSession) SetName(name string) {
 	s.Lock()
 	defer s.Unlock()
 	s.name = name
+	s.socketJamUpdate()
 }
 
 func (s *SpotifyJamSession) SetVotingType(votingType string) error {
@@ -202,7 +203,7 @@ func (s *SpotifyJamSession) SetVotingType(votingType string) error {
 	default:
 		return ErrVotingTypeInvalid
 	}
-
+	s.socketJamUpdate()
 	return nil
 }
 
@@ -210,6 +211,7 @@ func (s *SpotifyJamSession) SetActive(active bool) {
 	s.Lock()
 	defer s.Unlock()
 	s.active = active
+	s.socketJamUpdate()
 }
 
 func (s *SpotifyJamSession) SetTimestamp(time time.Time) {
@@ -350,7 +352,7 @@ func (s *SpotifyJamSession) AddCollection(collectionType string, collectionID st
 	default:
 		return ErrCollectionTypeInvalid
 	}
-	s.NotifyClients(&notifications.Message{
+	s.socketQueueUpdate()
 		Event: notifications.Queue,
 		Message: types.PutQueuePlaylistsResponse{
 			Tracks: s.Queue().Tracks(),
@@ -377,7 +379,7 @@ func (s *SpotifyJamSession) Vote(songID string, voteID string) error {
 	if err := s.queue.Vote(string(track.ID), voteID, track); err != nil {
 		return err
 	}
-
+	s.socketQueueUpdate()
 	s.NotifyClients(&notifications.Message{
 		Event: notifications.Queue,
 		Message: types.PutQueueVoteResponse{
@@ -417,6 +419,27 @@ func (s *SpotifyJamSession) DeleteSong(songID string) error {
 		return err
 	}
 
+	s.socketQueueUpdate()
+	return nil
+}
+
+func (s *SpotifyJamSession) getTrack(trackID string) (*spotify.FullTrack, error) {
+	return s.client.GetTrack(spotify.ID(trackID))
+}
+
+func (s *SpotifyJamSession) socketJamUpdate() {
+	s.NotifyClients(&notifications.Message{
+		Event: "jam",
+		Message: types.SocketJamMessage{
+			Label:      s.jamLabel,
+			Name:       s.name,
+			Active:     s.active,
+			VotingType: s.votingType,
+		},
+	})
+}
+
+func (s *SpotifyJamSession) socketQueueUpdate() {
 	s.NotifyClients(&notifications.Message{
 		Event: notifications.Queue,
 		Message: types.PutQueuePlaylistsResponse{
@@ -426,6 +449,12 @@ func (s *SpotifyJamSession) DeleteSong(songID string) error {
 	return nil
 }
 
-func (s *SpotifyJamSession) getTrack(trackID string) (*spotify.FullTrack, error) {
-	return s.client.GetTrack(spotify.ID(trackID))
+func (s *SpotifyJamSession) socketPlaybackUpdate() {
+	s.NotifyClients(&notifications.Message{
+		Event: notifications.Playback,
+		Message: types.SocketPlaybackMessage{
+			Playback: s.GetPlayerState(),
+			DeviceID: s.GetDevice().ID,
+		},
+	})
 }
