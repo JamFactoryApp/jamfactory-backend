@@ -61,7 +61,15 @@ func (s *Server) setJamSession(w http.ResponseWriter, r *http.Request) {
 	if body.Name.Set && body.Name.Valid {
 		jamSession.SetName(body.Name.Value)
 	}
-
+	jamSession.NotifyClients(&notifications.Message{
+		Event: notifications.Jam,
+		Message: types.SocketJamMessage{
+			Label:      jamSession.JamLabel(),
+			Name:       jamSession.Name(),
+			Active:     jamSession.Active(),
+			VotingType: jamSession.VotingType(),
+		},
+	})
 	utils.EncodeJSONBody(w, types.PutJamResponse{
 		Active:     jamSession.Active(),
 		Label:      jamSession.JamLabel(),

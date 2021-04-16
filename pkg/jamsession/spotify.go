@@ -105,7 +105,7 @@ func (s *SpotifyJamSession) Conductor() {
 				}
 			}
 			playbackUpdate = time.Tick(s.updateIntervall)
-			s.socketPlaybackUpdate()
+			s.SocketPlaybackUpdate()
 
 		// Check if the next song should be played
 		case <-queueUpdate:
@@ -121,7 +121,7 @@ func (s *SpotifyJamSession) Conductor() {
 						}
 						s.SetTimestamp(time.Now())
 						s.updateIntervall = time.Second
-						s.socketQueueUpdate()
+						s.SocketQueueUpdate()
 					}
 				case queue.ErrQueueEmpty:
 					s.updateIntervall = 10 * time.Second
@@ -184,7 +184,6 @@ func (s *SpotifyJamSession) SetName(name string) {
 	s.Lock()
 	defer s.Unlock()
 	s.name = name
-	s.socketJamUpdate()
 }
 
 func (s *SpotifyJamSession) SetVotingType(votingType string) error {
@@ -199,7 +198,6 @@ func (s *SpotifyJamSession) SetVotingType(votingType string) error {
 	default:
 		return ErrVotingTypeInvalid
 	}
-	s.socketJamUpdate()
 	return nil
 }
 
@@ -207,7 +205,6 @@ func (s *SpotifyJamSession) SetActive(active bool) {
 	s.Lock()
 	defer s.Unlock()
 	s.active = active
-	s.socketJamUpdate()
 }
 
 func (s *SpotifyJamSession) SetTimestamp(time time.Time) {
@@ -340,7 +337,7 @@ func (s *SpotifyJamSession) AddCollection(collectionType string, collectionID st
 	default:
 		return ErrCollectionTypeInvalid
 	}
-	s.socketQueueUpdate()
+	s.SocketQueueUpdate()
 	return nil
 }
 
@@ -362,7 +359,7 @@ func (s *SpotifyJamSession) Vote(songID string, voteID string) error {
 	if err := s.queue.Vote(string(track.ID), voteID, track); err != nil {
 		return err
 	}
-	s.socketQueueUpdate()
+	s.SocketQueueUpdate()
 	return nil
 }
 
@@ -395,7 +392,7 @@ func (s *SpotifyJamSession) DeleteSong(songID string) error {
 		return err
 	}
 
-	s.socketQueueUpdate()
+	s.SocketQueueUpdate()
 	return nil
 }
 
@@ -403,9 +400,9 @@ func (s *SpotifyJamSession) getTrack(trackID string) (*spotify.FullTrack, error)
 	return s.client.GetTrack(spotify.ID(trackID))
 }
 
-func (s *SpotifyJamSession) socketJamUpdate() {
+func (s *SpotifyJamSession) SocketJamUpdate() {
 	s.NotifyClients(&notifications.Message{
-		Event: "jam",
+		Event: notifications.Jam,
 		Message: types.SocketJamMessage{
 			Label:      s.jamLabel,
 			Name:       s.name,
@@ -415,7 +412,7 @@ func (s *SpotifyJamSession) socketJamUpdate() {
 	})
 }
 
-func (s *SpotifyJamSession) socketQueueUpdate() {
+func (s *SpotifyJamSession) SocketQueueUpdate() {
 	s.NotifyClients(&notifications.Message{
 		Event: notifications.Queue,
 		Message: types.PutQueuePlaylistsResponse{
@@ -424,7 +421,7 @@ func (s *SpotifyJamSession) socketQueueUpdate() {
 	})
 }
 
-func (s *SpotifyJamSession) socketPlaybackUpdate() {
+func (s *SpotifyJamSession) SocketPlaybackUpdate() {
 	s.NotifyClients(&notifications.Message{
 		Event: notifications.Playback,
 		Message: types.SocketPlaybackMessage{

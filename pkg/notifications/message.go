@@ -33,6 +33,7 @@ const (
 	Playback WebsocketEvent = "playback"
 	Queue                   = "queue"
 	Close                   = "close"
+	Jam                     = "jam"
 )
 
 type WebsocketCloseType string
