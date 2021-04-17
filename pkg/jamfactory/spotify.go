@@ -27,8 +27,8 @@ type SpotifyJamFactory struct {
 }
 
 const (
-	inactiveTime = 2 * time.Hour
-	inactiveWarning = 1 * time.Hour + 30 * time.Minute
+	inactiveTime    = 2 * time.Hour
+	inactiveWarning = 1*time.Hour + 30*time.Minute
 )
 
 var (
