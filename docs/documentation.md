@@ -110,8 +110,8 @@ The following event will change the JamSession state:
 | event                                                  | change to       
 |----------	                                             |-----------------
 | *User* creates a *JamSession*                          | inactive
-| *User* sets the *JamSession to active                  | active
-| *User* sets the *JamSession to inactive                | inactive
+| *User* sets the *JamSession* to active                 | active
+| *User* sets the *JamSession* to inactive               | inactive
 | *User* pauses playback through the *JamFactory App*    | no change
 | *User* resumes playback through the *JamFactory App*   | no change
 | *User* pauses playback through *Spotify*               | no change
