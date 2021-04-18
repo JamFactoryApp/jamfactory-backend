@@ -38,13 +38,38 @@ func (s *Server) setJamSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if body.Active.Set && body.Active.Valid {
+		if body.Active.Value && !jamSession.Active() {
+			song, err := jamSession.Queue().GetNext()
+			if err != nil {
+				s.errBadRequest(w, apierrors.ErrQueueEmpty, log.DebugLevel)
+				return
+			}
+			if jamSession.GetDevice().ID == "" {
+				s.errBadRequest(w, apierrors.ErrNoDevice, log.DebugLevel)
+				return
+			}
+			jamSession.Play(jamSession.GetDevice(), song)
+			message := types.GetQueueResponse{Tracks: jamSession.Queue().Tracks()}
+			jamSession.NotifyClients(&notifications.Message{
+				Event:   notifications.Queue,
+				Message: message,
+			})
+		}
 		jamSession.SetActive(body.Active.Value)
 	}
 
 	if body.Name.Set && body.Name.Valid {
 		jamSession.SetName(body.Name.Value)
 	}
-
+	jamSession.NotifyClients(&notifications.Message{
+		Event: notifications.Jam,
+		Message: types.SocketJamMessage{
+			Label:      jamSession.JamLabel(),
+			Name:       jamSession.Name(),
+			Active:     jamSession.Active(),
+			VotingType: jamSession.VotingType(),
+		},
+	})
 	utils.EncodeJSONBody(w, types.PutJamResponse{
 		Active:     jamSession.Active(),
 		Label:      jamSession.JamLabel(),
@@ -58,7 +83,7 @@ func (s *Server) getPlayback(w http.ResponseWriter, r *http.Request) {
 
 	utils.EncodeJSONBody(w, types.GetJamPlaybackResponse{
 		Playback: jamSession.GetPlayerState(),
-		DeviceID: jamSession.GetDeviceID(),
+		DeviceID: jamSession.GetDevice().ID,
 	})
 }
 
@@ -85,12 +110,11 @@ func (s *Server) setPlayback(w http.ResponseWriter, r *http.Request) {
 		if err := jamSession.SetDevice(body.DeviceID.Value); err != nil {
 			s.errInternalServerError(w, err, log.DebugLevel)
 		}
-		jamSession.SetDevice(body.DeviceID.Value)
 	}
 
 	utils.EncodeJSONBody(w, types.PutJamPlaybackResponse{
 		Playback: jamSession.GetPlayerState(),
-		DeviceID: jamSession.GetDeviceID(),
+		DeviceID: jamSession.GetDevice().ID,
 	})
 }
 

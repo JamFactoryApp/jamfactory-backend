@@ -33,6 +33,7 @@ const (
 	Playback WebsocketEvent = "playback"
 	Queue                   = "queue"
 	Close                   = "close"
+	Jam                     = "jam"
 )
 
 type WebsocketCloseType string
@@ -40,4 +41,5 @@ type WebsocketCloseType string
 const (
 	HostLeft WebsocketCloseType = "host"
 	Inactive                    = "inactive"
+	Warning                     = "warning"
 )

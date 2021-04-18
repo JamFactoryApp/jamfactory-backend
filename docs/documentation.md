@@ -107,13 +107,16 @@ The JamSession state will determine if the conductor has the right to control th
 
 The following event will change the JamSession state:
 
-| event                                                  | result       
+| event                                                  | change to       
 |----------	                                             |-----------------
-| *User* creates a *JamSession*                          | active = ``true`` if the user has a selected Playback Device, else inactive = ``false`` 
-| *User* pauses playback through the *JamFactory App*    | inactive = ``false``
-| *User* resumes playback through the *JamFactory App*   | active = ``true``
-| *User* pauses playback through *Spotify*               | inactive = ``false``
-| *User* resumes/starts playback through *Spotify*       | inactive = ``false``
+| *User* creates a *JamSession*                          | inactive
+| *User* sets the *JamSession* to active                 | active
+| *User* sets the *JamSession* to inactive               | inactive
+| *User* pauses playback through the *JamFactory App*    | no change
+| *User* resumes playback through the *JamFactory App*   | no change
+| *User* pauses playback through *Spotify*               | no change
+| *User* resumes playback through *Spotify*              | no change
+| *User* starts playback through *Spotify*               | inactive
 
 ## Object Model
 
@@ -748,6 +751,28 @@ A message provided by the websocket is formatted in JSON and has the following f
 
 ## Events
 
+### Event: ``jam`` 
+
+The setting of the JamSession changed.
+
+***Message (JSON):***
+
+| key      	        | value type        	| value description                                                                                                     |
+|----------	        |-------------------	|-----------------------------------------------------------------------------------------------------------------------|
+| ``label``         | string  	            | *JamLabel* of the *JamSession* currently joined by the user.                                       	                |
+| ``name`` 	        | string             	| *Name* of the *JamSession* currently joined by the user.    	                                                        |
+| ``active`` 	    | boolean            	| *State* of the *JamSession* currently joined by the user. See [JamSession State](#jamsession-state)	                |
+| ``voting_type`` 	| string             	| *Voting type* of the *JamSession* currently joined by the user. See [Available Voting Types](#available-voting-types)	|
+
+```json
+{
+    "label": "KWXBZ",
+    "name": "Joe's Birthday Party",
+    "active": true,
+    "voting_type": "ip_voting"
+}
+```
+
 ### Event: ``queue`` 
 
 The queue of the JamSession joined by the user has changed.
@@ -784,7 +809,7 @@ Update on the current playback state of the JamSession. This event is triggered 
 
 ### Event: ``close`` 
 
-The JamSession was closed.
+The JamSession was or will be closed.
 
 ***Message (String):***
 
@@ -793,6 +818,7 @@ Reason why the JamSession was closed.
 | Reason      	    | Description       
 |----------	        |-------------------
 | ``host``          | The *host* closed the *JamSession*.
+| ``warning``       | The *JamSession* will be closed due to inactivity shortly
 | ``inactive`` 	    | The *JamSession* was closed due to inactivity. 
 
 ---
