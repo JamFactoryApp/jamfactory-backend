@@ -26,18 +26,17 @@ var (
 
 type SpotifyJamSession struct {
 	sync.Mutex
-	jamLabel       string
-	name           string
-	active         bool
-	lastTimestamp  time.Time
-	playbackUpdate <-chan time.Time
-	currentSong    *spotify.FullTrack
-	votingType     types.VotingType
-	client         spotify.Client
-	player         *spotify.PlayerState
-	queue          *queue.SpotifyQueue
-	room           *notifications.Room
-	quit           chan bool
+	jamLabel      string
+	name          string
+	active        bool
+	lastTimestamp time.Time
+	currentSong   *spotify.FullTrack
+	votingType    types.VotingType
+	client        spotify.Client
+	player        *spotify.PlayerState
+	queue         *queue.SpotifyQueue
+	room          *notifications.Room
+	quit          chan bool
 }
 
 func NewSpotify(client spotify.Client, label string) (JamSession, error) {
@@ -52,27 +51,26 @@ func NewSpotify(client spotify.Client, label string) (JamSession, error) {
 	}
 
 	s := &SpotifyJamSession{
-		jamLabel:       label,
-		name:           fmt.Sprintf("%s's JamSession", u.DisplayName),
-		active:         false,
-		lastTimestamp:  time.Now(),
-		playbackUpdate: time.Tick(5 * time.Second),
-		currentSong:    nil,
-		votingType:     types.SessionVoting,
-		client:         client,
-		player:         playerState,
-		queue:          queue.NewSpotify(),
-		room:           notifications.NewRoom(),
-		quit:           make(chan bool),
+		jamLabel:      label,
+		name:          fmt.Sprintf("%s's JamSession", u.DisplayName),
+		active:        false,
+		lastTimestamp: time.Now(),
+		currentSong:   nil,
+		votingType:    types.SessionVoting,
+		client:        client,
+		player:        playerState,
+		queue:         queue.NewSpotify(),
+		room:          notifications.NewRoom(),
+		quit:          make(chan bool),
 	}
 
 	go s.room.OpenDoors()
-
+	log.Info("Created new JamSession for ", u.DisplayName)
 	return s, nil
 }
 
 func (s *SpotifyJamSession) Conductor() {
-	queueUpdate := time.Tick(time.Second)
+	tick := time.Tick(time.Second)
 	for {
 		select {
 
@@ -81,8 +79,7 @@ func (s *SpotifyJamSession) Conductor() {
 			return
 
 		// Update player state and send it to all connected clients
-		case <-s.playbackUpdate:
-			log.Trace("Update")
+		case <-tick:
 			playerState, err := s.client.PlayerState()
 			if err != nil {
 				continue
@@ -95,21 +92,7 @@ func (s *SpotifyJamSession) Conductor() {
 				s.SocketJamUpdate()
 			}
 			// Check if no start or end of song is near
-			if s.player.Item != nil {
-				if playerState.Progress > 10000 && playerState.Progress < playerState.Item.Duration-10000 {
-					// Conductor can relax a little
-					s.playbackUpdate = time.Tick(5 * time.Second)
-				} else if !s.active {
-					s.playbackUpdate = time.Tick(10 * time.Second)
-				} else if playerState.Progress > playerState.Item.Duration-10000 {
-					s.playbackUpdate = time.Tick(1 * time.Second)
-				}
-			}
 			s.SocketPlaybackUpdate()
-
-		// Check if the next song should be played
-		case <-queueUpdate:
-			queueUpdate = time.After(time.Second)
 			if s.active {
 				so, err := s.queue.GetNext()
 				switch err {
@@ -123,7 +106,7 @@ func (s *SpotifyJamSession) Conductor() {
 						s.SocketQueueUpdate()
 					}
 				case queue.ErrQueueEmpty:
-					s.playbackUpdate = time.Tick(10 * time.Second)
+					continue
 				default:
 					log.Error(err)
 					continue
@@ -152,7 +135,6 @@ func (s *SpotifyJamSession) Play(device spotify.PlayerDevice, song song.Song) er
 		return err
 	}
 	s.currentSong = track
-	s.playbackUpdate = time.Tick(time.Second)
 	if err := s.queue.Advance(); err != nil {
 		return err
 	}
