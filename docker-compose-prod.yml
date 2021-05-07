@@ -2,9 +2,7 @@ version: "3"
 
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile-prod
+    image: ghcr.io/jamfactoryapp/jamfactory-backend:latest
     env_file: .env
     environment:
       JAM_DATA_DIR: /data
