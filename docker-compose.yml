@@ -18,6 +18,9 @@ services:
     image: redis:latest
     ports:
       - "6379:6379"
+    volumes:
+      - "redis-data:/data"
 
 volumes:
   jam-data:
+  redis-data:

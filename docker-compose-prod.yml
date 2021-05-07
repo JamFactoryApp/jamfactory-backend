@@ -19,9 +19,12 @@ services:
 
   redis:
     image: redis:latest
-    ports:
-      - "6379:6379"
+    command: redis-server /etc/redis/redis.redis
     restart: always
+    volumes:
+      - "redis-data:/data"
+      - "./redis:/etc/redis/"
 
 volumes:
   jam-data:
+  redis-data:
