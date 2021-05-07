@@ -7,4 +7,6 @@ docker-compose*
 
 .env
 .env.example
+./redis/users.acl
+./redis/users.acl.example
 README.md

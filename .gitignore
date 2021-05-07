@@ -1,5 +1,6 @@
 .idea/
 .env
+./redis/users.acl
 .keypairs
 data
 
@@ -20,3 +21,4 @@ data
 # vendor/
 
 *.pem
+
