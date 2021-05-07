@@ -17,7 +17,7 @@ services:
 
   redis:
     image: redis:latest
-    command: redis-server /etc/redis/redis.redis
+    command: redis-server /etc/redis/redis.conf
     restart: always
     volumes:
       - "redis-data:/data"
