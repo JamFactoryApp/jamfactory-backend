@@ -65,7 +65,7 @@ func NewSpotify(client spotify.Client, label string) (JamSession, error) {
 	}
 
 	go s.room.OpenDoors()
-
+	log.Info("Created new JamSession for ", u.DisplayName)
 	return s, nil
 }
 
