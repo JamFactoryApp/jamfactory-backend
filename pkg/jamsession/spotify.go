@@ -70,7 +70,6 @@ func NewSpotify(client spotify.Client, label string) (JamSession, error) {
 }
 
 func (s *SpotifyJamSession) Conductor() {
-	tick := time.Tick(time.Second)
 	for {
 		select {
 
@@ -79,7 +78,7 @@ func (s *SpotifyJamSession) Conductor() {
 			return
 
 		// Update player state and send it to all connected clients
-		case <-tick:
+		case <-time.After(time.Second):
 			playerState, err := s.client.PlayerState()
 			if err != nil {
 				continue
