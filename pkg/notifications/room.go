@@ -9,6 +9,7 @@ type Room struct {
 	Broadcast  chan *Message
 	Register   chan *Client
 	Unregister chan *Client
+	quit       chan bool
 	log        *log.Entry
 }
 
@@ -18,12 +19,15 @@ func NewRoom() *Room {
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
 		Clients:    make(map[*Client]bool),
+		quit:       make(chan bool),
 	}
 }
 
 func (r *Room) OpenDoors() {
 	for {
 		select {
+		case <-r.quit:
+			return
 		case client := <-r.Register:
 			log.Trace("Registered client: ", client)
 			r.Clients[client] = true
@@ -47,8 +51,9 @@ func (r *Room) OpenDoors() {
 	}
 }
 
-func (r *Room) Evacuate() {
+func (r *Room) CloseDoors() {
 	for client := range r.Clients {
 		r.Unregister <- client
 	}
+	r.quit <- true
 }
