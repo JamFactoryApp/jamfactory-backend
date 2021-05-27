@@ -18,7 +18,7 @@ JamFactory acts as the conductor of your music and is not the playback device it
 
 The host of a JamSession has to have a Spotify premium account, the guests can join the without a Spotify account.
 
-Jamfactory consists of independent applications that form the ecosystem together. This project contains the backend that provides the necessary api to create, join and control a JamSession. See [API Documentation](./docs/documentation.md)
+JamFactory consists of independent applications that form the ecosystem together. This project contains the backend that provides the necessary api to create, join and control a JamSession.
 It also acts as the Conductor that controls the playback and communicates to the Spotify api.
 
 ### Built With
@@ -31,29 +31,35 @@ JamFactory is build among others using these awesome projects
 
 ### Last Release
 
-[Release Notes](./RELEASE.md)
+``V0.1.0`` [Release Notes](./RELEASE.md)
 
-## Installation
+## Getting started
 
-Jamfactory backend can either be installed using docker (*recommended*) or build and installed locally
+To understand how the JamFactory backend works, which API Endpoints are available and how it can be used to create a JamSession read the [Documentation](./docs/documentation.md) 
 
-## Initial setup
+
+### Installation
+
+The JamFactory backend can either be installed using docker (*recommended*) or build and installed locally.
+Helm charts for kubernetes deployments are available at [JamFactoryApp/jamfactory-helm](https://github.com/JamFactoryApp/jamfactory-helm).
+
+#### Initial setup
 
 * Clone the repository to your desired location
   ```sh
   git clone https://github.com/JamFactoryApp/jamfactory-backend.git
   ```
-* Create a Spotify App 
+* Create a Spotify App on the [Developer Dashboard](https://developer.spotify.com/dashboard)
 
-* Create an ``.env`` file. See [.env.example](./.env.example) for an example ``.env`` file.
+* Create an ``.env`` file and fill out the information. See [.env.example](./.env.example) for an example ``.env`` file. It is recommended to use a very long password for the redis db.
 
+#### Docker installation
 
-### Docker installation
+* Create a users.acl file in the ``/redis`` folder with. Make sure you use the same password as in the .env file. See [.env.example](./redis/users.acl.example) for an example ``users.acl`` file.
 
-TODO
+* Create and start the docker containers using ``docker-compose up -d``
 
-### Local installation
-
+#### Local installation
 TODO
 
 
