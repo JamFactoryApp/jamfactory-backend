@@ -70,6 +70,8 @@ func NewSpotify(client spotify.Client, label string) (JamSession, error) {
 }
 
 func (s *SpotifyJamSession) Conductor() {
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
 	for {
 		select {
 
@@ -78,7 +80,7 @@ func (s *SpotifyJamSession) Conductor() {
 			return
 
 		// Update player state and send it to all connected clients
-		case <-time.After(time.Second):
+		case <-ticker.C:
 			playerState, err := s.client.PlayerState()
 			if err != nil {
 				continue
@@ -249,7 +251,7 @@ func (s *SpotifyJamSession) SetState(state bool) error {
 
 func (s *SpotifyJamSession) Deconstruct() error {
 	s.SetActive(false)
-	s.room.Evacuate()
+	s.room.CloseDoors()
 	s.quit <- true
 	return nil
 }

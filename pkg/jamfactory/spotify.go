@@ -56,27 +56,26 @@ func NewSpotify(ca *cache.RedisCache, redirectURL string, clientID string, secre
 }
 
 func (s *SpotifyJamFactory) Housekeeper() {
+	ticker := time.NewTicker(10 * time.Minute)
+	defer ticker.Stop()
 	for {
-		tick := time.Tick(time.Second)
-		select {
-		case <-tick:
-			for jamLabel, jamSession := range s.jamSessions {
-				if time.Now().After(jamSession.Timestamp().Add(inactiveWarning)) {
-					jamSession.NotifyClients(&notifications.Message{
-						Event:   notifications.Close,
-						Message: notifications.Warning,
-					})
-				}
+		<-ticker.C
+		for jamLabel, jamSession := range s.jamSessions {
+			if time.Now().After(jamSession.Timestamp().Add(inactiveWarning)) {
+				jamSession.NotifyClients(&notifications.Message{
+					Event:   notifications.Close,
+					Message: notifications.Warning,
+				})
+			}
 
-				if time.Now().After(jamSession.Timestamp().Add(inactiveTime)) {
-					log.Debug(jamLabel, ": inactive, closing")
-					jamSession.NotifyClients(&notifications.Message{
-						Event:   notifications.Close,
-						Message: notifications.Inactive,
-					})
-					if err := s.DeleteJamSession(jamLabel); err != nil {
-						s.log.Debug(err)
-					}
+			if time.Now().After(jamSession.Timestamp().Add(inactiveTime)) {
+				log.Debug(jamLabel, ": inactive, closing")
+				jamSession.NotifyClients(&notifications.Message{
+					Event:   notifications.Close,
+					Message: notifications.Inactive,
+				})
+				if err := s.DeleteJamSession(jamLabel); err != nil {
+					s.log.Debug(err)
 				}
 			}
 		}
