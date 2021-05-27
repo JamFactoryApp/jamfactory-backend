@@ -29,6 +29,7 @@ type SpotifyJamSession struct {
 	jamLabel      string
 	name          string
 	active        bool
+	updateInterval time.Duration
 	lastTimestamp time.Time
 	currentSong   *spotify.FullTrack
 	votingType    types.VotingType
@@ -54,6 +55,7 @@ func NewSpotify(client spotify.Client, label string) (JamSession, error) {
 		jamLabel:      label,
 		name:          fmt.Sprintf("%s's JamSession", u.DisplayName),
 		active:        false,
+		updateInterval: time.Second,
 		lastTimestamp: time.Now(),
 		currentSong:   nil,
 		votingType:    types.SessionVoting,
@@ -70,7 +72,7 @@ func NewSpotify(client spotify.Client, label string) (JamSession, error) {
 }
 
 func (s *SpotifyJamSession) Conductor() {
-	ticker := time.NewTicker(time.Second)
+	ticker := time.NewTicker(s.updateInterval)
 	defer ticker.Stop()
 	for {
 		select {
@@ -113,6 +115,7 @@ func (s *SpotifyJamSession) Conductor() {
 					continue
 				}
 			}
+			ticker.Reset(s.updateInterval)
 		}
 	}
 }
