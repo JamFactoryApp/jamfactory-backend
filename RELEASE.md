@@ -1,32 +1,33 @@
 # JamFactory Backend Release Notes
-### V0.1.0
-[V0.1.0 Documentation](./docs/documentation.md)
 
-#### Features Added
-* First stable release of the JamFactory backend.
-* Handle user sessions using Redis. See [User Types](./docs/documentation.md#user-types)
-* Login to Spotify and create a Spotify JamSession as a host.
-* Join a created JamSession using the JamLabel.
-* Search for Spotify Songs, Albums or Playlists.
-* Save Spotify search results in a Redis cache.
-* Add, vote for or delete songs, which are stored in a Queue. See [How voting works](./docs/documentation.md#how-voting-works)
-* Add a Conductor to manage the JamSession and control the Spotify playback. 
-* Get the users Spotify Playlists and available Playback devices.
-* Basic Playback control (Play, Pause and select the playback device)
-* Detect, when a user takes Control over the Spotify playback and stop the Conductor. See [JamSession State](./docs/documentation.md#jamsession-state)
-* Add Housekeeping to delete inactive JamSessions.
-* Add Websocket Support to push updates to the joined users of a JamSession. See [Websocket Reference](./docs/documentation.md#socket-reference) for details.
-* Added [API Documentation](./docs/documentation.md#api-reference)
+## v0.1.0
 
-#### Features Removed
+:sparkles: This is the initial release of the JamFactory Backend project!
+See [v0.1.0 Documentation](./docs/documentation.md)
+
+### Features Added
+* :sparkles: First stable release of the JamFactory backend.
+* :sparkles: Handle user sessions using Redis. See [User Types](./docs/documentation.md#user-types)
+* :sparkles: Login to Spotify and create a Spotify JamSession as a host.
+* :sparkles: Join a created JamSession using the JamLabel.
+* :sparkles: Search for Spotify Songs, Albums or Playlists.
+* :sparkles: Save Spotify search results in a Redis cache.
+* :sparkles: Add, vote for or delete songs, which are stored in a Queue. See [How voting works](./docs/documentation.md#how-voting-works)
+* :sparkles: Add a Conductor to manage the JamSession and control the Spotify playback. 
+* :sparkles: Get the users Spotify Playlists and available Playback devices.
+* :sparkles: Basic Playback control (Play, Pause and select the playback device)
+* :sparkles: Detect, when a user takes Control over the Spotify playback and stop the Conductor. See [JamSession State](./docs/documentation.md#jamsession-state)
+* :sparkles: Add Housekeeping to delete inactive JamSessions.
+* :sparkles: Add Websocket Support to push updates to the joined users of a JamSession. See [Websocket Reference](./docs/documentation.md#socket-reference) for details.
+* :memo: Added [API Documentation](./docs/documentation.md#api-reference)
+
+### Features Removed
 This is the first release. Nothing to remove.
 
-
-#### Bug Fixes
+### Bug Fixes
 No bugs were fixed with this release
 
-
-#### Added API Endpoints
+### Added API Endpoints
 
 **Authorization**
 * [``GET: /api/v1/auth/current``](./docs/documentation.md#1-get-the-users-authorization-status)
@@ -49,10 +50,10 @@ No bugs were fixed with this release
 * [``PUT: /api/v1/queue/vote``](./docs/documentation.md#4-vote-for-a-song-in-the-queue-of-the-jamsession-joined-by-the-user)
 
 **Spotify**
-* [``PUT: /api/v1/spoity/devices``](./docs/documentation.md#1-get-the-users-available-spotify-playback-devices)
-* [``GET: /api/v1/spoity/playlists``](./docs/documentation.md#2-get-the-users-available-spotify-playlists)
-* [``PUT: /api/v1/spoity/search``](./docs/documentation.md#3-search-for-an-item-on-spotify)
+* [``PUT: /api/v1/spotify/devices``](./docs/documentation.md#1-get-the-users-available-spotify-playback-devices)
+* [``GET: /api/v1/spotify/playlists``](./docs/documentation.md#2-get-the-users-available-spotify-playlists)
+* [``PUT: /api/v1/spotify/search``](./docs/documentation.md#3-search-for-an-item-on-spotify)
 
 
-####Removed API Endpoints
+###Removed API Endpoints
 No API Endpoints will be removed in this release.
