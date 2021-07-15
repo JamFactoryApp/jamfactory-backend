@@ -59,6 +59,19 @@ func New() *Config {
 		log.Debug("JAM_DATA_DIR is empty. Using ", c.DataDir)
 	}
 
+	// Set Cookie related settings
+	useCookieSecureVal := os.Getenv("JAM_COOKIE_SECURE")
+	if useCookieSecureVal != "" {
+		useCookieSecure, err := strconv.ParseBool(useCookieSecureVal)
+		if err != nil {
+			log.Fatal("Failed to parse JAM_USE_HTTPS: ", err)
+		}
+		c.CookieSecure = useCookieSecure
+	} else {
+		log.Debug("JAM_COOKIE_SECURE is empty. Using ", c.CookieSecure)
+	}
+
+
 	// Set HTTPS related settings
 	useHttpsVal := os.Getenv("JAM_USE_HTTPS")
 	if useHttpsVal != "" {
@@ -105,8 +118,6 @@ func New() *Config {
 				log.Debug("JAM_KEY_FILE is empty. Using ", c.KeyFile)
 			}
 		}
-	} else {
-		c.CookieSecure = false
 	}
 
 	// Set c.Port
