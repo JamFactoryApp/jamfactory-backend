@@ -19,7 +19,7 @@ import (
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
-	log.SetLevel(log.WarnLevel)
+	log.SetLevel(log.TraceLevel)
 	log.SetOutput(os.Stdout)
 	log.SetFormatter(&log.TextFormatter{
 		ForceColors:   true,
@@ -31,8 +31,6 @@ func main() {
 	}
 
 	conf := config.New()
-
-	log.SetLevel(conf.LogLevel)
 
 	// Create JAM_DATA_DIR
 	if _, err := os.Stat(conf.DataDir); os.IsNotExist(err) {
