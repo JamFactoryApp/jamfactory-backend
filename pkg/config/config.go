@@ -78,7 +78,6 @@ func New() *Config {
 		log.Debug("JAM_COOKIE_SECURE is empty. Using ", c.CookieSecure)
 	}
 
-
 	// Set HTTPS related settings
 	useHttpsVal := os.Getenv("JAM_USE_HTTPS")
 	if useHttpsVal != "" {

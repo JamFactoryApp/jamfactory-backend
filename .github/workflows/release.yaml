@@ -3,21 +3,21 @@ name: Release version
 on:
   push:
     tags:
-    - 'v*.*.*'
+      - 'v*.*.*'
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-    - name: Set env
-      run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name:
-      run: sed '/^## ${{env.RELEASE_VERSION}}/,/^## /!d;//d' RELEASE.md >> CHANGELOG.md
-    - name: Release
-      uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
-      with:
-        body_path: CHANGELOG.md
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set env
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name:
+        run: sed '/^## ${{env.RELEASE_VERSION}}/,/^## /!d;//d' RELEASE.md >> CHANGELOG.md
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
