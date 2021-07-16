@@ -25,7 +25,7 @@ See [v0.1.0 Documentation](./docs/documentation.md)
 This is the first release. Nothing to remove.
 
 ### Bug Fixes
-No bugs were fixed with this release
+No bugs were fixed with this release.
 
 ### Added API Endpoints
 
@@ -55,5 +55,6 @@ No bugs were fixed with this release
 * [``PUT: /api/v1/spotify/search``](./docs/documentation.md#3-search-for-an-item-on-spotify)
 
 
-###Removed API Endpoints
-No API Endpoints will be removed in this release.
+### Removed API Endpoints
+
+No API Endpoints were removed in this release.
