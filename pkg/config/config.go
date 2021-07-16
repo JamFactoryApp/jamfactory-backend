@@ -75,7 +75,7 @@ func New() *Config {
 	if useCookieSecureVal != "" {
 		useCookieSecure, err := strconv.ParseBool(useCookieSecureVal)
 		if err != nil {
-			log.Fatal("Failed to parse JAM_USE_HTTPS: ", err)
+			log.Fatal("Failed to parse JAM_COOKIE_SECURE: ", err)
 		}
 		c.CookieSecure = useCookieSecure
 	} else {
