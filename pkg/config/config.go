@@ -29,10 +29,6 @@ type Config struct {
 	CookieSecure       bool
 }
 
-func SetLogLevel() {
-
-}
-
 func New() *Config {
 	// Set some default configs
 	clientAddress, _ := url.Parse("http://localhost:4200")
