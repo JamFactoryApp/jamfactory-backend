@@ -35,7 +35,7 @@ JamFactory is built among others using these awesome projects:
 
 ## Getting started
 
-To understand how the JamFactory backend works, which API Endpoints are available and how it can be used to create a JamSession, read the [Documentation](./docs/documentation.md) 
+To understand how the JamFactory backend works, which API Endpoints are available and how it can be used to create a JamSession, read the [Documentation](./docs/documentation.md). 
 
 
 ### Installation
