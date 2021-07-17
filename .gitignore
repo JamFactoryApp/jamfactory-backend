@@ -1,3 +1,9 @@
+.idea/
+.env
+./redis/users.acl
+.keypairs
+data
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -13,3 +19,6 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+*.pem
+

@@ -1,0 +1,12 @@
+Dockerfile*
+docker-compose*
+
+.idea
+.git
+.gitignore
+
+.env
+.env.example
+./redis/users.acl
+./redis/users.acl.example
+README.md

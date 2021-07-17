@@ -1,0 +1,28 @@
+version: "3"
+
+services:
+  app:
+    image: ghcr.io/jamfactoryapp/jamfactory-backend:latest
+    env_file: .env
+    environment:
+      JAM_DATA_DIR: /data
+      JAM_REDIS_ADDRESS: redis:6379
+    ports:
+      - '3000:3000'
+    volumes:
+      - "jam-data:/data"
+    restart: always
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:latest
+    command: redis-server /etc/redis/redis.conf
+    restart: always
+    volumes:
+      - "redis-data:/data"
+      - "./redis:/etc/redis/"
+
+volumes:
+  jam-data:
+  redis-data:
