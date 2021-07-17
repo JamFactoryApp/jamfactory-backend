@@ -18,7 +18,6 @@ type Config struct {
 	KeyFile            string
 	Port               int
 	ClientAddress      *url.URL
-	LogLevel           log.Level
 	DataDir            string
 	SpotifyID          string
 	SpotifySecret      string
@@ -40,13 +39,21 @@ func New() *Config {
 		KeyFile:        "./data/key.pem",
 		Port:           3000,
 		ClientAddress:  clientAddress,
-		LogLevel:       log.InfoLevel,
 		DataDir:        "./data",
 		RedisAddress:   "localhost:6379",
 		RedisDatabase:  "0",
 		RedisPassword:  "",
 		CookieSameSite: http.SameSiteLaxMode,
 		CookieSecure:   true,
+	}
+
+	// Set c.LogLevel
+	var logLevel log.Level
+	logLevelVal, _ := log.ParseLevel(os.Getenv("JAM_LOG_LEVEL"))
+	if logLevelVal != logLevel {
+		log.SetLevel(logLevelVal)
+	} else {
+		log.Debug("Failed to parse JAM_LOG_LEVEL. Using ", log.GetLevel())
 	}
 
 	// Set c.DataDir
@@ -57,6 +64,18 @@ func New() *Config {
 		c.KeyFile = path.Join(c.DataDir, "key.pem")
 	} else {
 		log.Debug("JAM_DATA_DIR is empty. Using ", c.DataDir)
+	}
+
+	// Set Cookie related settings
+	useCookieSecureVal := os.Getenv("JAM_COOKIE_SECURE")
+	if useCookieSecureVal != "" {
+		useCookieSecure, err := strconv.ParseBool(useCookieSecureVal)
+		if err != nil {
+			log.Fatal("Failed to parse JAM_COOKIE_SECURE: ", err)
+		}
+		c.CookieSecure = useCookieSecure
+	} else {
+		log.Debug("JAM_COOKIE_SECURE is empty. Using ", c.CookieSecure)
 	}
 
 	// Set HTTPS related settings
@@ -105,8 +124,6 @@ func New() *Config {
 				log.Debug("JAM_KEY_FILE is empty. Using ", c.KeyFile)
 			}
 		}
-	} else {
-		c.CookieSecure = false
 	}
 
 	// Set c.Port
@@ -131,15 +148,6 @@ func New() *Config {
 		c.ClientAddress = clientAddress
 	} else {
 		log.Debug("JAM_CLIENT_ADDRESS is empty. Using ", c.ClientAddress)
-	}
-
-	// Set c.LogLevel
-	var logLevel log.Level
-	logLevelVal, _ := log.ParseLevel(os.Getenv("JAM_LOG_LEVEL"))
-	if logLevelVal != logLevel {
-		c.LogLevel = logLevelVal
-	} else {
-		log.Debug("Failed to parse JAM_LOG_LEVEL. Using ", c.LogLevel)
 	}
 
 	// Set c.RedisAddress

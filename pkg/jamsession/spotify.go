@@ -26,18 +26,18 @@ var (
 
 type SpotifyJamSession struct {
 	sync.Mutex
-	jamLabel      string
-	name          string
-	active        bool
+	jamLabel       string
+	name           string
+	active         bool
 	updateInterval time.Duration
-	lastTimestamp time.Time
-	currentSong   *spotify.FullTrack
-	votingType    types.VotingType
-	client        spotify.Client
-	player        *spotify.PlayerState
-	queue         *queue.SpotifyQueue
-	room          *notifications.Room
-	quit          chan bool
+	lastTimestamp  time.Time
+	currentSong    *spotify.FullTrack
+	votingType     types.VotingType
+	client         spotify.Client
+	player         *spotify.PlayerState
+	queue          *queue.SpotifyQueue
+	room           *notifications.Room
+	quit           chan bool
 }
 
 func NewSpotify(client spotify.Client, label string) (JamSession, error) {
@@ -52,18 +52,18 @@ func NewSpotify(client spotify.Client, label string) (JamSession, error) {
 	}
 
 	s := &SpotifyJamSession{
-		jamLabel:      label,
-		name:          fmt.Sprintf("%s's JamSession", u.DisplayName),
-		active:        false,
+		jamLabel:       label,
+		name:           fmt.Sprintf("%s's JamSession", u.DisplayName),
+		active:         false,
 		updateInterval: time.Second,
-		lastTimestamp: time.Now(),
-		currentSong:   nil,
-		votingType:    types.SessionVoting,
-		client:        client,
-		player:        playerState,
-		queue:         queue.NewSpotify(),
-		room:          notifications.NewRoom(),
-		quit:          make(chan bool),
+		lastTimestamp:  time.Now(),
+		currentSong:    nil,
+		votingType:     types.SessionVoting,
+		client:         client,
+		player:         playerState,
+		queue:          queue.NewSpotify(),
+		room:           notifications.NewRoom(),
+		quit:           make(chan bool),
 	}
 
 	go s.room.OpenDoors()
