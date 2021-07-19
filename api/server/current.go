@@ -55,6 +55,15 @@ func (s *Server) CurrentSessionType(r *http.Request) types.SessionType {
 	return sessionType
 }
 
+func (s *Server) CurrentIdentifier(r *http.Request) string {
+	session := s.CurrentSession(r)
+	id, err := pkgsessions.Identifier(session)
+	if err != nil {
+		return ""
+	}
+	return id
+}
+
 func (s *Server) CurrentVoteID(r *http.Request) string {
 	jamSession := s.CurrentJamSession(r)
 

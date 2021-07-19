@@ -16,7 +16,7 @@ const (
 	jamLabelKey    = "Label"
 	tokenKey       = "CurrentToken"
 	sessionTypeKey = "User"
-	originKey   = "Origin"
+	identifierKey  = "Identifier"
 	originKey      = "Origin"
 )
 
@@ -88,6 +88,18 @@ func Origin(session *sessions.Session) (string, error) {
 	return origin, nil
 }
 
+func Identifier(session *sessions.Session) (string, error) {
+	identifierVal := session.Values[identifierKey]
+	if identifierVal == nil {
+		return "", errors.ErrIdentifierMissing
+	}
+	identifier, ok := identifierVal.(string)
+	if !ok {
+		return "", errors.ErrIdentifierMalformed
+	}
+	return identifier, nil
+}
+
 func SetJamLabel(session *sessions.Session, jamLabel string) {
 	session.Values[jamLabelKey] = jamLabel
 }
@@ -102,4 +114,8 @@ func SetSessionType(session *sessions.Session, userType types.SessionType) {
 
 func SetOrigin(session *sessions.Session, origin string) {
 	session.Values[originKey] = origin
+}
+
+func SetIdentifier(session *sessions.Session, identifier string) {
+	session.Values[identifierKey] = identifier
 }

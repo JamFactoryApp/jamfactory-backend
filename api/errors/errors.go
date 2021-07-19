@@ -23,6 +23,8 @@ var (
 	ErrInvalidVotingType     = errors.New("invalid voting type")
 	ErrOriginMissing         = errors.New("missing origin")
 	ErrOriginMalformed       = errors.New("malformed origin")
+	ErrIdentifierMissing     = errors.New("missing identifier")
+	ErrIdentifierMalformed   = errors.New("malformed identifier")
 	ErrAlreadyHost           = errors.New("already host")
 	ErrQueueEmpty            = errors.New("queue empty")
 	ErrNoDevice              = errors.New("no playback device")
