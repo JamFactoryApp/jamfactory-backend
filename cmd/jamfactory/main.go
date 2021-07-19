@@ -46,9 +46,10 @@ func main() {
 	}
 	log.Debug("Initialized connection to redis")
 
-	// Create redis session store
-	redisStore := store.NewRedis(pool, path.Join(conf.DataDir, ".keypairs"), conf.CookieSameSite, conf.CookieSecure)
-	log.Debug("Initialized redis cookie store")
+	// Create redis stores
+	redisStore := store.NewRedisSessionStore(pool, path.Join(conf.DataDir, ".keypairs"), conf.CookieSameSite, conf.CookieSecure)
+	userStore := store.NewRedisUserStore(pool)
+	log.Debug("Initialized redis stores")
 
 	// Create redis cache
 	redisCache := cache.NewRedis(pool)
@@ -59,7 +60,7 @@ func main() {
 	log.Debug("Initialized JamFactory")
 
 	// Create app server
-	appServer := server.NewServer("/", redisStore, spotifyJamFactory).
+	appServer := server.NewServer("/", redisStore, userStore, spotifyJamFactory).
 		WithPort(conf.Port).
 		WithCache(redisCache)
 
