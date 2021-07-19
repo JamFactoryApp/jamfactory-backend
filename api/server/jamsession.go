@@ -121,8 +121,8 @@ func (s *Server) setPlayback(w http.ResponseWriter, r *http.Request) {
 func (s *Server) createJamSession(w http.ResponseWriter, r *http.Request) {
 	session := s.CurrentSession(r)
 
-	userType := s.CurrentUserType(r)
-	if userType == "" {
+	sessionType := s.CurrentSessionType(r)
+	if sessionType == "" {
 		s.errBadRequest(w, apierrors.ErrUserTypeInvalid, log.DebugLevel)
 	}
 
@@ -141,7 +141,7 @@ func (s *Server) createJamSession(w http.ResponseWriter, r *http.Request) {
 	go jamSession.Conductor()
 
 	sessions.SetJamLabel(session, jamSession.JamLabel())
-	sessions.SetUserType(session, types.UserTypeHost)
+	sessions.SetSessionType(session, types.SessionTypeHost)
 
 	if err := session.Save(r, w); err != nil {
 		s.errSessionSave(w, err)
@@ -168,7 +168,7 @@ func (s *Server) joinJamSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessions.SetUserType(session, types.UserTypeGuest)
+	sessions.SetSessionType(session, types.SessionTypeGuest)
 	sessions.SetJamLabel(session, jamLabel)
 
 	if err := session.Save(r, w); err != nil {
@@ -183,9 +183,9 @@ func (s *Server) joinJamSession(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) leaveJamSession(w http.ResponseWriter, r *http.Request) {
 	session := s.CurrentSession(r)
-	userType := s.CurrentUserType(r)
+	userType := s.CurrentSessionType(r)
 
-	if userType == types.UserTypeHost {
+	if userType == types.SessionTypeHost {
 		jamSession := s.CurrentJamSession(r)
 		jamSession.NotifyClients(&notifications.Message{
 			Event:   notifications.Close,
@@ -198,7 +198,7 @@ func (s *Server) leaveJamSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sessions.SetJamLabel(session, "")
-	sessions.SetUserType(session, types.UserTypeNew)
+	sessions.SetSessionType(session, types.SessionTypeNew)
 
 	if err := session.Save(r, w); err != nil {
 		s.errSessionSave(w, err)

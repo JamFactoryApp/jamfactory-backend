@@ -69,9 +69,9 @@ func (s *Server) jamSessionRequired(next http.Handler) http.Handler {
 
 func (s *Server) hostRequired(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userType := s.CurrentUserType(r)
+		sessionType := s.CurrentSessionType(r)
 
-		if userType != types.UserTypeHost {
+		if sessionType != types.SessionTypeHost {
 			s.errUnauthorized(w, apierrors.ErrUserTypeInvalid, log.DebugLevel)
 			return
 		}
@@ -82,9 +82,9 @@ func (s *Server) hostRequired(next http.Handler) http.Handler {
 
 func (s *Server) notHostRequired(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userType := s.CurrentUserType(r)
+		sessionType := s.CurrentSessionType(r)
 
-		if userType == types.UserTypeHost {
+		if sessionType == types.SessionTypeHost {
 			s.errUnauthorized(w, apierrors.ErrAlreadyHost, log.DebugLevel)
 			return
 		}

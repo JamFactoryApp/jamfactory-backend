@@ -13,10 +13,11 @@ type contextKey string
 const key contextKey = "Session"
 
 const (
-	jamLabelKey = "Label"
-	tokenKey    = "CurrentToken"
-	userTypeKey = "User"
+	jamLabelKey    = "Label"
+	tokenKey       = "CurrentToken"
+	sessionTypeKey = "User"
 	originKey   = "Origin"
+	originKey      = "Origin"
 )
 
 func NewContext(ctx context.Context, session *sessions.Session) context.Context {
@@ -63,16 +64,16 @@ func Token(session *sessions.Session) (*oauth2.Token, error) {
 	return token, nil
 }
 
-func UserType(session *sessions.Session) (types.UserType, error) {
-	userTypeVal := session.Values[userTypeKey]
-	if userTypeVal == nil {
+func SessionType(session *sessions.Session) (types.SessionType, error) {
+	sessionTypeVal := session.Values[sessionTypeKey]
+	if sessionTypeVal == nil {
 		return "", errors.ErrUserTypeMissing
 	}
-	userType, ok := userTypeVal.(types.UserType)
+	sessionType, ok := sessionTypeVal.(types.SessionType)
 	if !ok {
 		return "", errors.ErrUserTypeMalformed
 	}
-	return userType, nil
+	return sessionType, nil
 }
 
 func Origin(session *sessions.Session) (string, error) {
@@ -95,8 +96,8 @@ func SetToken(session *sessions.Session, token *oauth2.Token) {
 	session.Values[tokenKey] = token
 }
 
-func SetUserType(session *sessions.Session, userType types.UserType) {
-	session.Values[userTypeKey] = userType
+func SetSessionType(session *sessions.Session, userType types.SessionType) {
+	session.Values[sessionTypeKey] = userType
 }
 
 func SetOrigin(session *sessions.Session, origin string) {

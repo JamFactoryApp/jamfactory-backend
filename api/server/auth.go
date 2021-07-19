@@ -10,7 +10,7 @@ import (
 )
 
 func (s *Server) current(w http.ResponseWriter, r *http.Request) {
-	userType := s.CurrentUserType(r)
+	sessionType := s.CurrentSessionType(r)
 	jamLabel := s.CurrentJamLabel(r)
 	token := s.CurrentToken(r)
 
@@ -68,6 +68,7 @@ func (s *Server) callback(w http.ResponseWriter, r *http.Request) {
 
 	sessions.SetToken(session, token)
 	sessions.SetUserType(session, types.UserTypeNew)
+	sessions.SetSessionType(session, types.SessionTypeNew)
 
 	if err := session.Save(r, w); err != nil {
 		s.errSessionSave(w, err)

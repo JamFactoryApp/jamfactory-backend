@@ -46,13 +46,13 @@ func (s *Server) CurrentToken(r *http.Request) *oauth2.Token {
 	return token
 }
 
-func (s *Server) CurrentUserType(r *http.Request) types.UserType {
+func (s *Server) CurrentSessionType(r *http.Request) types.SessionType {
 	session := s.CurrentSession(r)
-	userType, err := pkgsessions.UserType(session)
+	sessionType, err := pkgsessions.SessionType(session)
 	if err != nil {
-		return types.UserTypeNew
+		return types.SessionTypeNew
 	}
-	return userType
+	return sessionType
 }
 
 func (s *Server) CurrentVoteID(r *http.Request) string {
