@@ -18,10 +18,10 @@ func (s *Server) current(w http.ResponseWriter, r *http.Request) {
 	authorized := false
 	if user, err := s.users.Get(identifier); err == nil {
 		switch user.UserType {
-			case types.UserTypeSpotify:
-				if user.Token != nil && user.Token.Valid() {
-					authorized = true
-				}
+		case types.UserTypeSpotify:
+			if user.Token != nil && user.Token.Valid() {
+				authorized = true
+			}
 		}
 	}
 
