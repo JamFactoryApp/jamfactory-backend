@@ -5,9 +5,10 @@ import (
 	"encoding/gob"
 	"errors"
 	"github.com/gomodule/redigo/redis"
+	"github.com/jamfactoryapp/jamfactory-backend/api/types"
 	pkgredis "github.com/jamfactoryapp/jamfactory-backend/internal/redis"
-	"github.com/jamfactoryapp/jamfactory-backend/pkg/user"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/oauth2"
 )
 
 const (
@@ -26,10 +27,20 @@ func NewRedisUserStore(pool *redis.Pool) *RedisUserStore {
 	}
 }
 
-func (s *RedisUserStore) Get(identifier string) (*user.User, error) {
+func (s *RedisUserStore) New(identifier string, username string, usertype types.UserType, token *oauth2.Token) *types.User {
+	return &types.User{
+		Identifier: identifier,
+		UserType:   usertype,
+		UserName:   username,
+		Token:      token,
+	}
+}
+
+
+func (s *RedisUserStore) Get(identifier string) (*types.User, error) {
 	conn := s.pool.Get()
 	reply, err := conn.Do("GET", s.redisKey.Append(identifier))
-	var user user.User
+	var user types.User
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +56,7 @@ func (s *RedisUserStore) Get(identifier string) (*user.User, error) {
 	return &user, err
 }
 
-func (s *RedisUserStore) Save(user *user.User) error {
+func (s *RedisUserStore) Save(user *types.User) error {
 	conn := s.pool.Get()
 	serialized, err := s.serialize(user)
 	if err != nil {
@@ -62,7 +73,7 @@ func (s *RedisUserStore) Delete(identifier string) error {
 	return err
 }
 
-func (s *RedisUserStore) serialize(user *user.User) ([]byte, error) {
+func (s *RedisUserStore) serialize(user *types.User) ([]byte, error) {
 	var buffer bytes.Buffer
 	encoder := gob.NewEncoder(&buffer)
 	err := encoder.Encode(user)
@@ -73,7 +84,7 @@ func (s *RedisUserStore) serialize(user *user.User) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func (s *RedisUserStore) deserialize(data []byte, user *user.User) error {
+func (s *RedisUserStore) deserialize(data []byte, user *types.User) error {
 	buffer := bytes.NewBuffer(data)
 	decoder := gob.NewDecoder(buffer)
 	return decoder.Decode(user)

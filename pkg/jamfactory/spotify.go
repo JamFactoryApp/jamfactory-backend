@@ -3,8 +3,10 @@ package jamfactory
 import (
 	"crypto/sha1"
 	"encoding/hex"
+	"errors"
 	apierrors "github.com/jamfactoryapp/jamfactory-backend/api/errors"
 	"github.com/jamfactoryapp/jamfactory-backend/api/server"
+	"github.com/jamfactoryapp/jamfactory-backend/api/types"
 	"github.com/jamfactoryapp/jamfactory-backend/internal/logutils"
 	pkgredis "github.com/jamfactoryapp/jamfactory-backend/internal/redis"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/cache"
@@ -123,9 +125,13 @@ func (s *SpotifyJamFactory) GetJamSession(jamLabel string) (jamsession.JamSessio
 	return jamSession, nil
 }
 
-func (s *SpotifyJamFactory) NewJamSession(token *oauth2.Token) (jamsession.JamSession, error) {
-	client := s.authenticator.NewClient(token)
-	jamSession, err := jamsession.NewSpotify(client, s.labelManager.Create())
+func (s *SpotifyJamFactory) NewJamSession(host *types.User) (jamsession.JamSession, error) {
+	// Check if correct user type was passed
+	if host.UserType != types.UserTypeSpotify {
+		return nil, errors.New("Wrong User Type for Spotify JamSession with UserType: " + string(host.UserType))
+	}
+	client := s.authenticator.NewClient(host.Token)
+	jamSession, err := jamsession.NewSpotify(host, client, s.labelManager.Create())
 	if err != nil {
 		return nil, err
 	}

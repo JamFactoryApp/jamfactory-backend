@@ -5,7 +5,6 @@ import (
 	"github.com/jamfactoryapp/jamfactory-backend/api/sessions"
 	"github.com/jamfactoryapp/jamfactory-backend/api/types"
 	"github.com/jamfactoryapp/jamfactory-backend/api/utils"
-	userpkg "github.com/jamfactoryapp/jamfactory-backend/pkg/user"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 )
@@ -80,7 +79,7 @@ func (s *Server) callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := userpkg.NewUser(id, username, types.UserTypeSpotify, token)
+	user := s.users.New(id, username, types.UserTypeSpotify, token)
 	if err := s.users.Save(user); err != nil {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return

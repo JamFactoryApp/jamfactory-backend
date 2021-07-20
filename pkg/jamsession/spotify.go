@@ -29,6 +29,8 @@ type SpotifyJamSession struct {
 	jamLabel       string
 	name           string
 	active         bool
+	hosts          []*types.User
+	guests         []*types.User
 	updateInterval time.Duration
 	lastTimestamp  time.Time
 	currentSong    *spotify.FullTrack
@@ -40,7 +42,8 @@ type SpotifyJamSession struct {
 	quit           chan bool
 }
 
-func NewSpotify(client spotify.Client, label string) (JamSession, error) {
+func NewSpotify(host *types.User, client spotify.Client, label string) (JamSession, error) {
+
 	u, err := client.CurrentUser()
 	if err != nil {
 		return nil, err
@@ -55,6 +58,8 @@ func NewSpotify(client spotify.Client, label string) (JamSession, error) {
 		jamLabel:       label,
 		name:           fmt.Sprintf("%s's JamSession", u.DisplayName),
 		active:         false,
+		hosts:          []*types.User{host},
+		guests:         make([]*types.User, 0),
 		updateInterval: time.Second,
 		lastTimestamp:  time.Now(),
 		currentSong:    nil,

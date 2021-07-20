@@ -134,7 +134,7 @@ func (s *Server) createJamSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jamSession, err := s.jamFactory.NewJamSession(user.Token)
+	jamSession, err := s.jamFactory.NewJamSession(user)
 	if err != nil {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return

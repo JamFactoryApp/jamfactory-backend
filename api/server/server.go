@@ -10,7 +10,6 @@ import (
 	"github.com/jamfactoryapp/jamfactory-backend/api/store"
 	"github.com/jamfactoryapp/jamfactory-backend/api/types"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/cache"
-	"github.com/jamfactoryapp/jamfactory-backend/pkg/user"
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"
@@ -23,7 +22,7 @@ func init() {
 	gob.Register(&spotify.SearchResult{})
 	gob.Register(types.UserType(""))
 	gob.Register(types.SessionType(""))
-	gob.Register(&user.User{})
+	gob.Register(&types.User{})
 }
 
 const (
