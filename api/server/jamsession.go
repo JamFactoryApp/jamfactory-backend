@@ -1,11 +1,14 @@
 package server
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
 	apierrors "github.com/jamfactoryapp/jamfactory-backend/api/errors"
 	"github.com/jamfactoryapp/jamfactory-backend/api/sessions"
 	"github.com/jamfactoryapp/jamfactory-backend/api/types"
 	"github.com/jamfactoryapp/jamfactory-backend/api/utils"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/notifications"
+	user2 "github.com/jamfactoryapp/jamfactory-backend/pkg/user"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 )
@@ -120,19 +123,18 @@ func (s *Server) setPlayback(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) createJamSession(w http.ResponseWriter, r *http.Request) {
 	session := s.CurrentSession(r)
-
 	sessionType := s.CurrentSessionType(r)
-	if sessionType == "" {
+	user, err := s.users.Get(s.CurrentIdentifier(r))
+	if sessionType == "" || err != nil {
 		s.errBadRequest(w, apierrors.ErrUserTypeInvalid, log.DebugLevel)
 	}
 
-	token := s.CurrentToken(r)
-	if !token.Valid() {
+	if !user.Token.Valid() {
 		s.errForbidden(w, apierrors.ErrTokenInvalid, log.DebugLevel)
 		return
 	}
 
-	jamSession, err := s.jamFactory.NewJamSession(token)
+	jamSession, err := s.jamFactory.NewJamSession(user.Token)
 	if err != nil {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return
@@ -168,7 +170,20 @@ func (s *Server) joinJamSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//Check if a user for the request already exits
+	user, err := s.users.Get(s.CurrentIdentifier(r))
+	if err != nil {
+		// Create guest user from session
+		hash := sha1.Sum([]byte(session.ID))
+		user = user2.NewUser(hex.EncodeToString(hash[:]), "Guest", types.UserTypeSession, nil)
+		if err := s.users.Save(user); err != nil {
+			s.errInternalServerError(w, err, log.DebugLevel)
+			return
+		}
+	}
+
 	sessions.SetSessionType(session, types.SessionTypeGuest)
+	sessions.SetIdentifier(session, user.Identifier)
 	sessions.SetJamLabel(session, jamLabel)
 
 	if err := session.Save(r, w); err != nil {

@@ -27,7 +27,7 @@ type LabelResponse struct {
 // auth controller
 
 type GetAuthCurrentResponse struct {
-	User       string `json:"user"`
+	UserType   string `json:"user"`
 	Label      string `json:"label"`
 	Authorized bool   `json:"authorized"`
 }

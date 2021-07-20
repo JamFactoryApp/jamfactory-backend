@@ -1,6 +1,8 @@
 package jamfactory
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
 	apierrors "github.com/jamfactoryapp/jamfactory-backend/api/errors"
 	"github.com/jamfactoryapp/jamfactory-backend/api/server"
 	"github.com/jamfactoryapp/jamfactory-backend/internal/logutils"
@@ -82,8 +84,12 @@ func (s *SpotifyJamFactory) Housekeeper() {
 	}
 }
 
-func (s *SpotifyJamFactory) Authenticate(state string, r *http.Request) (*oauth2.Token, error) {
-	return s.authenticator.Token(state, r)
+func (s *SpotifyJamFactory) Authenticate(state string, r *http.Request) (*oauth2.Token, string, string, error) {
+	token, err := s.authenticator.Token(state, r)
+	client := s.authenticator.NewClient(token)
+	user, err := client.CurrentUser()
+	hash := sha1.Sum([]byte(user.Email))
+	return token, hex.EncodeToString(hash[:]), user.DisplayName, err
 }
 
 func (s *SpotifyJamFactory) CallbackURL(state string) string {

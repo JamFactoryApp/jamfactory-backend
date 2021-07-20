@@ -46,10 +46,8 @@ func (s *RedisUserStore) Get(identifier string) (*user.User, error) {
 }
 
 func (s *RedisUserStore) Save(user *user.User) error {
-
 	conn := s.pool.Get()
 	serialized, err := s.serialize(user)
-	log.Info(serialized)
 	if err != nil {
 		return err
 	}

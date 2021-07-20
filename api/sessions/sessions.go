@@ -5,7 +5,6 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/jamfactoryapp/jamfactory-backend/api/errors"
 	"github.com/jamfactoryapp/jamfactory-backend/api/types"
-	"golang.org/x/oauth2"
 )
 
 type contextKey string
@@ -14,8 +13,7 @@ const key contextKey = "Session"
 
 const (
 	jamLabelKey    = "Label"
-	tokenKey       = "CurrentToken"
-	sessionTypeKey = "User"
+	sessionTypeKey = "UserType"
 	identifierKey  = "Identifier"
 	originKey      = "Origin"
 )
@@ -48,20 +46,6 @@ func JamLabel(session *sessions.Session) (string, error) {
 	}
 
 	return jamLabel, nil
-}
-
-func Token(session *sessions.Session) (*oauth2.Token, error) {
-	tokenVal := session.Values[tokenKey]
-	if tokenVal == nil {
-		return nil, errors.ErrTokenMissing
-	}
-
-	token, ok := tokenVal.(*oauth2.Token)
-	if !ok {
-		return nil, errors.ErrTokenMalformed
-	}
-
-	return token, nil
 }
 
 func SessionType(session *sessions.Session) (types.SessionType, error) {
@@ -102,10 +86,6 @@ func Identifier(session *sessions.Session) (string, error) {
 
 func SetJamLabel(session *sessions.Session, jamLabel string) {
 	session.Values[jamLabelKey] = jamLabel
-}
-
-func SetToken(session *sessions.Session, token *oauth2.Token) {
-	session.Values[tokenKey] = token
 }
 
 func SetSessionType(session *sessions.Session, userType types.SessionType) {

@@ -22,6 +22,7 @@ func init() {
 	gob.Register(&oauth2.Token{})
 	gob.Register(&spotify.SearchResult{})
 	gob.Register(types.UserType(""))
+	gob.Register(types.SessionType(""))
 	gob.Register(&user.User{})
 }
 

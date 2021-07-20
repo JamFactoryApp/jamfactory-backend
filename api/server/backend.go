@@ -9,7 +9,7 @@ import (
 // JamFactory provides methods to control JamSessions
 type JamFactory interface {
 	// Authenticate takes a request and state and returns an OAuth2 token
-	Authenticate(state string, r *http.Request) (*oauth2.Token, error)
+	Authenticate(state string, r *http.Request) (*oauth2.Token, string, string, error)
 	// CallbackURL returns a URL a user should visit for authentication
 	CallbackURL(state string) string
 	// DeleteJamSession deletes the JamSession with the given jamLabel if it exists

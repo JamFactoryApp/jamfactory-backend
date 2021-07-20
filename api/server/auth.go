@@ -5,6 +5,7 @@ import (
 	"github.com/jamfactoryapp/jamfactory-backend/api/sessions"
 	"github.com/jamfactoryapp/jamfactory-backend/api/types"
 	"github.com/jamfactoryapp/jamfactory-backend/api/utils"
+	userpkg "github.com/jamfactoryapp/jamfactory-backend/pkg/user"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 )
@@ -12,12 +13,22 @@ import (
 func (s *Server) current(w http.ResponseWriter, r *http.Request) {
 	sessionType := s.CurrentSessionType(r)
 	jamLabel := s.CurrentJamLabel(r)
-	token := s.CurrentToken(r)
+	identifier := s.CurrentIdentifier(r)
+
+	authorized := false
+	if user, err := s.users.Get(identifier); err == nil {
+		switch user.UserType {
+			case types.UserTypeSpotify:
+				if user.Token != nil && user.Token.Valid() {
+					authorized = true
+				}
+		}
+	}
 
 	utils.EncodeJSONBody(w, types.GetAuthCurrentResponse{
-		User:       string(userType),
+		UserType:   string(sessionType),
 		Label:      jamLabel,
-		Authorized: token != nil && token.Valid(),
+		Authorized: authorized,
 	})
 }
 
@@ -40,12 +51,15 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) logout(w http.ResponseWriter, r *http.Request) {
 	session := s.CurrentSession(r)
+	identifier := s.CurrentIdentifier(r)
 	session.Options.MaxAge = -1
 
 	if err := session.Save(r, w); err != nil {
 		s.errSessionSave(w, err)
 		return
 	}
+
+	s.users.Delete(identifier)
 
 	utils.EncodeJSONBody(w, types.GetAuthLogoutResponse{
 		Success: true,
@@ -55,7 +69,7 @@ func (s *Server) logout(w http.ResponseWriter, r *http.Request) {
 func (s *Server) callback(w http.ResponseWriter, r *http.Request) {
 	session := s.CurrentSession(r)
 
-	token, err := s.jamFactory.Authenticate(session.ID, r)
+	token, id, username, err := s.jamFactory.Authenticate(session.ID, r)
 	if err != nil {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return
@@ -66,8 +80,12 @@ func (s *Server) callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessions.SetToken(session, token)
-	sessions.SetUserType(session, types.UserTypeNew)
+	user := userpkg.NewUser(id, username, types.UserTypeSpotify, token)
+	if err := s.users.Save(user); err != nil {
+		s.errInternalServerError(w, err, log.DebugLevel)
+		return
+	}
+	sessions.SetIdentifier(session, id)
 	sessions.SetSessionType(session, types.SessionTypeNew)
 
 	if err := session.Save(r, w); err != nil {
