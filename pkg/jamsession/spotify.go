@@ -29,8 +29,8 @@ type SpotifyJamSession struct {
 	jamLabel       string
 	name           string
 	active         bool
-	hosts          []*types.User
-	guests         []*types.User
+	hosts          map[string]*types.User
+	guests         map[string]*types.User
 	updateInterval time.Duration
 	lastTimestamp  time.Time
 	currentSong    *spotify.FullTrack
@@ -58,8 +58,8 @@ func NewSpotify(host *types.User, client spotify.Client, label string) (JamSessi
 		jamLabel:       label,
 		name:           fmt.Sprintf("%s's JamSession", u.DisplayName),
 		active:         false,
-		hosts:          []*types.User{host},
-		guests:         make([]*types.User, 0),
+		hosts:          map[string]*types.User{host.Identifier: host},
+		guests:         make(map[string]*types.User, 0),
 		updateInterval: time.Second,
 		lastTimestamp:  time.Now(),
 		currentSong:    nil,
@@ -152,6 +152,54 @@ func (s *SpotifyJamSession) Play(device spotify.PlayerDevice, song song.Song) er
 
 func (s *SpotifyJamSession) JamLabel() string {
 	return s.jamLabel
+}
+
+func (s *SpotifyJamSession) AddGuest(guest *types.User) bool {
+	if _, ok := s.guests[guest.Identifier]; !ok {
+		s.guests[guest.Identifier] = guest
+		return true
+	}
+	return false
+}
+
+func (s *SpotifyJamSession) RemoveGuest(guest *types.User) bool {
+	if _, ok := s.guests[guest.Identifier]; ok {
+		delete(s.guests, guest.Identifier)
+		return true
+	}
+	return false
+}
+
+func (s *SpotifyJamSession) GetGuests() []*types.User {
+	var arr []*types.User
+	for _, v := range s.guests {
+		arr = append(arr, v)
+	}
+	return arr
+}
+
+func (s *SpotifyJamSession) AddHost(host *types.User) bool {
+	if _, ok := s.hosts[host.Identifier]; !ok {
+		s.guests[host.Identifier] = host
+		return true
+	}
+	return false
+}
+
+func (s *SpotifyJamSession) RemoveHost(host *types.User) bool {
+	if _, ok := s.hosts[host.Identifier]; ok {
+		delete(s.hosts, host.Identifier)
+		return true
+	}
+	return false
+}
+
+func (s *SpotifyJamSession) GetHosts() []*types.User {
+	var arr []*types.User
+	for _, v := range s.hosts {
+		arr = append(arr, v)
+	}
+	return arr
 }
 
 func (s *SpotifyJamSession) Name() string {

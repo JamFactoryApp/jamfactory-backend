@@ -127,6 +127,7 @@ func (s *Server) createJamSession(w http.ResponseWriter, r *http.Request) {
 	user, err := s.users.Get(s.CurrentIdentifier(r))
 	if sessionType == "" || err != nil {
 		s.errBadRequest(w, apierrors.ErrUserTypeInvalid, log.DebugLevel)
+		return
 	}
 
 	if !user.Token.Valid() {
@@ -164,7 +165,7 @@ func (s *Server) joinJamSession(w http.ResponseWriter, r *http.Request) {
 	session := s.CurrentSession(r)
 	jamLabel := body.Label
 
-	_, err := s.jamFactory.GetJamSession(jamLabel)
+	jamSession, err := s.jamFactory.GetJamSession(jamLabel)
 	if err != nil {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return
@@ -176,7 +177,7 @@ func (s *Server) joinJamSession(w http.ResponseWriter, r *http.Request) {
 		// Create guest user from session
 		hash := sha1.Sum([]byte(session.ID))
 		identifier := hex.EncodeToString(hash[:])
-		username := "Guest " + string([]rune(base64.StdEncoding.EncodeToString(hash[:]))[0:5])
+		username := "Guest " + string([]rune(base32.StdEncoding.EncodeToString(hash[:]))[0:5])
 		user = s.users.New(identifier, username, types.UserTypeSession, nil)
 		if err := s.users.Save(user); err != nil {
 			s.errInternalServerError(w, err, log.DebugLevel)
@@ -193,6 +194,8 @@ func (s *Server) joinJamSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	jamSession.AddGuest(user)
+
 	utils.EncodeJSONBody(w, types.PutJamJoinResponse{
 		Label: jamLabel,
 	})
@@ -201,17 +204,30 @@ func (s *Server) joinJamSession(w http.ResponseWriter, r *http.Request) {
 func (s *Server) leaveJamSession(w http.ResponseWriter, r *http.Request) {
 	session := s.CurrentSession(r)
 	userType := s.CurrentSessionType(r)
+	user, err := s.users.Get(s.CurrentIdentifier(r))
+	if err != nil {
+		s.errBadRequest(w, apierrors.ErrUserTypeInvalid, log.DebugLevel)
+		return
+	}
 
 	if userType == types.SessionTypeHost {
 		jamSession := s.CurrentJamSession(r)
-		jamSession.NotifyClients(&notifications.Message{
-			Event:   notifications.Close,
-			Message: notifications.HostLeft,
-		})
-		if err := s.jamFactory.DeleteJamSession(jamSession.JamLabel()); err != nil {
-			s.errInternalServerError(w, err, log.DebugLevel)
-			return
+		if jamSession.RemoveHost(user) {
+			if len(jamSession.GetHosts()) == 0 {
+				jamSession.NotifyClients(&notifications.Message{
+					Event:   notifications.Close,
+					Message: notifications.HostLeft,
+				})
+
+				if err := s.jamFactory.DeleteJamSession(jamSession.JamLabel()); err != nil {
+					s.errInternalServerError(w, err, log.DebugLevel)
+					return
+				}
+			}
 		}
+	} else if userType == types.SessionTypeGuest {
+		jamSession := s.CurrentJamSession(r)
+		jamSession.RemoveGuest(user)
 	}
 
 	sessions.SetJamLabel(session, "")
