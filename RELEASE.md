@@ -1,5 +1,24 @@
 # JamFactory Backend Release Notes
 
+* [v0.1.0 (Latest)](#v010)
+
+## vx.x.x
+
+### Features Added
+
+### Features Removed
+This is the first release. Nothing to remove.
+
+### Bug Fixes
+No bugs were fixed with this release.
+
+### Added API Endpoints
+No API Endpoints were added in this release.
+
+### Removed API Endpoints
+No API Endpoints were removed in this release.
+
+
 ## v0.1.0
 
 :sparkles: This is the initial release of the JamFactory Backend project!
