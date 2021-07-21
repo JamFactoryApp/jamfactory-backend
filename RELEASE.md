@@ -6,14 +6,17 @@
 
 ### Features Added
 
+* :sparkles: Add User management. Keep track who is the host and which users are joined a JamSession.
+
 ### Features Removed
 This is the first release. Nothing to remove.
 
 ### Bug Fixes
 No bugs were fixed with this release.
 
-### Added API Endpoints
-No API Endpoints were added in this release.
+### API Changes
+
+* Changed [``GET: /api/v1/jam``](./docs/documentation.md#2-get-the-information-of-the-jamsession-joined-by-the-user) to include new fields `users` and `hosts`.  
 
 ### Removed API Endpoints
 No API Endpoints were removed in this release.

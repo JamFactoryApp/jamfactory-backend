@@ -56,7 +56,7 @@ The host can select a Spotify playback device on which they wish to play the mus
 
 The host of a JamSession has to have a Spotify premium account, the guests can join the JamSession without a Spotify account.
 
-### User Types
+### TODO: User Types (Update with User Management)
 
 The following user types are currently available:
 
@@ -265,17 +265,21 @@ URL: jamfactory.app/api/v1/jam
 
 ***Response Body (JSON):***
 
-| key      	        | value type        	| value description                                                                                     |
-|----------	        |-------------------	|-------------------------------------------------------------------------------------------------------|
-| ``label``         | string  	            | *JamLabel* of the currently joined *JamSession*.                                       	            |
-| ``name`` 	        | string             	| *Name* of the currently joined *JamSession*.    	                                                |
-| ``active`` 	    | string            	| *State* of the currently joined *JamSession*. See [JamSession State](#jamsession-state)	|
+| key      	        | value type        	| value description                                                                                         |
+|----------	        |-------------------	|-----------------------------------------------------------------------------------------------------------|
+| ``label``         | string  	            | *JamLabel* of the currently joined *JamSession*.                                       	                |
+| ``name`` 	        | string             	| *Name* of the currently joined *JamSession*.    	                                                        |
+| ``hosts`` 	    | []string             	| Array of *Usernames* of the current *JamSession* hosts.                                                   |
+| ``guests`` 	    | []string             	| Array of *Usernames* of the currently joined *JamSession* guests.                                         |
+| ``active`` 	    | string            	| *State* of the currently joined *JamSession*. See [JamSession State](#jamsession-state)	                |
 | ``voting_type`` 	| string             	| *Voting type* of the currently joined *JamSession*. See [Available Voting Types](#available-voting-types)	|
 
 ```json
 {
     "label": "TPMU4",
     "name": "Joe's Birthday Party",
+    "hosts": ["Joe"],
+    "guests": ["Guest A2DE1", "Guest G3AR1"],
     "active": true,
     "voting_type": "session_voting"
 }
