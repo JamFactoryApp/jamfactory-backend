@@ -36,7 +36,6 @@ func (s *RedisUserStore) New(identifier string, username string, usertype types.
 	}
 }
 
-
 func (s *RedisUserStore) Get(identifier string) (*types.User, error) {
 	conn := s.pool.Get()
 	reply, err := conn.Do("GET", s.redisKey.Append(identifier))

@@ -10,6 +10,8 @@ import (
 type JamResponse struct {
 	Label      string     `json:"label"`
 	Name       string     `json:"name"`
+	Hosts      []string   `json:"hosts"`
+	Guests     []string   `json:"guests"`
 	Active     bool       `json:"active"`
 	VotingType VotingType `json:"voting_type"`
 }

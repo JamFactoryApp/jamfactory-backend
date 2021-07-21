@@ -2,7 +2,7 @@ package server
 
 import (
 	"crypto/sha1"
-	"encoding/base64"
+	"encoding/base32"
 	"encoding/hex"
 	apierrors "github.com/jamfactoryapp/jamfactory-backend/api/errors"
 	"github.com/jamfactoryapp/jamfactory-backend/api/sessions"
@@ -16,9 +16,21 @@ import (
 func (s *Server) getJamSession(w http.ResponseWriter, r *http.Request) {
 	jamSession := s.CurrentJamSession(r)
 
+	guests := make([]string, 0)
+	for _, guest := range jamSession.GetGuests() {
+		guests = append(guests, guest.UserName)
+	}
+
+	hosts := make([]string, 0)
+	for _, host := range jamSession.GetHosts() {
+		hosts = append(hosts, host.UserName)
+	}
+
 	utils.EncodeJSONBody(w, types.GetJamResponse{
 		Label:      jamSession.JamLabel(),
 		Name:       jamSession.Name(),
+		Guests:     guests,
+		Hosts:      hosts,
 		Active:     jamSession.Active(),
 		VotingType: jamSession.VotingType(),
 	})
