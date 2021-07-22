@@ -6,7 +6,9 @@
 
 ### Features Added
 
-* :sparkles: Add User management. Keep track who is the host and which users are joined a JamSession.
+* :sparkles: Add User management. No longer save token is the session.  See [What are Users](./docs/documentation.md#what-is-a-user)
+* :sparkles: Keep track which members have joined a JamSession. See [What are Members](./docs/documentation.md#what-is-a-member)
+* :construction: Add basic rights management. See [Member Rights](./docs/documentation.md#member-rights). At the moment there is no way to control the rights of a member.
 
 ### Features Removed
 This is the first release. Nothing to remove.
@@ -16,7 +18,7 @@ No bugs were fixed with this release.
 
 ### API Changes
 
-* Changed [``GET: /api/v1/jam``](./docs/documentation.md#2-get-the-information-of-the-jamsession-joined-by-the-user) to include new fields `users` and `hosts`.  
+* Changed [``GET: /api/v1/jam``](./docs/documentation.md#2-get-the-information-of-the-jamsession-joined-by-the-user) to include new field `members` containing the [Members](./docs/documentation.md#jamsession-member).  
 
 ### Removed API Endpoints
 No API Endpoints were removed in this release.

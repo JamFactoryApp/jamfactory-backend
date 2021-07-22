@@ -56,17 +56,27 @@ The host can select a Spotify playback device on which they wish to play the mus
 
 The host of a JamSession has to have a Spotify premium account, the guests can join the JamSession without a Spotify account.
 
-### TODO: User Types (Update with User Management)
+### User Management (TODO -> Also update all request to display what rights are required)
 
+#### What is a Session
+
+
+#### What is a User
+
+
+#### What is a Member
 The following user types are currently available:
 
-| type      | description       
-|----------	|-----------------
-| ``New``   | The *User* did not join any *JamSession* as a *Guest* or created his own.
-| ``Guest`` | The *User* joined an ongoing *JamSession* as a *Guest*. 	       
-| ``Host``  | The *User* is logged into Spotify and started his own *JamSession* as a *Host*.
+
 
 See the API description for information on the required user type for certain routes.
+
+##### Member Rights
+
+| type      | description      
+|----------	|-----------------
+| ``Guest`` | The *Member* joined an ongoing *JamSession* as a *Guest*.    
+| ``Host``  | The *Member* the *Host* of a *JamSession*.
 
 ### How voting works
 
@@ -122,11 +132,18 @@ The following event will change the JamSession state:
 
 ### Queue Song
 
-| type                      | description       
-|----------	                |-----------------
-| ``spotifyTrackFull``      | The *Session ID* of the *User* is used as an identifier
-| ``votes``                 | The *IP Address* of the *User* is used as an identifier
-| ``voted``                 | 
+| type                  | value type     | description       
+|----------	            |----    |-----------------
+| ``spotifyTrackFull``  | [Spotify Track Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#track-object-full)  | The *Spotify Track* 
+| ``votes``             | number   | Number of *Votes* for the *Queue Song*
+| ``voted``             | boolean   | True if the request initiator *Voted* for the *Queue Song*. Always false for WebSocket Messages
+
+### JamSession Member
+
+| type                | value type            | description       
+|----------	          |------      |-----------------
+| ``display_name``    | string      | The *Display Name* of the *User*
+| ``rights``           | []string      | The *IP Address* of the *User* is used as an identifier
 
 ## API Reference
 
@@ -269,8 +286,7 @@ URL: jamfactory.app/api/v1/jam
 |----------	        |-------------------	|-----------------------------------------------------------------------------------------------------------|
 | ``label``         | string  	            | *JamLabel* of the currently joined *JamSession*.                                       	                |
 | ``name`` 	        | string             	| *Name* of the currently joined *JamSession*.    	                                                        |
-| ``hosts`` 	    | []string             	| Array of *Usernames* of the current *JamSession* hosts.                                                   |
-| ``guests`` 	    | []string             	| Array of *Usernames* of the currently joined *JamSession* guests.                                         |
+| ``members`` 	    | [][JamSession Members](#jamsession-members)    	| Array of *Members* of the current *JamSession*.                                               |
 | ``active`` 	    | string            	| *State* of the currently joined *JamSession*. See [JamSession State](#jamsession-state)	                |
 | ``voting_type`` 	| string             	| *Voting type* of the currently joined *JamSession*. See [Available Voting Types](#available-voting-types)	|
 
@@ -278,8 +294,16 @@ URL: jamfactory.app/api/v1/jam
 {
     "label": "TPMU4",
     "name": "Joe's Birthday Party",
-    "hosts": ["Joe"],
-    "guests": ["Guest A2DE1", "Guest G3AR1"],
+    "members": [
+       {
+           "display_name": "Joe",
+           "rights": ["Host", "Guest"]
+       },
+       {
+           "display_name": "Guest A5E1D",
+           "rights": ["Guest"]
+       }
+    ],
     "active": true,
     "voting_type": "session_voting"
 }
