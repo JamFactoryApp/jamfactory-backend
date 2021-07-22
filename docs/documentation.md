@@ -380,7 +380,7 @@ URL: jamfactory.app/api/v1/jam/join
 
 ***Description***
 
-Leave the JamSession currently joined by the user. If the user is the host of the JamSession, the JamSession will be deleted. Requires the user to have joined a JamSession.
+Leave the JamSession currently joined by the user. If the user is the host of the JamSession, the JamSession will be deleted. Also returns a success confirmation if the user isn't a member of any JamSession.
 
 ***Endpoint:***
 

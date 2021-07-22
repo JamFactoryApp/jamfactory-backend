@@ -62,7 +62,7 @@ func (s *Server) registerAuthRoutes(r *mux.Router) {
 func (s *Server) registerJamSessionRoutes(r *mux.Router) {
 	r.Handle(jamSessionCreatePath, s.nonMemberRequired(http.HandlerFunc(s.createJamSession))).Methods("GET")
 	r.Handle(jamSessionJoinPath, s.nonMemberRequired(http.HandlerFunc(s.joinJamSession))).Methods("PUT")
-	r.Handle(jamSessionLeavePath, s.jamSessionRequired(http.HandlerFunc(s.leaveJamSession))).Methods("GET")
+	r.Handle(jamSessionLeavePath, http.HandlerFunc(s.leaveJamSession)).Methods("GET")
 	r.Handle(jamSessionIndexPath, s.jamSessionRequired(http.HandlerFunc(s.getJamSession))).Methods("GET")
 	r.Handle(jamSessionIndexPath, s.jamSessionRequired(s.hostRequired(http.HandlerFunc(s.setJamSession)))).Methods("PUT")
 	r.Handle(jamSessionPlaybackPath, s.jamSessionRequired(http.HandlerFunc(s.getPlayback))).Methods("GET")

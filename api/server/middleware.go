@@ -46,7 +46,6 @@ func (s *Server) sessionMiddleware(next http.Handler) http.Handler {
 
 		ctx := sessions.NewContext(r.Context(), session)
 		r = r.WithContext(ctx)
-
 		next.ServeHTTP(w, r)
 	})
 }

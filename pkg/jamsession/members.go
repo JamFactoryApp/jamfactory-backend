@@ -62,6 +62,7 @@ func (m *Member) Add(rights []types.MemberRights) {
 	}
 }
 
+
 func (m *Member) Remove(rights []types.MemberRights) bool {
 	for _, toRemove := range rights {
 		for i, right := range m.Rights {

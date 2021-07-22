@@ -204,21 +204,22 @@ func (s *Server) joinJamSession(w http.ResponseWriter, r *http.Request) {
 func (s *Server) leaveJamSession(w http.ResponseWriter, r *http.Request) {
 
 	user := s.CurrentUser(r)
-	jamSession := s.CurrentJamSession(r)
-	member, err := jamSession.Members().Get(user)
-	if err == nil && member.Has([]types.MemberRights{types.RightHost}) {
-		if jamSession.Members().Remove(user) {
-			jamSession.NotifyClients(&notifications.Message{
-				Event:   notifications.Close,
-				Message: notifications.HostLeft,
-			})
-			if err := s.jamFactory.DeleteJamSession(jamSession.JamLabel()); err != nil {
-				s.errInternalServerError(w, err, log.DebugLevel)
-				return
+	if jamSession, err := s.jamFactory.GetJamSessionByUser(user); err == nil {
+		member, err := jamSession.Members().Get(user)
+		if err == nil && member.Has([]types.MemberRights{types.RightHost}) {
+			if jamSession.Members().Remove(user) {
+				jamSession.NotifyClients(&notifications.Message{
+					Event:   notifications.Close,
+					Message: notifications.HostLeft,
+				})
+				if err := s.jamFactory.DeleteJamSession(jamSession.JamLabel()); err != nil {
+					s.errInternalServerError(w, err, log.DebugLevel)
+					return
+				}
 			}
+		} else {
+			jamSession.Members().Remove(user)
 		}
-	} else {
-		jamSession.Members().Remove(user)
 	}
 
 	utils.EncodeJSONBody(w, types.GetJamLeaveResponse{

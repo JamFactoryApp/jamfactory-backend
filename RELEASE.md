@@ -14,7 +14,8 @@
 This is the first release. Nothing to remove.
 
 ### Bug Fixes
-No bugs were fixed with this release.
+
+* :bug: Don't return ``jamSession not found`` if a user isn't a member of a JamSession and tries to leave his current JamSession using [``GET: /api/v1/jam/leave``](./docs/documentation.md#5-leave-the-jamsession-currently-joined-by-the-user). He already isn't a member of any JamSession, so the route should indicate that and return a success confirmation. 
 
 ### API Changes
 
