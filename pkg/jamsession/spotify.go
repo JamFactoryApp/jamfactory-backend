@@ -29,8 +29,7 @@ type SpotifyJamSession struct {
 	jamLabel       string
 	name           string
 	active         bool
-	hosts          map[string]*types.User
-	guests         map[string]*types.User
+	members Members
 	updateInterval time.Duration
 	lastTimestamp  time.Time
 	currentSong    *spotify.FullTrack
@@ -54,12 +53,15 @@ func NewSpotify(host *types.User, client spotify.Client, label string) (JamSessi
 		return nil, err
 	}
 
+	members := Members{host.Identifier: Member{
+		User:   host,
+		Rights: []types.MemberRights{types.RightHost, types.RightsGuest}}}
+
 	s := &SpotifyJamSession{
 		jamLabel:       label,
 		name:           fmt.Sprintf("%s's JamSession", u.DisplayName),
 		active:         false,
-		hosts:          map[string]*types.User{host.Identifier: host},
-		guests:         make(map[string]*types.User, 0),
+		members:        members,
 		updateInterval: time.Second,
 		lastTimestamp:  time.Now(),
 		currentSong:    nil,
@@ -70,7 +72,6 @@ func NewSpotify(host *types.User, client spotify.Client, label string) (JamSessi
 		room:           notifications.NewRoom(),
 		quit:           make(chan bool),
 	}
-
 	go s.room.OpenDoors()
 	log.Info("Created new JamSession for ", u.DisplayName)
 	return s, nil
@@ -154,66 +155,8 @@ func (s *SpotifyJamSession) JamLabel() string {
 	return s.jamLabel
 }
 
-func (s *SpotifyJamSession) AddGuest(guest *types.User) bool {
-	if _, ok := s.guests[guest.Identifier]; !ok {
-		s.guests[guest.Identifier] = guest
-		return true
-	}
-	return false
-}
-
-func (s *SpotifyJamSession) IsGuest(guest *types.User) bool {
-	if _, ok := s.guests[guest.Identifier]; ok {
-		return true
-	}
-	return false
-}
-
-func (s *SpotifyJamSession) RemoveGuest(guest *types.User) bool {
-	if _, ok := s.guests[guest.Identifier]; ok {
-		delete(s.guests, guest.Identifier)
-		return true
-	}
-	return false
-}
-
-func (s *SpotifyJamSession) GetGuests() []*types.User {
-	var arr []*types.User
-	for _, v := range s.guests {
-		arr = append(arr, v)
-	}
-	return arr
-}
-
-func (s *SpotifyJamSession) AddHost(host *types.User) bool {
-	if _, ok := s.hosts[host.Identifier]; !ok {
-		s.guests[host.Identifier] = host
-		return true
-	}
-	return false
-}
-
-func (s *SpotifyJamSession) IsHost(host *types.User) bool {
-	if _, ok := s.hosts[host.Identifier]; ok {
-		return true
-	}
-	return false
-}
-
-func (s *SpotifyJamSession) RemoveHost(host *types.User) bool {
-	if _, ok := s.hosts[host.Identifier]; ok {
-		delete(s.hosts, host.Identifier)
-		return true
-	}
-	return false
-}
-
-func (s *SpotifyJamSession) GetHosts() []*types.User {
-	var arr []*types.User
-	for _, v := range s.hosts {
-		arr = append(arr, v)
-	}
-	return arr
+func (s *SpotifyJamSession) Members() Members {
+	return s.members
 }
 
 func (s *SpotifyJamSession) Name() string {

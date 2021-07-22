@@ -127,7 +127,7 @@ func (s *SpotifyJamFactory) GetJamSessionByLabel(jamLabel string) (jamsession.Ja
 
 func (s *SpotifyJamFactory) GetJamSessionByUser(user *types.User) (jamsession.JamSession, error) {
 	for _, jamSession := range s.jamSessions {
-		if jamSession.IsGuest(user) || jamSession.IsHost(user) {
+		if _, err := jamSession.Members().Get(user); err == nil {
 			return jamSession, nil
 		}
 	}

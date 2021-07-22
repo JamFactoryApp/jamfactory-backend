@@ -26,7 +26,8 @@ func (s *Server) current(w http.ResponseWriter, r *http.Request) {
 		if jamSession, err := s.jamFactory.GetJamSessionByUser(user); err == nil {
 			jamLabel = jamSession.JamLabel()
 			userType = types.SessionTypeGuest
-			if jamSession.IsHost(user) {
+			member, err := jamSession.Members().Get(user)
+			if err == nil && member.Has([]types.MemberRights{types.RightHost}) {
 				userType = types.SessionTypeHost
 			}
 		}

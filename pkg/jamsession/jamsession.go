@@ -28,22 +28,8 @@ type JamSession interface {
 	Name() string
 	// SetName updates this JamSession's name
 	SetName(name string)
-	// AddGuest add a Guest to the JamSession
-	AddGuest(guest *types.User) bool
-	// IsGuest checks if a user is a guest of a JamSession
-	IsGuest(guest *types.User) bool
-	// RemoveGuest removes a Guest from the JamSession
-	RemoveGuest(guest *types.User) bool
-	// GetGuests returns a list of the current Guests of a JamSession
-	GetGuests() []*types.User
-	// AddHost add a Host to the JamSession
-	AddHost(host *types.User) bool
-	// IsHost checks if a user is a guest of a JamSession
-	IsHost(host *types.User) bool
-	// RemoveHost removes a Host from the JamSession
-	RemoveHost(host *types.User) bool
-	// GetHosts returns a list of the current Hosts of a JamSession
-	GetHosts() []*types.User
+	// Members returns the JamSession's members
+	Members() Members
 	// Active returns whether this JamSession is active
 	Active() bool
 	// SetActive activates or deactivates this JamSession

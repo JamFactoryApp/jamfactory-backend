@@ -3,6 +3,7 @@ package server
 import (
 	apierrors "github.com/jamfactoryapp/jamfactory-backend/api/errors"
 	"github.com/jamfactoryapp/jamfactory-backend/api/sessions"
+	"github.com/jamfactoryapp/jamfactory-backend/api/types"
 	"github.com/jamfactoryapp/jamfactory-backend/api/users"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/jamsession"
 	log "github.com/sirupsen/logrus"
@@ -85,8 +86,8 @@ func (s *Server) hostRequired(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := s.CurrentUser(r)
 		jamSession := s.CurrentJamSession(r)
-
-		if !jamSession.IsHost(user) {
+		member, err := jamSession.Members().Get(user)
+		if err != nil || !member.Has([]types.MemberRights{types.RightHost}) {
 			s.errUnauthorized(w, apierrors.ErrUserTypeInvalid, log.DebugLevel)
 			return
 		}
@@ -98,9 +99,13 @@ func (s *Server) notHostRequired(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := s.CurrentUser(r)
 		jamSession, err := s.jamFactory.GetJamSessionByUser(user)
-		if err == nil && jamSession.IsHost(user) {
-			s.errUnauthorized(w, apierrors.ErrAlreadyHost, log.DebugLevel)
-			return
+		if err == nil {
+			// user is joined a JamSession. Check if he is a host
+			member, err := jamSession.Members().Get(user)
+			if err == nil && member.Has([]types.MemberRights{types.RightHost}) {
+				s.errUnauthorized(w, apierrors.ErrAlreadyHost, log.DebugLevel)
+				return
+			}
 		}
 		next.ServeHTTP(w, r)
 	})
