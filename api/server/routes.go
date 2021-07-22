@@ -36,7 +36,8 @@ const (
 )
 
 func (s *Server) initRoutes() {
-	s.router.Use(s.sessionRequired)
+	s.router.Use(s.sessionMiddleware)
+	s.router.Use(s.userMiddleware)
 
 	authRouter := s.router.PathPrefix(apiPath + authPath).Subrouter()
 	jamSessionRouter := s.router.PathPrefix(apiPath + jamSessionPath).Subrouter()

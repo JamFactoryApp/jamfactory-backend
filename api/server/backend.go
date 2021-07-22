@@ -15,8 +15,10 @@ type JamFactory interface {
 	CallbackURL(state string) string
 	// DeleteJamSession deletes the JamSession with the given jamLabel if it exists
 	DeleteJamSession(jamLabel string) error
-	// GetJamSession returns the JamSession for a given jamLabel
-	GetJamSession(jamLabel string) (jamsession.JamSession, error)
+	// GetJamSessionByLabel returns the JamSession for a given jamLabel
+	GetJamSessionByLabel(jamLabel string) (jamsession.JamSession, error)
+	// GetJamSessionByLabel returns the JamSession a given user belongs to
+	GetJamSessionByUser(user *types.User) (jamsession.JamSession, error)
 	// NewJamSession creates a new JamSession using the user account provided by the OAuth2 token
 	NewJamSession(host *types.User) (jamsession.JamSession, error)
 	// Search yields search results from the music streaming provider

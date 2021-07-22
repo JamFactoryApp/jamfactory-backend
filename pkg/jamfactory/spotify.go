@@ -117,12 +117,21 @@ func (s *SpotifyJamFactory) DeleteJamSession(jamLabel string) error {
 	return nil
 }
 
-func (s *SpotifyJamFactory) GetJamSession(jamLabel string) (jamsession.JamSession, error) {
+func (s *SpotifyJamFactory) GetJamSessionByLabel(jamLabel string) (jamsession.JamSession, error) {
 	jamSession, exists := s.jamSessions[strings.ToUpper(jamLabel)]
 	if !exists {
 		return nil, apierrors.ErrJamSessionNotFound
 	}
 	return jamSession, nil
+}
+
+func (s *SpotifyJamFactory) GetJamSessionByUser(user *types.User) (jamsession.JamSession, error) {
+	for _, jamSession := range s.jamSessions {
+		if jamSession.IsGuest(user) || jamSession.IsHost(user) {
+			return jamSession, nil
+		}
+	}
+	return nil, apierrors.ErrJamSessionNotFound
 }
 
 func (s *SpotifyJamFactory) NewJamSession(host *types.User) (jamsession.JamSession, error) {

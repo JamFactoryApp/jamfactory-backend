@@ -10,22 +10,30 @@ import (
 )
 
 func (s *Server) current(w http.ResponseWriter, r *http.Request) {
-	sessionType := s.CurrentSessionType(r)
-	jamLabel := s.CurrentJamLabel(r)
 	identifier := s.CurrentIdentifier(r)
 
 	authorized := false
-	if user, err := s.users.Get(identifier); err == nil {
+	jamLabel := ""
+	userType := types.SessionTypeNew
+	user, err := s.users.Get(identifier)
+	if err == nil {
 		switch user.UserType {
 		case types.UserTypeSpotify:
 			if user.Token != nil && user.Token.Valid() {
 				authorized = true
 			}
 		}
+		if jamSession, err := s.jamFactory.GetJamSessionByUser(user); err == nil {
+			jamLabel = jamSession.JamLabel()
+			userType = types.SessionTypeGuest
+			if jamSession.IsHost(user) {
+				userType = types.SessionTypeHost
+			}
+		}
 	}
 
 	utils.EncodeJSONBody(w, types.GetAuthCurrentResponse{
-		UserType:   string(sessionType),
+		UserType:   string(userType),
 		Label:      jamLabel,
 		Authorized: authorized,
 	})
@@ -85,7 +93,6 @@ func (s *Server) callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sessions.SetIdentifier(session, id)
-	sessions.SetSessionType(session, types.SessionTypeNew)
 
 	if err := session.Save(r, w); err != nil {
 		s.errSessionSave(w, err)

@@ -162,6 +162,13 @@ func (s *SpotifyJamSession) AddGuest(guest *types.User) bool {
 	return false
 }
 
+func (s *SpotifyJamSession) IsGuest(guest *types.User) bool {
+	if _, ok := s.guests[guest.Identifier]; ok {
+		return true
+	}
+	return false
+}
+
 func (s *SpotifyJamSession) RemoveGuest(guest *types.User) bool {
 	if _, ok := s.guests[guest.Identifier]; ok {
 		delete(s.guests, guest.Identifier)
@@ -181,6 +188,13 @@ func (s *SpotifyJamSession) GetGuests() []*types.User {
 func (s *SpotifyJamSession) AddHost(host *types.User) bool {
 	if _, ok := s.hosts[host.Identifier]; !ok {
 		s.guests[host.Identifier] = host
+		return true
+	}
+	return false
+}
+
+func (s *SpotifyJamSession) IsHost(host *types.User) bool {
+	if _, ok := s.hosts[host.Identifier]; ok {
 		return true
 	}
 	return false

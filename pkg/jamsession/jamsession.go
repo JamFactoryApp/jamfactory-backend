@@ -30,12 +30,16 @@ type JamSession interface {
 	SetName(name string)
 	// AddGuest add a Guest to the JamSession
 	AddGuest(guest *types.User) bool
+	// IsGuest checks if a user is a guest of a JamSession
+	IsGuest(guest *types.User) bool
 	// RemoveGuest removes a Guest from the JamSession
 	RemoveGuest(guest *types.User) bool
 	// GetGuests returns a list of the current Guests of a JamSession
 	GetGuests() []*types.User
 	// AddHost add a Host to the JamSession
 	AddHost(host *types.User) bool
+	// IsHost checks if a user is a guest of a JamSession
+	IsHost(host *types.User) bool
 	// RemoveHost removes a Host from the JamSession
 	RemoveHost(host *types.User) bool
 	// GetHosts returns a list of the current Hosts of a JamSession
@@ -97,7 +101,6 @@ type JamSession interface {
 }
 
 type contextKey string
-
 const key contextKey = "JamSession"
 
 // NewContext returns a new context containing a JamSession

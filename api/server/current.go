@@ -5,6 +5,7 @@ import (
 	apierrors "github.com/jamfactoryapp/jamfactory-backend/api/errors"
 	pkgsessions "github.com/jamfactoryapp/jamfactory-backend/api/sessions"
 	"github.com/jamfactoryapp/jamfactory-backend/api/types"
+	"github.com/jamfactoryapp/jamfactory-backend/api/users"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/jamsession"
 	"net/http"
 	"time"
@@ -18,13 +19,12 @@ func (s *Server) CurrentSession(r *http.Request) *sessions.Session {
 	return session
 }
 
-func (s *Server) CurrentJamLabel(r *http.Request) string {
-	session := s.CurrentSession(r)
-	jamLabel, err := pkgsessions.JamLabel(session)
+func (s *Server) CurrentUser(r *http.Request) *types.User {
+	user, err := users.FromContext(r.Context())
 	if err != nil {
-		return ""
+		panic(err)
 	}
-	return jamLabel
+	return user
 }
 
 func (s *Server) CurrentJamSession(r *http.Request) jamsession.JamSession {
@@ -34,15 +34,6 @@ func (s *Server) CurrentJamSession(r *http.Request) jamsession.JamSession {
 	}
 	jamSession.SetTimestamp(time.Now())
 	return jamSession
-}
-
-func (s *Server) CurrentSessionType(r *http.Request) types.SessionType {
-	session := s.CurrentSession(r)
-	sessionType, err := pkgsessions.SessionType(session)
-	if err != nil {
-		return types.SessionTypeNew
-	}
-	return sessionType
 }
 
 func (s *Server) CurrentIdentifier(r *http.Request) string {

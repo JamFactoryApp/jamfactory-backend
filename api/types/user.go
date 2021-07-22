@@ -4,7 +4,12 @@ import "golang.org/x/oauth2"
 
 type UserType string
 
+type contextKey string
+
+const key contextKey = "User"
+
 const (
+	UserTypeEmpty   UserType = "Empty"
 	UserTypeSession UserType = "Session"
 	UserTypeSpotify UserType = "Spotify"
 )

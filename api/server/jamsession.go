@@ -135,12 +135,7 @@ func (s *Server) setPlayback(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) createJamSession(w http.ResponseWriter, r *http.Request) {
 	session := s.CurrentSession(r)
-	sessionType := s.CurrentSessionType(r)
 	user, err := s.users.Get(s.CurrentIdentifier(r))
-	if sessionType == "" || err != nil {
-		s.errBadRequest(w, apierrors.ErrUserTypeInvalid, log.DebugLevel)
-		return
-	}
 
 	if !user.Token.Valid() {
 		s.errForbidden(w, apierrors.ErrTokenInvalid, log.DebugLevel)
@@ -154,9 +149,6 @@ func (s *Server) createJamSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	go jamSession.Conductor()
-
-	sessions.SetJamLabel(session, jamSession.JamLabel())
-	sessions.SetSessionType(session, types.SessionTypeHost)
 
 	if err := session.Save(r, w); err != nil {
 		s.errSessionSave(w, err)
@@ -177,7 +169,7 @@ func (s *Server) joinJamSession(w http.ResponseWriter, r *http.Request) {
 	session := s.CurrentSession(r)
 	jamLabel := body.Label
 
-	jamSession, err := s.jamFactory.GetJamSession(jamLabel)
+	jamSession, err := s.jamFactory.GetJamSessionByLabel(jamLabel)
 	if err != nil {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return
@@ -197,9 +189,7 @@ func (s *Server) joinJamSession(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	sessions.SetSessionType(session, types.SessionTypeGuest)
 	sessions.SetIdentifier(session, user.Identifier)
-	sessions.SetJamLabel(session, jamLabel)
 
 	if err := session.Save(r, w); err != nil {
 		s.errSessionSave(w, err)
@@ -214,16 +204,11 @@ func (s *Server) joinJamSession(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) leaveJamSession(w http.ResponseWriter, r *http.Request) {
-	session := s.CurrentSession(r)
-	userType := s.CurrentSessionType(r)
-	user, err := s.users.Get(s.CurrentIdentifier(r))
-	if err != nil {
-		s.errBadRequest(w, apierrors.ErrUserTypeInvalid, log.DebugLevel)
-		return
-	}
 
-	if userType == types.SessionTypeHost {
-		jamSession := s.CurrentJamSession(r)
+	user := s.CurrentUser(r)
+	jamSession := s.CurrentJamSession(r)
+
+	if jamSession.IsHost(user) {
 		if jamSession.RemoveHost(user) {
 			if len(jamSession.GetHosts()) == 0 {
 				jamSession.NotifyClients(&notifications.Message{
@@ -237,17 +222,8 @@ func (s *Server) leaveJamSession(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		}
-	} else if userType == types.SessionTypeGuest {
-		jamSession := s.CurrentJamSession(r)
+	} else {
 		jamSession.RemoveGuest(user)
-	}
-
-	sessions.SetJamLabel(session, "")
-	sessions.SetSessionType(session, types.SessionTypeNew)
-
-	if err := session.Save(r, w); err != nil {
-		s.errSessionSave(w, err)
-		return
 	}
 
 	utils.EncodeJSONBody(w, types.GetJamLeaveResponse{
