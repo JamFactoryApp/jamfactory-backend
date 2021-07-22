@@ -26,7 +26,7 @@ var (
 	ErrOriginMalformed       = errors.New("malformed origin")
 	ErrIdentifierMissing     = errors.New("missing identifier")
 	ErrIdentifierMalformed   = errors.New("malformed identifier")
-	ErrAlreadyHost           = errors.New("already host")
+	ErrAlreadyMember         = errors.New("already member")
 	ErrQueueEmpty            = errors.New("queue empty")
 	ErrNoDevice              = errors.New("no playback device")
 )

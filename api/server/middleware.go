@@ -95,17 +95,12 @@ func (s *Server) hostRequired(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Server) notHostRequired(next http.Handler) http.Handler {
+func (s *Server) nonMemberRequired(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := s.CurrentUser(r)
-		jamSession, err := s.jamFactory.GetJamSessionByUser(user)
-		if err == nil {
-			// user is joined a JamSession. Check if he is a host
-			member, err := jamSession.Members().Get(user)
-			if err == nil && member.Has([]types.MemberRights{types.RightHost}) {
-				s.errUnauthorized(w, apierrors.ErrAlreadyHost, log.DebugLevel)
-				return
-			}
+		if _, err := s.jamFactory.GetJamSessionByUser(user); err == nil {
+			s.errUnauthorized(w, apierrors.ErrAlreadyMember, log.DebugLevel)
+			return
 		}
 		next.ServeHTTP(w, r)
 	})
