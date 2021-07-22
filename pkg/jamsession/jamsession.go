@@ -3,7 +3,6 @@ package jamsession
 import (
 	"context"
 	"github.com/gorilla/websocket"
-	"github.com/jamfactoryapp/jamfactory-backend/api/types"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/notifications"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/queue"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/song"
@@ -38,10 +37,6 @@ type JamSession interface {
 	Timestamp() time.Time
 	// SetTimestamp updates the timestamp of the JamSession
 	SetTimestamp(time.Time)
-	// VotingType returns this JamSession's voting type
-	VotingType() types.VotingType
-	// SetVotingType updates this JamSession's voting type
-	SetVotingType(votingType string) error
 	// SetState updates this JamSession's playback state
 	SetState(state bool) error
 	// Deconstruct this JamSession

@@ -26,11 +26,10 @@ func (s *Server) getJamSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.EncodeJSONBody(w, types.GetJamResponse{
-		Label:      jamSession.JamLabel(),
-		Name:       jamSession.Name(),
-		Members:    memberRespone,
-		Active:     jamSession.Active(),
-		VotingType: jamSession.VotingType(),
+		Label:   jamSession.JamLabel(),
+		Name:    jamSession.Name(),
+		Members: memberRespone,
+		Active:  jamSession.Active(),
 	})
 }
 
@@ -42,13 +41,6 @@ func (s *Server) setJamSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jamSession := s.CurrentJamSession(r)
-
-	if body.VotingType.Set && body.VotingType.Valid {
-		if err := jamSession.SetVotingType(body.VotingType.Value); err != nil {
-			s.errInternalServerError(w, err, log.DebugLevel)
-			return
-		}
-	}
 
 	if body.Active.Set && body.Active.Valid {
 		if body.Active.Value && !jamSession.Active() {
@@ -77,17 +69,15 @@ func (s *Server) setJamSession(w http.ResponseWriter, r *http.Request) {
 	jamSession.NotifyClients(&notifications.Message{
 		Event: notifications.Jam,
 		Message: types.SocketJamMessage{
-			Label:      jamSession.JamLabel(),
-			Name:       jamSession.Name(),
-			Active:     jamSession.Active(),
-			VotingType: jamSession.VotingType(),
+			Label:  jamSession.JamLabel(),
+			Name:   jamSession.Name(),
+			Active: jamSession.Active(),
 		},
 	})
 	utils.EncodeJSONBody(w, types.PutJamResponse{
-		Active:     jamSession.Active(),
-		Label:      jamSession.JamLabel(),
-		Name:       jamSession.Name(),
-		VotingType: jamSession.VotingType(),
+		Active: jamSession.Active(),
+		Label:  jamSession.JamLabel(),
+		Name:   jamSession.Name(),
 	})
 }
 

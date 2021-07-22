@@ -2,7 +2,6 @@ package server
 
 import (
 	"github.com/gorilla/sessions"
-	apierrors "github.com/jamfactoryapp/jamfactory-backend/api/errors"
 	pkgsessions "github.com/jamfactoryapp/jamfactory-backend/api/sessions"
 	"github.com/jamfactoryapp/jamfactory-backend/api/types"
 	"github.com/jamfactoryapp/jamfactory-backend/api/users"
@@ -46,19 +45,6 @@ func (s *Server) CurrentIdentifier(r *http.Request) string {
 }
 
 func (s *Server) CurrentVoteID(r *http.Request) string {
-	jamSession := s.CurrentJamSession(r)
-
-	var voteID string
-
-	switch jamSession.VotingType() {
-	case types.SessionVoting:
-		session := s.CurrentSession(r)
-		voteID = session.ID
-	case types.IPVoting:
-		voteID = r.RemoteAddr
-	default:
-		panic(apierrors.ErrInvalidVotingType)
-	}
-
-	return voteID
+	user := s.CurrentUser(r)
+	return user.Identifier
 }

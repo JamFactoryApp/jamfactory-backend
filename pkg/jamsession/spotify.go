@@ -33,7 +33,6 @@ type SpotifyJamSession struct {
 	updateInterval time.Duration
 	lastTimestamp  time.Time
 	currentSong    *spotify.FullTrack
-	votingType     types.VotingType
 	client         spotify.Client
 	player         *spotify.PlayerState
 	queue          *queue.SpotifyQueue
@@ -65,7 +64,6 @@ func NewSpotify(host *types.User, client spotify.Client, label string) (JamSessi
 		updateInterval: time.Second,
 		lastTimestamp:  time.Now(),
 		currentSong:    nil,
-		votingType:     types.SessionVoting,
 		client:         client,
 		player:         playerState,
 		queue:          queue.NewSpotify(),
@@ -171,29 +169,10 @@ func (s *SpotifyJamSession) Timestamp() time.Time {
 	return s.lastTimestamp
 }
 
-func (s *SpotifyJamSession) VotingType() types.VotingType {
-	return s.votingType
-}
-
 func (s *SpotifyJamSession) SetName(name string) {
 	s.Lock()
 	defer s.Unlock()
 	s.name = name
-}
-
-func (s *SpotifyJamSession) SetVotingType(votingType string) error {
-	s.Lock()
-	defer s.Unlock()
-
-	switch votingType {
-	case string(types.SessionVoting):
-		s.votingType = types.SessionVoting
-	case string(types.IPVoting):
-		s.votingType = types.IPVoting
-	default:
-		return ErrVotingTypeInvalid
-	}
-	return nil
 }
 
 func (s *SpotifyJamSession) SetActive(active bool) {
@@ -399,10 +378,9 @@ func (s *SpotifyJamSession) SocketJamUpdate() {
 	s.NotifyClients(&notifications.Message{
 		Event: notifications.Jam,
 		Message: types.SocketJamMessage{
-			Label:      s.jamLabel,
-			Name:       s.name,
-			Active:     s.active,
-			VotingType: s.votingType,
+			Label:  s.jamLabel,
+			Name:   s.name,
+			Active: s.active,
 		},
 	})
 }

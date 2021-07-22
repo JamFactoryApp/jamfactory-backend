@@ -90,21 +90,14 @@ If the song has already previously been added to the queue, that song's votes wi
 A vote can be retracted from a song in the queue, by voting again. Only the user's own vote can be taken away. When a song reaches zero votes, it will automatically be deleted
 from the queue.
 
-To keep track of which user voted for which song, each vote has a unique identifier based on the selected voting type of the JamSession. See
-[Voting Types](#available-voting-types).
+To keep track of which user voted for which song, each vote has a unique identifier based on the user identifier. See
+[What is a User](#what-is-a-user).
 
 When a new JamSession is created, the queue will be empty. To get the jam going from the getgo, the host can decide to add a collection to the queue.
 The songs in the collection are voted into the queue with one virtual vote. Although adding the collection to the queue, the host can still vote independently for each song of the collection. 
 
 The virtual votes are added with a date in the future, meaning songs with only virtual votes will be added to the bottom of the queue, because "real" votes have a higher priority.
 The songs with only virtual votes will serve as a fallback, as soon as there are no more songs with user votes left, so the jam never stops.
-
-#### Available voting types
-
-| type                  | description       
-|----------	            |-----------------
-| ``session_voting``    | The *Session ID* of the *User* is used as an identifier
-| ``ip_voting``         | The *IP Address* of the *User* is used as an identifier	       
 
 
 ### JamSession State
@@ -288,7 +281,6 @@ URL: jamfactory.app/api/v1/jam
 | ``name`` 	        | string             	| *Name* of the currently joined *JamSession*.    	                                                        |
 | ``members`` 	    | [][JamSession Members](#jamsession-members)    	| Array of *Members* of the current *JamSession*.                                               |
 | ``active`` 	    | string            	| *State* of the currently joined *JamSession*. See [JamSession State](#jamsession-state)	                |
-| ``voting_type`` 	| string             	| *Voting type* of the currently joined *JamSession*. See [Available Voting Types](#available-voting-types)	|
 
 ```json
 {
@@ -465,7 +457,6 @@ URL: jamfactory.app/api/v1/jam
 |----------	        |-------------------	|-----------------------------------------------------------------------------------------------------------------------|
 | ``name`` 	        | string *optional*    	| *Name* of the *JamSession* currently joined by the user.   	                                                        |
 | ``active`` 	    | boolean *optional*    | *State* of the *JamSession* currently joined by the user. See [JamSession State](#jamsession-state)	                |
-| ``voting_type`` 	| string *optional*    	| *Voting type* of the *JamSession* currently joined by the user. See [Available Voting Types](#available-voting-types)	|
 
 ```json
 {
@@ -482,7 +473,6 @@ URL: jamfactory.app/api/v1/jam
 | ``label``         | string  	            | *JamLabel* of the *JamSession* currently joined by the user.                                       	                |
 | ``name`` 	        | string             	| *Name* of the *JamSession* currently joined by the user.    	                                                        |
 | ``active`` 	    | boolean            	| *State* of the *JamSession* currently joined by the user. See [JamSession State](#jamsession-state)	                |
-| ``voting_type`` 	| string             	| *Voting type* of the *JamSession* currently joined by the user. See [Available Voting Types](#available-voting-types)	|
 
 ```json
 {
@@ -790,7 +780,6 @@ The setting of the JamSession changed.
 | ``label``         | string  	            | *JamLabel* of the *JamSession* currently joined by the user.                                       	                |
 | ``name`` 	        | string             	| *Name* of the *JamSession* currently joined by the user.    	                                                        |
 | ``active`` 	    | boolean            	| *State* of the *JamSession* currently joined by the user. See [JamSession State](#jamsession-state)	                |
-| ``voting_type`` 	| string             	| *Voting type* of the *JamSession* currently joined by the user. See [Available Voting Types](#available-voting-types)	|
 
 ```json
 {

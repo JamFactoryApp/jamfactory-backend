@@ -11,8 +11,8 @@ type contextKey string
 const key contextKey = "Session"
 
 const (
-	identifierKey  = "Identifier"
-	originKey      = "Origin"
+	identifierKey = "Identifier"
+	originKey     = "Origin"
 )
 
 func NewContext(ctx context.Context, session *sessions.Session) context.Context {

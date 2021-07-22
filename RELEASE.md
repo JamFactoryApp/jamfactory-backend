@@ -11,7 +11,8 @@
 * :construction: Add basic rights management. See [Member Rights](./docs/documentation.md#member-rights). At the moment there is no way to control the rights of a member.
 
 ### Features Removed
-This is the first release. Nothing to remove.
+
+* :boom: Remove support for IP and Session voting. Remove changing the voting type of a JamSession. Use new user identifiers for voting as a default.
 
 ### Bug Fixes
 
@@ -19,10 +20,13 @@ This is the first release. Nothing to remove.
 
 ### API Changes
 
-* Changed [``GET: /api/v1/jam``](./docs/documentation.md#2-get-the-information-of-the-jamsession-joined-by-the-user) to include new field `members` containing the [Members](./docs/documentation.md#jamsession-member).  
+* :heavy_plus_sign: Changed [``GET: /api/v1/jam``](./docs/documentation.md#2-get-the-information-of-the-jamsession-joined-by-the-user) to include new field `members` containing the [Members](./docs/documentation.md#jamsession-member).  
+* :boom: Remove ``voting_type`` key from [``GET: /api/v1/jam``](./docs/documentation.md#2-get-the-information-of-the-jamsession-joined-by-the-user) response.
+* :boom: Remove ``voting_type`` key from [``PUT: /api/v1/jam``](./docs/documentation.md#2-get-the-information-of-the-jamsession-joined-by-the-user) request and respone.
 
-### Removed API Endpoints
-No API Endpoints were removed in this release.
+### Websocket Changes
+
+* :boom: Remove ``voting_type`` key from [Websocket Event ``jam``](./docs/documentation.md#event-jam) message.
 
 
 ## v0.1.0
