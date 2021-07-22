@@ -87,6 +87,7 @@ type JamSession interface {
 }
 
 type contextKey string
+
 const key contextKey = "JamSession"
 
 // NewContext returns a new context containing a JamSession

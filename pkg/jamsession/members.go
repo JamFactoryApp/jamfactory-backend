@@ -8,21 +8,21 @@ import (
 type Members map[string]Member
 
 type Member struct {
-	User *types.User
+	User   *types.User
 	Rights []types.MemberRights
 }
 
-func (m Members) Get (user *types.User) (*Member, error) {
+func (m Members) Get(user *types.User) (*Member, error) {
 	if member, ok := m[user.Identifier]; ok {
 		return &member, nil
 	}
 	return nil, errors.New("not a member")
 }
 
-func (m Members) Add (user *types.User, rights []types.MemberRights) bool {
+func (m Members) Add(user *types.User, rights []types.MemberRights) bool {
 	if _, ok := m[user.Identifier]; !ok {
 		m[user.Identifier] = Member{
-			User: user,
+			User:   user,
 			Rights: rights,
 		}
 		return true
@@ -30,7 +30,7 @@ func (m Members) Add (user *types.User, rights []types.MemberRights) bool {
 	return false
 }
 
-func (m Members) Remove (user *types.User) bool {
+func (m Members) Remove(user *types.User) bool {
 	if _, ok := m[user.Identifier]; ok {
 		delete(m, user.Identifier)
 		return true

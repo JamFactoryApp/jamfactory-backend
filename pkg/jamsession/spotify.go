@@ -29,7 +29,7 @@ type SpotifyJamSession struct {
 	jamLabel       string
 	name           string
 	active         bool
-	members Members
+	members        Members
 	updateInterval time.Duration
 	lastTimestamp  time.Time
 	currentSong    *spotify.FullTrack

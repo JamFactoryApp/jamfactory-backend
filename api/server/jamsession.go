@@ -17,7 +17,7 @@ func (s *Server) getJamSession(w http.ResponseWriter, r *http.Request) {
 	jamSession := s.CurrentJamSession(r)
 	members := jamSession.Members()
 	log.Info(len(members))
-	memberRespone := make([]types.JamMemberResponse,0)
+	memberRespone := make([]types.JamMemberResponse, 0)
 	for _, member := range members {
 		memberRespone = append(memberRespone, types.JamMemberResponse{
 			DisplayName: member.User.UserName,
@@ -25,11 +25,10 @@ func (s *Server) getJamSession(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-
 	utils.EncodeJSONBody(w, types.GetJamResponse{
 		Label:      jamSession.JamLabel(),
 		Name:       jamSession.Name(),
-		Members: memberRespone,
+		Members:    memberRespone,
 		Active:     jamSession.Active(),
 		VotingType: jamSession.VotingType(),
 	})

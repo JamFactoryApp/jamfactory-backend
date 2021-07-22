@@ -8,19 +8,17 @@ import (
 // general
 
 type JamResponse struct {
-	Label      string     `json:"label"`
-	Name       string     `json:"name"`
-	Members    []JamMemberResponse   `json:"members"`
-	Active     bool       `json:"active"`
-	VotingType VotingType `json:"voting_type"`
+	Label      string              `json:"label"`
+	Name       string              `json:"name"`
+	Members    []JamMemberResponse `json:"members"`
+	Active     bool                `json:"active"`
+	VotingType VotingType          `json:"voting_type"`
 }
 
 type JamMemberResponse struct {
-	DisplayName string `json:"display_name"`
-	Rights []MemberRights  `json:"rights"`
+	DisplayName string         `json:"display_name"`
+	Rights      []MemberRights `json:"rights"`
 }
-
-
 
 type PlaybackBody struct {
 	Playback *spotify.PlayerState `json:"playback"`
