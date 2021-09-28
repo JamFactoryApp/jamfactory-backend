@@ -8,15 +8,13 @@ import (
 	"github.com/jamfactoryapp/jamfactory-backend/api/sessions"
 	"github.com/jamfactoryapp/jamfactory-backend/api/types"
 	"github.com/jamfactoryapp/jamfactory-backend/api/utils"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/jamsession"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/notifications"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 )
 
-func (s *Server) getJamSession(w http.ResponseWriter, r *http.Request) {
-	jamSession := s.CurrentJamSession(r)
-	members := jamSession.Members()
-
+func (s *Server) getMembersResponse(members jamsession.Members) []types.JamMemberResponse {
 	memberRespone := make([]types.JamMemberResponse, 0)
 	for _, member := range members {
 		user, err := s.users.Get(member.UserIdentifier)
@@ -29,11 +27,16 @@ func (s *Server) getJamSession(w http.ResponseWriter, r *http.Request) {
 			Rights:      member.Rights,
 		})
 	}
+	return memberRespone
+}
+
+func (s *Server) getJamSession(w http.ResponseWriter, r *http.Request) {
+	jamSession := s.CurrentJamSession(r)
 
 	utils.EncodeJSONBody(w, types.GetJamResponse{
 		Label:   jamSession.JamLabel(),
 		Name:    jamSession.Name(),
-		Members: memberRespone,
+		Members: s.getMembersResponse(jamSession.Members()),
 		Active:  jamSession.Active(),
 	})
 }
@@ -76,13 +79,15 @@ func (s *Server) setJamSession(w http.ResponseWriter, r *http.Request) {
 		Message: types.SocketJamMessage{
 			Label:  jamSession.JamLabel(),
 			Name:   jamSession.Name(),
+			Members: s.getMembersResponse(jamSession.Members()),
 			Active: jamSession.Active(),
 		},
 	})
-	utils.EncodeJSONBody(w, types.PutJamResponse{
-		Active: jamSession.Active(),
-		Label:  jamSession.JamLabel(),
-		Name:   jamSession.Name(),
+	utils.EncodeJSONBody(w, types.GetJamResponse{
+		Label:   jamSession.JamLabel(),
+		Name:    jamSession.Name(),
+		Members: s.getMembersResponse(jamSession.Members()),
+		Active:  jamSession.Active(),
 	})
 }
 
@@ -191,6 +196,16 @@ func (s *Server) joinJamSession(w http.ResponseWriter, r *http.Request) {
 
 	jamSession.Members().Add(user.Identifier, []types.MemberRights{types.RightsGuest})
 
+	jamSession.NotifyClients(&notifications.Message{
+		Event: notifications.Jam,
+		Message: types.SocketJamMessage{
+			Label:  jamSession.JamLabel(),
+			Name:   jamSession.Name(),
+			Members: s.getMembersResponse(jamSession.Members()),
+			Active: jamSession.Active(),
+		},
+	})
+
 	utils.EncodeJSONBody(w, types.PutJamJoinResponse{
 		Label: jamLabel,
 	})
@@ -214,6 +229,15 @@ func (s *Server) leaveJamSession(w http.ResponseWriter, r *http.Request) {
 			}
 		} else {
 			jamSession.Members().Remove(user.Identifier)
+			jamSession.NotifyClients(&notifications.Message{
+				Event: notifications.Jam,
+				Message: types.SocketJamMessage{
+					Label:  jamSession.JamLabel(),
+					Name:   jamSession.Name(),
+					Members: s.getMembersResponse(jamSession.Members()),
+					Active: jamSession.Active(),
+				},
+			})
 		}
 	}
 
