@@ -8,31 +8,31 @@ import (
 type Members map[string]Member
 
 type Member struct {
-	User   *types.User
-	Rights []types.MemberRights
+	UserIdentifier string
+	Rights         []types.MemberRights
 }
 
-func (m Members) Get(user *types.User) (*Member, error) {
-	if member, ok := m[user.Identifier]; ok {
+func (m Members) Get(identifier string) (*Member, error) {
+	if member, ok := m[identifier]; ok {
 		return &member, nil
 	}
 	return nil, errors.New("not a member")
 }
 
-func (m Members) Add(user *types.User, rights []types.MemberRights) bool {
-	if _, ok := m[user.Identifier]; !ok {
-		m[user.Identifier] = Member{
-			User:   user,
-			Rights: rights,
+func (m Members) Add(identifier string, rights []types.MemberRights) bool {
+	if _, ok := m[identifier]; !ok {
+		m[identifier] = Member{
+			UserIdentifier: identifier,
+			Rights:         rights,
 		}
 		return true
 	}
 	return false
 }
 
-func (m Members) Remove(user *types.User) bool {
-	if _, ok := m[user.Identifier]; ok {
-		delete(m, user.Identifier)
+func (m Members) Remove(identifier string) bool {
+	if _, ok := m[identifier]; ok {
+		delete(m, identifier)
 		return true
 	}
 	return false

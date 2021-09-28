@@ -16,11 +16,16 @@ import (
 func (s *Server) getJamSession(w http.ResponseWriter, r *http.Request) {
 	jamSession := s.CurrentJamSession(r)
 	members := jamSession.Members()
-	log.Info(len(members))
+
 	memberRespone := make([]types.JamMemberResponse, 0)
 	for _, member := range members {
+		user, err := s.users.Get(member.UserIdentifier)
+		if err != nil {
+			log.Warn("User for identifier not found", member.UserIdentifier)
+			continue
+		}
 		memberRespone = append(memberRespone, types.JamMemberResponse{
-			DisplayName: member.User.UserName,
+			DisplayName: user.UserName,
 			Rights:      member.Rights,
 		})
 	}
@@ -184,7 +189,7 @@ func (s *Server) joinJamSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jamSession.Members().Add(user, []types.MemberRights{types.RightsGuest})
+	jamSession.Members().Add(user.Identifier, []types.MemberRights{types.RightsGuest})
 
 	utils.EncodeJSONBody(w, types.PutJamJoinResponse{
 		Label: jamLabel,
@@ -195,9 +200,9 @@ func (s *Server) leaveJamSession(w http.ResponseWriter, r *http.Request) {
 
 	user := s.CurrentUser(r)
 	if jamSession, err := s.jamFactory.GetJamSessionByUser(user); err == nil {
-		member, err := jamSession.Members().Get(user)
+		member, err := jamSession.Members().Get(user.Identifier)
 		if err == nil && member.Has([]types.MemberRights{types.RightHost}) {
-			if jamSession.Members().Remove(user) {
+			if jamSession.Members().Remove(user.Identifier) {
 				jamSession.NotifyClients(&notifications.Message{
 					Event:   notifications.Close,
 					Message: notifications.HostLeft,
@@ -208,7 +213,7 @@ func (s *Server) leaveJamSession(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		} else {
-			jamSession.Members().Remove(user)
+			jamSession.Members().Remove(user.Identifier)
 		}
 	}
 

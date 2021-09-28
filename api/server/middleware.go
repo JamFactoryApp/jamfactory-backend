@@ -85,7 +85,7 @@ func (s *Server) hostRequired(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := s.CurrentUser(r)
 		jamSession := s.CurrentJamSession(r)
-		member, err := jamSession.Members().Get(user)
+		member, err := jamSession.Members().Get(user.Identifier)
 		if err != nil || !member.Has([]types.MemberRights{types.RightHost}) {
 			s.errUnauthorized(w, apierrors.ErrUserTypeInvalid, log.DebugLevel)
 			return

@@ -6,7 +6,7 @@ type UserType string
 
 type contextKey string
 
-const key contextKey = "User"
+const key contextKey = "UserIdentifier"
 
 const (
 	UserTypeEmpty   UserType = "Empty"

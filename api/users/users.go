@@ -8,7 +8,7 @@ import (
 
 type contextKey string
 
-const key contextKey = "User"
+const key contextKey = "UserIdentifier"
 
 func NewContext(ctx context.Context, user *types.User) context.Context {
 	return context.WithValue(ctx, key, user)

@@ -53,8 +53,8 @@ func NewSpotify(host *types.User, client spotify.Client, label string) (JamSessi
 	}
 
 	members := Members{host.Identifier: Member{
-		User:   host,
-		Rights: []types.MemberRights{types.RightHost, types.RightsGuest}}}
+		UserIdentifier: host.Identifier,
+		Rights:         []types.MemberRights{types.RightHost, types.RightsGuest}}}
 
 	s := &SpotifyJamSession{
 		jamLabel:       label,
