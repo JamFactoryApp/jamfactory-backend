@@ -39,19 +39,20 @@ func (m Members) Remove(user *types.User) bool {
 }
 
 func (m *Member) Has(rights []types.MemberRights) bool {
-	hasAll := true
+	hasAllRights := true
 	for _, wanted := range rights {
-		has := false
+		hasCurrent := false
 		for _, right := range m.Rights {
 			if right == wanted {
-				has = true
+				hasCurrent = true
+				break
 			}
 		}
-		if !has {
-			hasAll = false
+		if !hasCurrent {
+			hasAllRights = false
 		}
 	}
-	return hasAll
+	return hasAllRights
 }
 
 func (m *Member) Add(rights []types.MemberRights) {
@@ -63,13 +64,19 @@ func (m *Member) Add(rights []types.MemberRights) {
 }
 
 func (m *Member) Remove(rights []types.MemberRights) bool {
+	removedAllRights := true
 	for _, toRemove := range rights {
+		removedCurrent := false
 		for i, right := range m.Rights {
 			if toRemove == right {
 				m.Rights = append(m.Rights[:i], m.Rights[i+1:]...)
-				return true
+				removedCurrent = true
+				break
 			}
 		}
+		if !removedCurrent {
+			removedAllRights = false
+		}
 	}
-	return false
+	return removedAllRights
 }
