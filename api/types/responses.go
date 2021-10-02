@@ -8,14 +8,14 @@ import (
 // general
 
 type JamResponse struct {
-	Label   string              `json:"label"`
-	Name    string              `json:"name"`
-	Members []JamMemberResponse `json:"members"`
-	Active  bool                `json:"active"`
+	Label  string `json:"label"`
+	Name   string `json:"name"`
+	Active bool   `json:"active"`
 }
 
-type JamMemberResponse struct {
+type JamMember struct {
 	DisplayName string         `json:"display_name"`
+	Identifier  string         `json:"identifier"`
 	Rights      []MemberRights `json:"rights"`
 }
 
@@ -54,6 +54,9 @@ type PutJamResponse JamResponse
 
 type GetJamPlaybackResponse PlaybackBody
 type PutJamPlaybackResponse PlaybackBody
+
+type GetJamMembersResponse []JamMember
+type PutJamMembersResponse []JamMember
 
 type GetJamCreateResponse LabelResponse
 type PutJamJoinResponse LabelResponse

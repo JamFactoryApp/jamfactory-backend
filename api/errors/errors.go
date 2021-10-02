@@ -29,4 +29,6 @@ var (
 	ErrAlreadyMember         = errors.New("already member")
 	ErrQueueEmpty            = errors.New("queue empty")
 	ErrNoDevice              = errors.New("no playback device")
+	ErrOnlyOneHost           = errors.New("only one host allowed")
+	ErrBadRight              = errors.New("bad right")
 )

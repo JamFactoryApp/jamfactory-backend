@@ -44,4 +44,11 @@ type PutJamPlaybackRequest struct {
 	DeviceID JSONString `json:"device_id,omitempty"`
 }
 
+type JamMemberRequest struct {
+	Identifier string         `json:"identifier"`
+	Rights     []MemberRights `json:"rights"`
+}
+
+type PutJamMemberRequest []JamMemberRequest
+
 type PutJamJoinRequest LabelRequest

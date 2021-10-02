@@ -20,6 +20,7 @@ const (
 	jamSessionJoinPath     = "/join"
 	jamSessionLeavePath    = "/leave"
 	jamSessionPlaybackPath = "/playback"
+	jamSessionMembersPath  = "/members"
 
 	queuePath           = "/queue"
 	queueIndexPath      = ""
@@ -67,6 +68,8 @@ func (s *Server) registerJamSessionRoutes(r *mux.Router) {
 	r.Handle(jamSessionIndexPath, s.jamSessionRequired(s.hostRequired(http.HandlerFunc(s.setJamSession)))).Methods("PUT")
 	r.Handle(jamSessionPlaybackPath, s.jamSessionRequired(http.HandlerFunc(s.getPlayback))).Methods("GET")
 	r.Handle(jamSessionPlaybackPath, s.jamSessionRequired(s.hostRequired(http.HandlerFunc(s.setPlayback)))).Methods("PUT")
+	r.Handle(jamSessionMembersPath, s.jamSessionRequired(http.HandlerFunc(s.getMembers))).Methods("GET")
+	r.Handle(jamSessionMembersPath, s.jamSessionRequired(s.hostRequired(http.HandlerFunc(s.setMembers)))).Methods("PUT")
 }
 
 func (s *Server) registerQueueRoutes(r *mux.Router) {

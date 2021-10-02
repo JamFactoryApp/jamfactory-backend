@@ -137,7 +137,7 @@ func (s *SpotifyJamFactory) GetJamSessionByUser(user *types.User) (jamsession.Ja
 func (s *SpotifyJamFactory) NewJamSession(host *types.User) (jamsession.JamSession, error) {
 	// Check if correct user type was passed
 	if host.UserType != types.UserTypeSpotify {
-		return nil, errors.New("Wrong UserIdentifier Type for Spotify JamSession with UserType: " + string(host.UserType))
+		return nil, errors.New("Wrong userIdentifier Type for Spotify JamSession with UserType: " + string(host.UserType))
 	}
 	client := s.authenticator.NewClient(host.Token)
 	jamSession, err := jamsession.NewSpotify(host, client, s.labelManager.Create())

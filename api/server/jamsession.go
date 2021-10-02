@@ -14,31 +14,84 @@ import (
 	"net/http"
 )
 
-func (s *Server) getMembersResponse(members jamsession.Members) []types.JamMemberResponse {
-	memberRespone := make([]types.JamMemberResponse, 0)
+func (s *Server) getMemberResponse(members jamsession.Members) types.GetJamMembersResponse {
+	memberResponse := make([]types.JamMember, 0)
 	for _, member := range members {
-		user, err := s.users.Get(member.UserIdentifier)
+		user, err := s.users.Get(member.Identifier())
 		if err != nil {
-			log.Warn("User for identifier not found", member.UserIdentifier)
+			log.Warn("User for identifier not found", member.Identifier())
 			continue
 		}
-		memberRespone = append(memberRespone, types.JamMemberResponse{
+		memberResponse = append(memberResponse, types.JamMember{
 			DisplayName: user.UserName,
-			Rights:      member.Rights,
+			Identifier:  user.Identifier,
+			Rights:      member.Rights(),
 		})
 	}
-	return memberRespone
+	return memberResponse
+}
+
+func (s *Server) getMembers(w http.ResponseWriter, r *http.Request) {
+	jamSession := s.CurrentJamSession(r)
+	utils.EncodeJSONBody(w, s.getMemberResponse(jamSession.Members()))
+}
+
+func (s *Server) setMembers(w http.ResponseWriter, r *http.Request) {
+	var body types.PutJamMemberRequest
+	if err := utils.DecodeJSONBody(w, r, &body); err != nil {
+		s.errBadRequest(w, err, log.DebugLevel)
+		return
+	}
+
+	jamSession := s.CurrentJamSession(r)
+
+	// Validate Request
+	hostCount := 0
+	for _, requestMember := range body {
+		if jamsession.ContainsRight(types.RightHost, requestMember.Rights) {
+			hostCount++
+		}
+
+		if !jamsession.ValidRights(requestMember.Rights) {
+			s.errBadRequest(w, apierrors.ErrBadRight, log.DebugLevel)
+			return
+		}
+	}
+	if hostCount != 1 {
+		s.errBadRequest(w, apierrors.ErrOnlyOneHost, log.DebugLevel)
+		return
+	}
+
+	for _, availableMembers := range jamSession.Members() {
+		var removeMember = true
+		for _, requestMember := range body {
+			if requestMember.Identifier == availableMembers.Identifier() {
+				removeMember = false
+				availableMembers.SetRights(requestMember.Rights)
+			}
+		}
+		if removeMember {
+			jamSession.Members().Remove(availableMembers.Identifier())
+		}
+	}
+
+	jamSession.NotifyClients(&notifications.Message{
+		Event:   notifications.Members,
+		Message: s.getMemberResponse(jamSession.Members()),
+	})
+
+	utils.EncodeJSONBody(w, s.getMemberResponse(jamSession.Members()))
 }
 
 func (s *Server) getJamSession(w http.ResponseWriter, r *http.Request) {
 	jamSession := s.CurrentJamSession(r)
 
 	utils.EncodeJSONBody(w, types.GetJamResponse{
-		Label:   jamSession.JamLabel(),
-		Name:    jamSession.Name(),
-		Members: s.getMembersResponse(jamSession.Members()),
-		Active:  jamSession.Active(),
+		Label:  jamSession.JamLabel(),
+		Name:   jamSession.Name(),
+		Active: jamSession.Active(),
 	})
+
 }
 
 func (s *Server) setJamSession(w http.ResponseWriter, r *http.Request) {
@@ -79,15 +132,13 @@ func (s *Server) setJamSession(w http.ResponseWriter, r *http.Request) {
 		Message: types.SocketJamMessage{
 			Label:  jamSession.JamLabel(),
 			Name:   jamSession.Name(),
-			Members: s.getMembersResponse(jamSession.Members()),
 			Active: jamSession.Active(),
 		},
 	})
 	utils.EncodeJSONBody(w, types.GetJamResponse{
-		Label:   jamSession.JamLabel(),
-		Name:    jamSession.Name(),
-		Members: s.getMembersResponse(jamSession.Members()),
-		Active:  jamSession.Active(),
+		Label:  jamSession.JamLabel(),
+		Name:   jamSession.Name(),
+		Active: jamSession.Active(),
 	})
 }
 
@@ -197,13 +248,8 @@ func (s *Server) joinJamSession(w http.ResponseWriter, r *http.Request) {
 	jamSession.Members().Add(user.Identifier, []types.MemberRights{types.RightsGuest})
 
 	jamSession.NotifyClients(&notifications.Message{
-		Event: notifications.Jam,
-		Message: types.SocketJamMessage{
-			Label:  jamSession.JamLabel(),
-			Name:   jamSession.Name(),
-			Members: s.getMembersResponse(jamSession.Members()),
-			Active: jamSession.Active(),
-		},
+		Event:   notifications.Members,
+		Message: s.getMemberResponse(jamSession.Members()),
 	})
 
 	utils.EncodeJSONBody(w, types.PutJamJoinResponse{
@@ -216,7 +262,12 @@ func (s *Server) leaveJamSession(w http.ResponseWriter, r *http.Request) {
 	user := s.CurrentUser(r)
 	if jamSession, err := s.jamFactory.GetJamSessionByUser(user); err == nil {
 		member, err := jamSession.Members().Get(user.Identifier)
-		if err == nil && member.Has([]types.MemberRights{types.RightHost}) {
+		if err != nil {
+			s.errBadRequest(w, err, log.DebugLevel)
+			return
+		}
+		isHost := member.HasRights([]types.MemberRights{types.RightHost})
+		if isHost {
 			if jamSession.Members().Remove(user.Identifier) {
 				jamSession.NotifyClients(&notifications.Message{
 					Event:   notifications.Close,
@@ -230,13 +281,8 @@ func (s *Server) leaveJamSession(w http.ResponseWriter, r *http.Request) {
 		} else {
 			jamSession.Members().Remove(user.Identifier)
 			jamSession.NotifyClients(&notifications.Message{
-				Event: notifications.Jam,
-				Message: types.SocketJamMessage{
-					Label:  jamSession.JamLabel(),
-					Name:   jamSession.Name(),
-					Members: s.getMembersResponse(jamSession.Members()),
-					Active: jamSession.Active(),
-				},
+				Event:   notifications.Members,
+				Message: s.getMemberResponse(jamSession.Members()),
 			})
 		}
 	}

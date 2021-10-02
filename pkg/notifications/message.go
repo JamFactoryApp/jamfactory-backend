@@ -34,6 +34,7 @@ const (
 	Queue                   = "queue"
 	Close                   = "close"
 	Jam                     = "jam"
+	Members                 = "members"
 )
 
 type WebsocketCloseType string

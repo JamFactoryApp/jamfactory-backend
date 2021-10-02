@@ -5,25 +5,25 @@ import (
 	"github.com/jamfactoryapp/jamfactory-backend/api/types"
 )
 
-type Members map[string]Member
+type Members map[string]*Member
 
 type Member struct {
-	UserIdentifier string
-	Rights         []types.MemberRights
+	userIdentifier string
+	rights         []types.MemberRights
 }
 
 func (m Members) Get(identifier string) (*Member, error) {
 	if member, ok := m[identifier]; ok {
-		return &member, nil
+		return member, nil
 	}
 	return nil, errors.New("not a member")
 }
 
 func (m Members) Add(identifier string, rights []types.MemberRights) bool {
 	if _, ok := m[identifier]; !ok {
-		m[identifier] = Member{
-			UserIdentifier: identifier,
-			Rights:         rights,
+		m[identifier] = &Member{
+			userIdentifier: identifier,
+			rights:         rights,
 		}
 		return true
 	}
@@ -38,45 +38,63 @@ func (m Members) Remove(identifier string) bool {
 	return false
 }
 
-func (m *Member) Has(rights []types.MemberRights) bool {
+func (m *Member) Identifier() string {
+	return m.userIdentifier
+}
+
+func (m *Member) Rights() []types.MemberRights {
+	return m.rights
+}
+
+func (m *Member) SetRights(rights []types.MemberRights) {
+	m.rights = rights
+}
+
+func (m *Member) HasRights(rights []types.MemberRights) bool {
 	hasAllRights := true
 	for _, wanted := range rights {
-		hasCurrent := false
-		for _, right := range m.Rights {
-			if right == wanted {
-				hasCurrent = true
-				break
-			}
-		}
-		if !hasCurrent {
+		if !ContainsRight(wanted, m.rights) {
 			hasAllRights = false
 		}
 	}
 	return hasAllRights
 }
 
-func (m *Member) Add(rights []types.MemberRights) {
+func (m *Member) AddRights(rights []types.MemberRights) error {
 	for _, toAdd := range rights {
-		if !m.Has([]types.MemberRights{toAdd}) {
-			m.Rights = append(m.Rights, toAdd)
+		if !ContainsRight(toAdd, m.rights) {
+			m.rights = append(m.rights, toAdd)
+		}
+	}
+	return nil
+}
+
+func (m *Member) RemoveRights(rights []types.MemberRights) {
+	for _, toRemove := range rights {
+		for i, right := range m.rights {
+			if toRemove == right {
+				m.rights = append(m.rights[:i], m.rights[i+1:]...)
+				break
+			}
 		}
 	}
 }
 
-func (m *Member) Remove(rights []types.MemberRights) bool {
-	removedAllRights := true
-	for _, toRemove := range rights {
-		removedCurrent := false
-		for i, right := range m.Rights {
-			if toRemove == right {
-				m.Rights = append(m.Rights[:i], m.Rights[i+1:]...)
-				removedCurrent = true
-				break
-			}
-		}
-		if !removedCurrent {
-			removedAllRights = false
+func ContainsRight(right types.MemberRights, rights []types.MemberRights) bool {
+	contains := false
+	for _, r := range rights {
+		if r == right {
+			contains = true
 		}
 	}
-	return removedAllRights
+	return contains
+}
+
+func ValidRights(rights []types.MemberRights) bool {
+	for _, r := range rights {
+		if !ContainsRight(r, types.ValidRights) {
+			return false
+		}
+	}
+	return true
 }
