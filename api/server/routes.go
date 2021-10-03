@@ -62,7 +62,6 @@ func (s *Server) registerAuthRoutes(r *mux.Router) {
 	r.HandleFunc(authCallbackPath, s.callback).Methods("GET")
 	r.HandleFunc(authLoginPath, s.login).Methods("GET")
 	r.HandleFunc(authLogoutPath, s.logout).Methods("GET")
-	r.HandleFunc(authCurrentPath, s.current).Methods("GET")
 }
 
 func (s *Server) registerMeRoutes(r *mux.Router) {
