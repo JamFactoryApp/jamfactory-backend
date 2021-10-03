@@ -19,7 +19,7 @@ func (s *Server) current(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		switch user.UserType {
 		case types.UserTypeSpotify:
-			if user.Token != nil && user.Token.Valid() {
+			if user.SpotifyToken != nil && user.SpotifyToken.Valid() {
 				authorized = true
 			}
 		}

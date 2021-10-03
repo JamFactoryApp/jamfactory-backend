@@ -29,19 +29,19 @@ func NewRedisUserStore(pool *redis.Pool) *RedisUserStore {
 
 func (s *RedisUserStore) New(identifier string, username string, usertype types.UserType, token *oauth2.Token) *types.User {
 	return &types.User{
-		Identifier: identifier,
-		UserType:   usertype,
-		UserName:   username,
-		Token:      token,
+		Identifier:   identifier,
+		UserType:     usertype,
+		UserName:     username,
+		SpotifyToken: token,
 	}
 }
 
 func (s *RedisUserStore) NewEmpty() *types.User {
 	return &types.User{
-		Identifier: "",
-		UserType:   types.UserTypeEmpty,
-		UserName:   "",
-		Token:      nil,
+		Identifier:   "",
+		UserType:     types.UserTypeEmpty,
+		UserName:     "",
+		SpotifyToken: nil,
 	}
 }
 

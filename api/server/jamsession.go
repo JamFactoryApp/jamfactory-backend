@@ -186,7 +186,7 @@ func (s *Server) createJamSession(w http.ResponseWriter, r *http.Request) {
 	session := s.CurrentSession(r)
 	user, err := s.users.Get(s.CurrentIdentifier(r))
 
-	if !user.Token.Valid() {
+	if !user.SpotifyToken.Valid() {
 		s.errForbidden(w, apierrors.ErrTokenInvalid, log.DebugLevel)
 		return
 	}

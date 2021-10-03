@@ -28,6 +28,10 @@ type LabelResponse struct {
 	Label string `json:"label"`
 }
 
+type SuccessResponse struct {
+	Success bool `json:"success"`
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 // auth controller
 
@@ -41,9 +45,7 @@ type GetAuthLoginResponse struct {
 	URL string `json:"url"`
 }
 
-type GetAuthLogoutResponse struct {
-	Success bool `json:"success"`
-}
+type GetAuthLogoutResponse SuccessResponse
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -93,3 +95,18 @@ type PutSpotifySearchResponse struct {
 	Playlists *spotify.SimplePlaylistPage `json:"playlists"`
 	Tracks    *spotify.FullTrackPage      `json:"tracks"`
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// user controller
+
+type UserResponse struct {
+	Identifier string `json:"identifier"`
+	DisplayName string `json:"display_name"`
+	UserType   string `json:"type"`
+	JoinedLabel      string `json:"joined_label"`
+	SpotifyAuthorized bool   `json:"spotify_authorized"`
+}
+
+type GetUserResponse UserResponse
+type PutUserResponse UserResponse
+type DeleteUserResponse SuccessResponse

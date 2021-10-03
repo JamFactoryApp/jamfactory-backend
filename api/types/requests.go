@@ -52,3 +52,13 @@ type JamMemberRequest struct {
 type PutJamMemberRequest []JamMemberRequest
 
 type PutJamJoinRequest LabelRequest
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// user controller
+
+type UserRequest struct {
+	DisplayName string `json:"display_name"`
+}
+
+type PutUserRequest UserRequest
