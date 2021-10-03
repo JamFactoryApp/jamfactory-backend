@@ -11,8 +11,8 @@ const (
 )
 
 type User struct {
-	Identifier string
-	UserType   UserType
+	Identifier   string
+	UserType     UserType
 	UserName     string
 	SpotifyToken *oauth2.Token
 }

@@ -23,10 +23,10 @@ func (s *Server) getUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.EncodeJSONBody(w, types.GetUserResponse{
-		Identifier: user.Identifier,
-		DisplayName: user.UserName,
-		UserType: string(user.UserType),
-		JoinedLabel: jamLabel,
+		Identifier:        user.Identifier,
+		DisplayName:       user.UserName,
+		UserType:          string(user.UserType),
+		JoinedLabel:       jamLabel,
 		SpotifyAuthorized: spotifyAuthorized,
 	})
 }
@@ -58,10 +58,10 @@ func (s *Server) setUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.EncodeJSONBody(w, types.GetUserResponse{
-		Identifier: user.Identifier,
-		DisplayName: user.UserName,
-		UserType: string(user.UserType),
-		JoinedLabel: jamLabel,
+		Identifier:        user.Identifier,
+		DisplayName:       user.UserName,
+		UserType:          string(user.UserType),
+		JoinedLabel:       jamLabel,
 		SpotifyAuthorized: spotifyAuthorized,
 	})
 }

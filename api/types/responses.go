@@ -100,10 +100,10 @@ type PutSpotifySearchResponse struct {
 // user controller
 
 type UserResponse struct {
-	Identifier string `json:"identifier"`
-	DisplayName string `json:"display_name"`
-	UserType   string `json:"type"`
-	JoinedLabel      string `json:"joined_label"`
+	Identifier        string `json:"identifier"`
+	DisplayName       string `json:"display_name"`
+	UserType          string `json:"type"`
+	JoinedLabel       string `json:"joined_label"`
 	SpotifyAuthorized bool   `json:"spotify_authorized"`
 }
 

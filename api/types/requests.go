@@ -53,7 +53,6 @@ type PutJamMemberRequest []JamMemberRequest
 
 type PutJamJoinRequest LabelRequest
 
-
 // ---------------------------------------------------------------------------------------------------------------------
 // user controller
 
