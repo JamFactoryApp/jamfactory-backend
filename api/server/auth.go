@@ -9,37 +9,6 @@ import (
 	"net/http"
 )
 
-func (s *Server) current(w http.ResponseWriter, r *http.Request) {
-	identifier := s.CurrentIdentifier(r)
-
-	authorized := false
-	jamLabel := ""
-	userType := types.SessionTypeNew
-	user, err := s.users.Get(identifier)
-	if err == nil {
-		switch user.UserType {
-		case types.UserTypeSpotify:
-			if user.SpotifyToken != nil && user.SpotifyToken.Valid() {
-				authorized = true
-			}
-		}
-		if jamSession, err := s.jamFactory.GetJamSessionByUser(user); err == nil {
-			jamLabel = jamSession.JamLabel()
-			userType = types.SessionTypeGuest
-			member, err := jamSession.Members().Get(user.Identifier)
-			if err == nil && member.HasRights([]types.MemberRights{types.RightHost}) {
-				userType = types.SessionTypeHost
-			}
-		}
-	}
-
-	utils.EncodeJSONBody(w, types.GetAuthCurrentResponse{
-		UserType:   string(userType),
-		Label:      jamLabel,
-		Authorized: authorized,
-	})
-}
-
 func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 	session := s.CurrentSession(r)
 	state := session.ID
@@ -58,6 +27,7 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) logout(w http.ResponseWriter, r *http.Request) {
+	
 	session := s.CurrentSession(r)
 	identifier := s.CurrentIdentifier(r)
 	session.Options.MaxAge = -1
