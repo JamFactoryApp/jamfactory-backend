@@ -27,7 +27,7 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) logout(w http.ResponseWriter, r *http.Request) {
-	
+
 	session := s.CurrentSession(r)
 	identifier := s.CurrentIdentifier(r)
 	session.Options.MaxAge = -1
@@ -58,7 +58,14 @@ func (s *Server) callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := s.users.New(id, username, types.UserTypeSpotify, token)
+	user, err := s.users.Get(id)
+	if err != nil {
+		user = s.users.New(id, username, types.UserTypeSpotify, token)
+	} else {
+		user.UserType = types.UserTypeSpotify
+		user.SpotifyToken = token
+	}
+
 	if err := s.users.Save(user); err != nil {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return
