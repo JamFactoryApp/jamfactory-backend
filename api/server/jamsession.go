@@ -28,7 +28,7 @@ func (s *Server) getMemberResponse(members jamsession.Members) types.GetJamMembe
 			Rights:      member.Rights(),
 		})
 	}
-	return memberResponse
+	return types.GetJamMembersResponse{Members: memberResponse}
 }
 
 func (s *Server) getMembers(w http.ResponseWriter, r *http.Request) {
@@ -47,7 +47,7 @@ func (s *Server) setMembers(w http.ResponseWriter, r *http.Request) {
 
 	// Validate Request
 	hostCount := 0
-	for _, requestMember := range body {
+	for _, requestMember := range body.Members {
 		if jamsession.ContainsRight(types.RightHost, requestMember.Rights) {
 			hostCount++
 		}
@@ -64,7 +64,7 @@ func (s *Server) setMembers(w http.ResponseWriter, r *http.Request) {
 
 	for _, availableMembers := range jamSession.Members() {
 		var removeMember = true
-		for _, requestMember := range body {
+		for _, requestMember := range body.Members {
 			if requestMember.Identifier == availableMembers.Identifier() {
 				removeMember = false
 				availableMembers.SetRights(requestMember.Rights)

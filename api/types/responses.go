@@ -19,6 +19,10 @@ type JamMember struct {
 	Rights      []MemberRights `json:"rights"`
 }
 
+type JamMemberResponse struct {
+	Members []JamMember `json:"members"`
+}
+
 type PlaybackBody struct {
 	Playback *spotify.PlayerState `json:"playback"`
 	DeviceID spotify.ID           `json:"device_id"`
@@ -57,8 +61,8 @@ type PutJamResponse JamResponse
 type GetJamPlaybackResponse PlaybackBody
 type PutJamPlaybackResponse PlaybackBody
 
-type GetJamMembersResponse []JamMember
-type PutJamMembersResponse []JamMember
+type GetJamMembersResponse JamMemberResponse
+type PutJamMembersResponse JamMemberResponse
 
 type GetJamCreateResponse LabelResponse
 type PutJamJoinResponse LabelResponse

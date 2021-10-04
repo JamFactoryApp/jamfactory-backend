@@ -45,11 +45,10 @@ type PutJamPlaybackRequest struct {
 }
 
 type JamMemberRequest struct {
-	Identifier string         `json:"identifier"`
-	Rights     []MemberRights `json:"rights"`
+	Members []JamMember `json:"members"`
 }
 
-type PutJamMemberRequest []JamMemberRequest
+type PutJamMemberRequest JamMemberRequest
 
 type PutJamJoinRequest LabelRequest
 
