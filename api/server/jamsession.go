@@ -46,6 +46,10 @@ func (s *Server) setMembers(w http.ResponseWriter, r *http.Request) {
 	jamSession := s.CurrentJamSession(r)
 
 	// Validate Request
+	if len(body.Members) != len(jamSession.Members()) {
+		s.errBadRequest(w, apierrors.ErrWrongMemberCount, log.DebugLevel)
+		return
+	}
 	hostCount := 0
 	for _, requestMember := range body.Members {
 		if jamsession.ContainsRight(types.RightHost, requestMember.Rights) {
@@ -56,22 +60,27 @@ func (s *Server) setMembers(w http.ResponseWriter, r *http.Request) {
 			s.errBadRequest(w, apierrors.ErrBadRight, log.DebugLevel)
 			return
 		}
+		included := false
+		for _, availableMembers := range jamSession.Members() {
+			if requestMember.Identifier == availableMembers.Identifier() {
+				included = true
+			}
+		}
+		if !included {
+			s.errBadRequest(w, apierrors.ErrMissingMember, log.DebugLevel)
+			return
+		}
 	}
 	if hostCount != 1 {
 		s.errBadRequest(w, apierrors.ErrOnlyOneHost, log.DebugLevel)
 		return
 	}
-
+	// Request is valid. Apply changes
 	for _, availableMembers := range jamSession.Members() {
-		var removeMember = true
 		for _, requestMember := range body.Members {
 			if requestMember.Identifier == availableMembers.Identifier() {
-				removeMember = false
 				availableMembers.SetRights(requestMember.Rights)
 			}
-		}
-		if removeMember {
-			jamSession.Members().Remove(availableMembers.Identifier())
 		}
 	}
 
