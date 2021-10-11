@@ -6,13 +6,12 @@
 
 ### Features Added
 
-* :sparkles: Add User support and store all user information persistent in the redis database. No longer save spotify
-  token is the session. See [What are Users](./docs/documentation.md#what-is-a-user)
+* :sparkles: Add User support and store all user information persistent in the redis database. No longer save spotify token is the session.
+  See [What are Users](./docs/documentation.md#what-is-a-user)
 * :sparkles: Add User management to get, set and delete your current user.
 * :sparkles: Keep track which members have joined a JamSession. Each member is linked to a User.
   See [What are Members](./docs/documentation.md#what-is-a-member)
-* :sparkles: Add rights management for the joined members. See [Member Rights](./docs/documentation.md#member-rights).
-  Currently, there is no way to remove members from the JamSession.
+* :sparkles: Add rights management for the joined members. See [Member Rights](./docs/documentation.md#member-rights). Currently, there is no way to remove members from the JamSession.
 
 ### Features Removed
 
@@ -29,31 +28,20 @@
 ### API Changes
 
 * :boom: Remove ``PUT: /api/v1/auth/current`` endpoint, as it is replaced with the user management
-* :sparkles: Add [``GET: /api/v1/me``](./docs/documentation.md#1-get-the-current-user-information) to get the current
-  user information and authorization status.
-* :sparkles: Add [``PUT: /api/v1/me``](./docs/documentation.md#2-set-the-current-user-information) to set the current
-  user information.
-* :sparkles: Add [``DELETE: /api/v1/me``](./docs/documentation.md#3-delete-the-current-user-information) to delete the
-  current user information.
-* :sparkles:
-  Add [``GET: /api/v1/jam/members``](./docs/documentation.md#8-get-the-members-of-the-jamsession-joined-by-the-user) to
-  get the joined members of the JamSession.
-* :sparkles:
-  Add [``SET: /api/v1/jam/members``](./docs/documentation.md#9-set-the-members-of-the-jamsession-joined-by-the-user) to
-  set the joined members of the JamSession.
-* :boom: Remove ``voting_type`` key
-  from [``GET: /api/v1/jam``](./docs/documentation.md#2-get-the-information-of-the-jamsession-joined-by-the-user)
+* :sparkles: Add [``GET: /api/v1/me``](./docs/documentation.md#1-get-the-current-user-information) to get the current user information and authorization status.
+* :sparkles: Add [``PUT: /api/v1/me``](./docs/documentation.md#2-set-the-current-user-information) to set the current user information.
+* :sparkles: Add [``DELETE: /api/v1/me``](./docs/documentation.md#3-delete-the-current-user-information) to delete the current user information.
+* :sparkles: Add [``GET: /api/v1/jam/members``](./docs/documentation.md#8-get-the-members-of-the-jamsession-joined-by-the-user) to get the joined members of the JamSession.
+* :sparkles: Add [``SET: /api/v1/jam/members``](./docs/documentation.md#9-set-the-members-of-the-jamsession-joined-by-the-user) to set the joined members of the JamSession.
+* :boom: Remove ``voting_type`` key from [``GET: /api/v1/jam``](./docs/documentation.md#2-get-the-information-of-the-jamsession-joined-by-the-user)
   response.
-* :boom: Remove ``voting_type`` key
-  from [``PUT: /api/v1/jam``](./docs/documentation.md#2-get-the-information-of-the-jamsession-joined-by-the-user)
+* :boom: Remove ``voting_type`` key from [``PUT: /api/v1/jam``](./docs/documentation.md#2-get-the-information-of-the-jamsession-joined-by-the-user)
   request and response.
 
 ### Websocket Changes
 
-* :sparkles: Add new [Websocket Event ``jam``](./docs/documentation.md#event-jam) sending changes of the JamSession
-  information.
-* :sparkles: Add new [Websocket Event ``members``](./docs/documentation.md#event-members) sending changes of the joined
-  JamSession members.
+* :sparkles: Add new [Websocket Event ``jam``](./docs/documentation.md#event-jam) sending changes of the JamSession information.
+* :sparkles: Add new [Websocket Event ``members``](./docs/documentation.md#event-members) sending changes of the joined JamSession members.
 
 ## v0.1.0
 
