@@ -276,7 +276,7 @@ func (s *SpotifyJamSession) AddCollection(collectionType string, collectionID st
 			if err != nil {
 				return err
 			}
-			if err := s.queue.Vote(so.ID(), string(types.SessionTypeHost), so.Song()); err != nil {
+			if err := s.queue.Vote(so.ID(), queue.HostVoteIdentifier, so.Song()); err != nil {
 				return err
 			}
 		}
@@ -303,7 +303,7 @@ func (s *SpotifyJamSession) AddCollection(collectionType string, collectionID st
 			if err != nil {
 				return err
 			}
-			if err := s.queue.Vote(so.ID(), string(types.SessionTypeHost), so.Song()); err != nil {
+			if err := s.queue.Vote(so.ID(), queue.HostVoteIdentifier, so.Song()); err != nil {
 				return err
 			}
 		}

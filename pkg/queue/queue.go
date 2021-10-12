@@ -12,6 +12,10 @@ var (
 	ErrSongNotFound = errors.New("song not found")
 )
 
+const (
+	HostVoteIdentifier string = "Host"
+)
+
 // Queue holds an ordered list of songs
 type Queue interface {
 	sort.Interface

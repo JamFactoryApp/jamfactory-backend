@@ -75,7 +75,7 @@ func (q *SpotifyQueue) Vote(songID string, voteID string, s interface{}) error {
 		if err != nil {
 			return err
 		}
-		if voteID == string(types.SessionTypeHost) {
+		if voteID == HostVoteIdentifier {
 			so.SetDate(so.Date().Add(time.Hour * 24 * 365))
 		}
 		so.Vote(voteID)
