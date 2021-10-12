@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/jamfactoryapp/jamfactory-backend/api/types"
+	"github.com/jamfactoryapp/jamfactory-backend/api/users"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/notifications"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/queue"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/song"
@@ -40,7 +41,7 @@ type SpotifyJamSession struct {
 	quit           chan bool
 }
 
-func NewSpotify(host *types.User, client spotify.Client, label string) (JamSession, error) {
+func NewSpotify(host *users.User, client spotify.Client, label string) (JamSession, error) {
 
 	u, err := client.CurrentUser()
 	if err != nil {

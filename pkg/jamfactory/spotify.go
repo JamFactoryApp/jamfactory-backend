@@ -6,7 +6,7 @@ import (
 	"errors"
 	apierrors "github.com/jamfactoryapp/jamfactory-backend/api/errors"
 	"github.com/jamfactoryapp/jamfactory-backend/api/server"
-	"github.com/jamfactoryapp/jamfactory-backend/api/types"
+	"github.com/jamfactoryapp/jamfactory-backend/api/users"
 	"github.com/jamfactoryapp/jamfactory-backend/internal/logutils"
 	pkgredis "github.com/jamfactoryapp/jamfactory-backend/internal/redis"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/cache"
@@ -125,7 +125,7 @@ func (s *SpotifyJamFactory) GetJamSessionByLabel(jamLabel string) (jamsession.Ja
 	return jamSession, nil
 }
 
-func (s *SpotifyJamFactory) GetJamSessionByUser(user *types.User) (jamsession.JamSession, error) {
+func (s *SpotifyJamFactory) GetJamSessionByUser(user *users.User) (jamsession.JamSession, error) {
 	for _, jamSession := range s.jamSessions {
 		if _, err := jamSession.Members().Get(user.Identifier); err == nil {
 			return jamSession, nil
@@ -134,9 +134,9 @@ func (s *SpotifyJamFactory) GetJamSessionByUser(user *types.User) (jamsession.Ja
 	return nil, apierrors.ErrJamSessionNotFound
 }
 
-func (s *SpotifyJamFactory) NewJamSession(host *types.User) (jamsession.JamSession, error) {
+func (s *SpotifyJamFactory) NewJamSession(host *users.User) (jamsession.JamSession, error) {
 	// Check if correct user type was passed
-	if host.UserType != types.UserTypeSpotify {
+	if host.UserType != users.UserTypeSpotify {
 		return nil, errors.New("Wrong userIdentifier Type for Spotify JamSession with UserType: " + string(host.UserType))
 	}
 	client := s.authenticator.NewClient(host.SpotifyToken)

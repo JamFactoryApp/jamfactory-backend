@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/gorilla/websocket"
 	"github.com/jamfactoryapp/jamfactory-backend/api/store"
-	"github.com/jamfactoryapp/jamfactory-backend/api/types"
+	"github.com/jamfactoryapp/jamfactory-backend/api/users"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/cache"
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
@@ -20,9 +20,8 @@ import (
 func init() {
 	gob.Register(&oauth2.Token{})
 	gob.Register(&spotify.SearchResult{})
-	gob.Register(types.UserType(""))
-	gob.Register(types.SessionType(""))
-	gob.Register(&types.User{})
+	gob.Register(users.UserType(""))
+	gob.Register(&users.User{})
 }
 
 const (

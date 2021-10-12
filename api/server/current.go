@@ -3,7 +3,6 @@ package server
 import (
 	"github.com/gorilla/sessions"
 	pkgsessions "github.com/jamfactoryapp/jamfactory-backend/api/sessions"
-	"github.com/jamfactoryapp/jamfactory-backend/api/types"
 	"github.com/jamfactoryapp/jamfactory-backend/api/users"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/jamsession"
 	"net/http"
@@ -18,7 +17,7 @@ func (s *Server) CurrentSession(r *http.Request) *sessions.Session {
 	return session
 }
 
-func (s *Server) CurrentUser(r *http.Request) *types.User {
+func (s *Server) CurrentUser(r *http.Request) *users.User {
 	user, err := users.FromContext(r.Context())
 	if err != nil {
 		panic(err)

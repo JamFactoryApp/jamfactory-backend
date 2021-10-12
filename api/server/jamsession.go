@@ -7,6 +7,7 @@ import (
 	apierrors "github.com/jamfactoryapp/jamfactory-backend/api/errors"
 	"github.com/jamfactoryapp/jamfactory-backend/api/sessions"
 	"github.com/jamfactoryapp/jamfactory-backend/api/types"
+	"github.com/jamfactoryapp/jamfactory-backend/api/users"
 	"github.com/jamfactoryapp/jamfactory-backend/api/utils"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/jamsession"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/notifications"
@@ -240,7 +241,7 @@ func (s *Server) joinJamSession(w http.ResponseWriter, r *http.Request) {
 		hash := sha1.Sum([]byte(session.ID))
 		identifier := hex.EncodeToString(hash[:])
 		username := "Guest " + string([]rune(base32.StdEncoding.EncodeToString(hash[:]))[0:5])
-		user = s.users.New(identifier, username, types.UserTypeSession, nil)
+		user = s.users.New(identifier, username, users.UserTypeSession, nil)
 		if err := s.users.Save(user); err != nil {
 			s.errInternalServerError(w, err, log.DebugLevel)
 			return

@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/jamfactoryapp/jamfactory-backend/api/types"
+	"github.com/jamfactoryapp/jamfactory-backend/api/users"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/jamsession"
 	"golang.org/x/oauth2"
 	"net/http"
@@ -18,9 +18,9 @@ type JamFactory interface {
 	// GetJamSessionByLabel returns the JamSession for a given jamLabel
 	GetJamSessionByLabel(jamLabel string) (jamsession.JamSession, error)
 	// GetJamSessionByLabel returns the JamSession a given user belongs to
-	GetJamSessionByUser(user *types.User) (jamsession.JamSession, error)
+	GetJamSessionByUser(user *users.User) (jamsession.JamSession, error)
 	// NewJamSession creates a new JamSession using the user account provided by the OAuth2 token
-	NewJamSession(host *types.User) (jamsession.JamSession, error)
+	NewJamSession(host *users.User) (jamsession.JamSession, error)
 	// Search yields search results from the music streaming provider
 	Search(jamSession jamsession.JamSession, t string, text string) (interface{}, error)
 	// ClientAddress returns the address this JamFactory's client listens on
