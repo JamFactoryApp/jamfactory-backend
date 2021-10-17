@@ -27,7 +27,7 @@ func (s *Server) getMemberResponse(members jamsession.Members) types.GetJamMembe
 		memberResponse = append(memberResponse, types.JamMember{
 			DisplayName: user.UserName,
 			Identifier:  user.Identifier,
-			Rights:      member.Permissions(),
+			Permission:  member.Permissions(),
 		})
 	}
 	return types.GetJamMembersResponse{Members: memberResponse}
@@ -54,11 +54,11 @@ func (s *Server) setMembers(w http.ResponseWriter, r *http.Request) {
 	}
 	hostCount := 0
 	for _, requestMember := range body.Members {
-		if jamsession.ContainsPermissions(types.RightHost, requestMember.Rights) {
+		if jamsession.ContainsPermissions(types.RightHost, requestMember.Permission) {
 			hostCount++
 		}
 
-		if !jamsession.ValidPermissions(requestMember.Rights) {
+		if !jamsession.ValidPermissions(requestMember.Permission) {
 			s.errBadRequest(w, apierrors.ErrBadRight, log.DebugLevel)
 			return
 		}
@@ -82,7 +82,7 @@ func (s *Server) setMembers(w http.ResponseWriter, r *http.Request) {
 	for _, availableMembers := range jamSession.Members() {
 		for _, requestMember := range body.Members {
 			if requestMember.Identifier == availableMembers.Identifier() {
-				availableMembers.SetPermissions(requestMember.Rights)
+				availableMembers.SetPermissions(requestMember.Permission)
 			}
 		}
 	}
