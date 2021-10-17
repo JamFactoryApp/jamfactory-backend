@@ -7,8 +7,9 @@ import (
 	"path"
 	"time"
 
+	"github.com/jamfactoryapp/jamfactory-backend/api/sessions"
+
 	"github.com/jamfactoryapp/jamfactory-backend/api/server"
-	"github.com/jamfactoryapp/jamfactory-backend/api/store"
 	"github.com/jamfactoryapp/jamfactory-backend/api/users"
 	pkgredis "github.com/jamfactoryapp/jamfactory-backend/internal/redis"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/cache"
@@ -49,7 +50,7 @@ func main() {
 	log.Debug("Initialized connection to redis")
 
 	// Create redis stores
-	redisStore := store.NewRedisSessionStore(pool, path.Join(conf.DataDir, ".keypairs"), conf.CookieSameSite, conf.CookieSecure)
+	redisStore := sessions.NewRedisSessionStore(pool, path.Join(conf.DataDir, ".keypairs"), conf.CookieSameSite, conf.CookieSecure)
 	userStore := users.NewRedisUserStore(pool)
 	log.Debug("Initialized redis stores")
 

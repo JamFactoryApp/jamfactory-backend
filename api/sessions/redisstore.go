@@ -1,10 +1,16 @@
-package store
+package sessions
 
 import (
 	"bufio"
 	"bytes"
 	"encoding/base32"
 	"encoding/gob"
+	"io"
+	"net/http"
+	"os"
+	"strings"
+	"sync"
+
 	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
@@ -12,11 +18,6 @@ import (
 	pkgredis "github.com/jamfactoryapp/jamfactory-backend/internal/redis"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"io"
-	"net/http"
-	"os"
-	"strings"
-	"sync"
 )
 
 const (
