@@ -3,6 +3,8 @@ package server
 import (
 	"net/http"
 
+	"github.com/pkg/errors"
+
 	apierrors "github.com/jamfactoryapp/jamfactory-backend/api/errors"
 	"github.com/jamfactoryapp/jamfactory-backend/api/sessions"
 	"github.com/jamfactoryapp/jamfactory-backend/api/types"
@@ -62,7 +64,12 @@ func (s *Server) callback(w http.ResponseWriter, r *http.Request) {
 
 	user, err := s.users.Get(id)
 	if err != nil {
-		user = users.New(id, username, users.UserTypeSpotify, token)
+		if errors.Is(err, users.ErrUserNotFound) {
+			user = users.New(id, username, users.UserTypeSpotify, token)
+		} else {
+			s.errInternalServerError(w, err, log.DebugLevel)
+			return
+		}
 	} else {
 		user.UserType = users.UserTypeSpotify
 		user.SpotifyToken = token
