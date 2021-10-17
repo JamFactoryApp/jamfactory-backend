@@ -1,13 +1,14 @@
 package server
 
 import (
+	"net/http"
+
 	apierrors "github.com/jamfactoryapp/jamfactory-backend/api/errors"
 	"github.com/jamfactoryapp/jamfactory-backend/api/sessions"
 	"github.com/jamfactoryapp/jamfactory-backend/api/types"
 	"github.com/jamfactoryapp/jamfactory-backend/api/users"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/jamsession"
 	log "github.com/sirupsen/logrus"
-	"net/http"
 )
 
 const (
@@ -56,7 +57,7 @@ func (s *Server) userMiddleware(next http.Handler) http.Handler {
 		identifier := s.CurrentIdentifier(r)
 		user, err := s.users.Get(identifier)
 		if err != nil {
-			user = s.users.NewEmpty()
+			user = users.NewEmpty()
 		}
 		ctx := users.NewContext(r.Context(), user)
 		r = r.WithContext(ctx)

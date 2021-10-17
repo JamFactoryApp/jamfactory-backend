@@ -2,6 +2,7 @@ package users
 
 import (
 	"context"
+
 	"github.com/jamfactoryapp/jamfactory-backend/api/errors"
 	"golang.org/x/oauth2"
 )
@@ -22,6 +23,24 @@ type User struct {
 	UserType     UserType
 	UserName     string
 	SpotifyToken *oauth2.Token
+}
+
+func New(identifier string, username string, usertype UserType, token *oauth2.Token) *User {
+	return &User{
+		Identifier:   identifier,
+		UserType:     usertype,
+		UserName:     username,
+		SpotifyToken: token,
+	}
+}
+
+func NewEmpty() *User {
+	return &User{
+		Identifier:   "",
+		UserType:     UserTypeEmpty,
+		UserName:     "",
+		SpotifyToken: nil,
+	}
 }
 
 func NewContext(ctx context.Context, user *User) context.Context {

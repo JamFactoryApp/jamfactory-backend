@@ -1,14 +1,12 @@
-package store
+package users
 
 import (
 	"bytes"
 	"encoding/gob"
-	"errors"
+
 	"github.com/gomodule/redigo/redis"
-	"github.com/jamfactoryapp/jamfactory-backend/api/users"
 	pkgredis "github.com/jamfactoryapp/jamfactory-backend/internal/redis"
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/oauth2"
 )
 
 const (
@@ -27,44 +25,26 @@ func NewRedisUserStore(pool *redis.Pool) *RedisUserStore {
 	}
 }
 
-func (s *RedisUserStore) New(identifier string, username string, usertype users.UserType, token *oauth2.Token) *users.User {
-	return &users.User{
-		Identifier:   identifier,
-		UserType:     usertype,
-		UserName:     username,
-		SpotifyToken: token,
-	}
-}
-
-func (s *RedisUserStore) NewEmpty() *users.User {
-	return &users.User{
-		Identifier:   "",
-		UserType:     users.UserTypeEmpty,
-		UserName:     "",
-		SpotifyToken: nil,
-	}
-}
-
-func (s *RedisUserStore) Get(identifier string) (*users.User, error) {
+func (s *RedisUserStore) Get(identifier string) (*User, error) {
 	conn := s.pool.Get()
 	reply, err := conn.Do("GET", s.redisKey.Append(identifier))
-	var user users.User
+	var user User
 	if err != nil {
 		return nil, err
 	}
 	if reply == nil {
-		return nil, errors.New("RedisUserStore: user not found")
+		return nil, ErrUserNotFound
 	}
 	if data, ok := reply.([]byte); ok {
 		err = s.deserialize(data, &user)
 	} else {
-		err = errors.New("RedisUserStore: Failed to convert user from interface{} to []bytes")
+		err = ErrInterfaceConvert
 	}
 
 	return &user, err
 }
 
-func (s *RedisUserStore) Save(user *users.User) error {
+func (s *RedisUserStore) Save(user *User) error {
 	conn := s.pool.Get()
 	serialized, err := s.serialize(user)
 	if err != nil {
@@ -81,7 +61,7 @@ func (s *RedisUserStore) Delete(identifier string) error {
 	return err
 }
 
-func (s *RedisUserStore) serialize(user *users.User) ([]byte, error) {
+func (s *RedisUserStore) serialize(user *User) ([]byte, error) {
 	var buffer bytes.Buffer
 	encoder := gob.NewEncoder(&buffer)
 	err := encoder.Encode(user)
@@ -92,7 +72,7 @@ func (s *RedisUserStore) serialize(user *users.User) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func (s *RedisUserStore) deserialize(data []byte, user *users.User) error {
+func (s *RedisUserStore) deserialize(data []byte, user *User) error {
 	buffer := bytes.NewBuffer(data)
 	decoder := gob.NewDecoder(buffer)
 	return decoder.Decode(user)

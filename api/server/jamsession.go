@@ -243,7 +243,7 @@ func (s *Server) joinJamSession(w http.ResponseWriter, r *http.Request) {
 		hash := sha1.Sum([]byte(session.ID))
 		identifier := hex.EncodeToString(hash[:])
 		username := "Guest " + string([]rune(base32.StdEncoding.EncodeToString(hash[:]))[0:5])
-		user = s.users.New(identifier, username, users.UserTypeSession, nil)
+		user = users.New(identifier, username, users.UserTypeSession, nil)
 		if err := s.users.Save(user); err != nil {
 			s.errInternalServerError(w, err, log.DebugLevel)
 			return

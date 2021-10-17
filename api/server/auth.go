@@ -1,13 +1,14 @@
 package server
 
 import (
+	"net/http"
+
 	apierrors "github.com/jamfactoryapp/jamfactory-backend/api/errors"
 	"github.com/jamfactoryapp/jamfactory-backend/api/sessions"
 	"github.com/jamfactoryapp/jamfactory-backend/api/types"
 	"github.com/jamfactoryapp/jamfactory-backend/api/users"
 	"github.com/jamfactoryapp/jamfactory-backend/api/utils"
 	log "github.com/sirupsen/logrus"
-	"net/http"
 )
 
 func (s *Server) login(w http.ResponseWriter, r *http.Request) {
@@ -61,7 +62,7 @@ func (s *Server) callback(w http.ResponseWriter, r *http.Request) {
 
 	user, err := s.users.Get(id)
 	if err != nil {
-		user = s.users.New(id, username, users.UserTypeSpotify, token)
+		user = users.New(id, username, users.UserTypeSpotify, token)
 	} else {
 		user.UserType = users.UserTypeSpotify
 		user.SpotifyToken = token
