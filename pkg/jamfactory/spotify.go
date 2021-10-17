@@ -1,8 +1,16 @@
 package jamfactory
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
+	"errors"
+	"net/http"
+	"strings"
+	"time"
+
 	apierrors "github.com/jamfactoryapp/jamfactory-backend/api/errors"
 	"github.com/jamfactoryapp/jamfactory-backend/api/server"
+	"github.com/jamfactoryapp/jamfactory-backend/api/users"
 	"github.com/jamfactoryapp/jamfactory-backend/internal/logutils"
 	pkgredis "github.com/jamfactoryapp/jamfactory-backend/internal/redis"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/cache"
@@ -12,9 +20,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"
-	"net/http"
-	"strings"
-	"time"
 )
 
 type SpotifyJamFactory struct {
@@ -82,8 +87,18 @@ func (s *SpotifyJamFactory) Housekeeper() {
 	}
 }
 
-func (s *SpotifyJamFactory) Authenticate(state string, r *http.Request) (*oauth2.Token, error) {
-	return s.authenticator.Token(state, r)
+func (s *SpotifyJamFactory) Authenticate(state string, r *http.Request) (*oauth2.Token, string, string, error) {
+	token, err := s.authenticator.Token(state, r)
+	if err != nil {
+		return nil, "", "", err
+	}
+	client := s.authenticator.NewClient(token)
+	user, err := client.CurrentUser()
+	if err != nil {
+		return nil, "", "", err
+	}
+	hash := sha1.Sum([]byte(user.Email))
+	return token, hex.EncodeToString(hash[:]), user.DisplayName, nil
 }
 
 func (s *SpotifyJamFactory) CallbackURL(state string) string {
@@ -109,7 +124,7 @@ func (s *SpotifyJamFactory) DeleteJamSession(jamLabel string) error {
 	return nil
 }
 
-func (s *SpotifyJamFactory) GetJamSession(jamLabel string) (jamsession.JamSession, error) {
+func (s *SpotifyJamFactory) GetJamSessionByLabel(jamLabel string) (jamsession.JamSession, error) {
 	jamSession, exists := s.jamSessions[strings.ToUpper(jamLabel)]
 	if !exists {
 		return nil, apierrors.ErrJamSessionNotFound
@@ -117,9 +132,22 @@ func (s *SpotifyJamFactory) GetJamSession(jamLabel string) (jamsession.JamSessio
 	return jamSession, nil
 }
 
-func (s *SpotifyJamFactory) NewJamSession(token *oauth2.Token) (jamsession.JamSession, error) {
-	client := s.authenticator.NewClient(token)
-	jamSession, err := jamsession.NewSpotify(client, s.labelManager.Create())
+func (s *SpotifyJamFactory) GetJamSessionByUser(user *users.User) (jamsession.JamSession, error) {
+	for _, jamSession := range s.jamSessions {
+		if _, err := jamSession.Members().Get(user.Identifier); err == nil {
+			return jamSession, nil
+		}
+	}
+	return nil, apierrors.ErrJamSessionNotFound
+}
+
+func (s *SpotifyJamFactory) NewJamSession(host *users.User) (jamsession.JamSession, error) {
+	// Check if correct user type was passed
+	if host.UserType != users.UserTypeSpotify {
+		return nil, errors.New("Wrong userIdentifier Type for Spotify JamSession with UserType: " + string(host.UserType))
+	}
+	client := s.authenticator.NewClient(host.SpotifyToken)
+	jamSession, err := jamsession.NewSpotify(host, client, s.labelManager.Create())
 	if err != nil {
 		return nil, err
 	}

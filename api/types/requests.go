@@ -35,9 +35,8 @@ type DeleteQueueSongRequest struct {
 // jamsession controller
 
 type PutJamRequest struct {
-	Name       JSONString `json:"name,omitempty"`
-	Active     JSONBool   `json:"active,omitempty"`
-	VotingType JSONString `json:"voting_type,omitempty"`
+	Name   JSONString `json:"name,omitempty"`
+	Active JSONBool   `json:"active,omitempty"`
 }
 
 type PutJamPlaybackRequest struct {
@@ -45,4 +44,19 @@ type PutJamPlaybackRequest struct {
 	DeviceID JSONString `json:"device_id,omitempty"`
 }
 
+type JamMemberRequest struct {
+	Members []JamMember `json:"members"`
+}
+
+type PutJamMemberRequest JamMemberRequest
+
 type PutJamJoinRequest LabelRequest
+
+// ---------------------------------------------------------------------------------------------------------------------
+// user controller
+
+type UserRequest struct {
+	DisplayName string `json:"display_name"`
+}
+
+type PutUserRequest UserRequest

@@ -2,16 +2,18 @@ package jamsession
 
 import (
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/gorilla/websocket"
 	"github.com/jamfactoryapp/jamfactory-backend/api/types"
+	"github.com/jamfactoryapp/jamfactory-backend/api/users"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/notifications"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/queue"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/song"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
-	"sync"
-	"time"
 )
 
 var (
@@ -21,7 +23,6 @@ var (
 	ErrCouldNotGetPlaylistTracks = errors.New("could not get playlist tracks")
 	ErrDeviceNotActive           = errors.New("device not active")
 	ErrSongMalformed             = errors.New("malformed song")
-	ErrVotingTypeInvalid         = errors.New("voting type invalid")
 )
 
 type SpotifyJamSession struct {
@@ -29,10 +30,10 @@ type SpotifyJamSession struct {
 	jamLabel       string
 	name           string
 	active         bool
+	members        Members
 	updateInterval time.Duration
 	lastTimestamp  time.Time
 	currentSong    *spotify.FullTrack
-	votingType     types.VotingType
 	client         spotify.Client
 	player         *spotify.PlayerState
 	queue          *queue.SpotifyQueue
@@ -40,7 +41,8 @@ type SpotifyJamSession struct {
 	quit           chan bool
 }
 
-func NewSpotify(client spotify.Client, label string) (JamSession, error) {
+func NewSpotify(host *users.User, client spotify.Client, label string) (JamSession, error) {
+
 	u, err := client.CurrentUser()
 	if err != nil {
 		return nil, err
@@ -51,21 +53,27 @@ func NewSpotify(client spotify.Client, label string) (JamSession, error) {
 		return nil, err
 	}
 
+	members := Members{
+		host.Identifier: &Member{
+			userIdentifier: host.Identifier,
+			permissions:    []types.Permission{types.RightHost, types.RightsGuest},
+		},
+	}
+
 	s := &SpotifyJamSession{
 		jamLabel:       label,
 		name:           fmt.Sprintf("%s's JamSession", u.DisplayName),
 		active:         false,
+		members:        members,
 		updateInterval: time.Second,
 		lastTimestamp:  time.Now(),
 		currentSong:    nil,
-		votingType:     types.SessionVoting,
 		client:         client,
 		player:         playerState,
 		queue:          queue.NewSpotify(),
 		room:           notifications.NewRoom(),
 		quit:           make(chan bool),
 	}
-
 	go s.room.OpenDoors()
 	log.Info("Created new JamSession for ", u.DisplayName)
 	return s, nil
@@ -149,6 +157,10 @@ func (s *SpotifyJamSession) JamLabel() string {
 	return s.jamLabel
 }
 
+func (s *SpotifyJamSession) Members() Members {
+	return s.members
+}
+
 func (s *SpotifyJamSession) Name() string {
 	return s.name
 }
@@ -161,29 +173,10 @@ func (s *SpotifyJamSession) Timestamp() time.Time {
 	return s.lastTimestamp
 }
 
-func (s *SpotifyJamSession) VotingType() types.VotingType {
-	return s.votingType
-}
-
 func (s *SpotifyJamSession) SetName(name string) {
 	s.Lock()
 	defer s.Unlock()
 	s.name = name
-}
-
-func (s *SpotifyJamSession) SetVotingType(votingType string) error {
-	s.Lock()
-	defer s.Unlock()
-
-	switch votingType {
-	case string(types.SessionVoting):
-		s.votingType = types.SessionVoting
-	case string(types.IPVoting):
-		s.votingType = types.IPVoting
-	default:
-		return ErrVotingTypeInvalid
-	}
-	return nil
 }
 
 func (s *SpotifyJamSession) SetActive(active bool) {
@@ -287,7 +280,7 @@ func (s *SpotifyJamSession) AddCollection(collectionType string, collectionID st
 			if err != nil {
 				return err
 			}
-			if err := s.queue.Vote(so.ID(), string(types.UserTypeHost), so.Song()); err != nil {
+			if err := s.queue.Vote(so.ID(), queue.HostVoteIdentifier, so.Song()); err != nil {
 				return err
 			}
 		}
@@ -314,7 +307,7 @@ func (s *SpotifyJamSession) AddCollection(collectionType string, collectionID st
 			if err != nil {
 				return err
 			}
-			if err := s.queue.Vote(so.ID(), string(types.UserTypeHost), so.Song()); err != nil {
+			if err := s.queue.Vote(so.ID(), queue.HostVoteIdentifier, so.Song()); err != nil {
 				return err
 			}
 		}
@@ -389,10 +382,9 @@ func (s *SpotifyJamSession) SocketJamUpdate() {
 	s.NotifyClients(&notifications.Message{
 		Event: notifications.Jam,
 		Message: types.SocketJamMessage{
-			Label:      s.jamLabel,
-			Name:       s.name,
-			Active:     s.active,
-			VotingType: s.votingType,
+			Label:  s.jamLabel,
+			Name:   s.name,
+			Active: s.active,
 		},
 	})
 }
