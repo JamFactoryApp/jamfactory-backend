@@ -2,6 +2,9 @@ package jamsession
 
 import (
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/gorilla/websocket"
 	"github.com/jamfactoryapp/jamfactory-backend/api/types"
 	"github.com/jamfactoryapp/jamfactory-backend/api/users"
@@ -11,8 +14,6 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
-	"sync"
-	"time"
 )
 
 var (
@@ -22,7 +23,6 @@ var (
 	ErrCouldNotGetPlaylistTracks = errors.New("could not get playlist tracks")
 	ErrDeviceNotActive           = errors.New("device not active")
 	ErrSongMalformed             = errors.New("malformed song")
-	ErrVotingTypeInvalid         = errors.New("voting type invalid")
 )
 
 type SpotifyJamSession struct {
@@ -53,9 +53,12 @@ func NewSpotify(host *users.User, client spotify.Client, label string) (JamSessi
 		return nil, err
 	}
 
-	members := Members{host.Identifier: &Member{
-		userIdentifier: host.Identifier,
-		rights:         []types.MemberRights{types.RightHost, types.RightsGuest}}}
+	members := Members{
+		host.Identifier: &Member{
+			userIdentifier: host.Identifier,
+			rights:         []types.MemberRights{types.RightHost, types.RightsGuest},
+		},
+	}
 
 	s := &SpotifyJamSession{
 		jamLabel:       label,

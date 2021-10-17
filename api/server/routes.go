@@ -1,8 +1,9 @@
 package server
 
 import (
-	"github.com/gorilla/mux"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 const (
@@ -12,7 +13,6 @@ const (
 	authCallbackPath = "/callback"
 	authLoginPath    = "/login"
 	authLogoutPath   = "/logout"
-	authCurrentPath  = "/current"
 
 	mePath      = "/me"
 	meIndexPath = ""

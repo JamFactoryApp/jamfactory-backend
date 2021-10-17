@@ -1,10 +1,11 @@
 package server
 
 import (
+	"net/http"
+
 	"github.com/jamfactoryapp/jamfactory-backend/api/users"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/jamsession"
 	"golang.org/x/oauth2"
-	"net/http"
 )
 
 // JamFactory provides methods to control JamSessions
@@ -17,7 +18,7 @@ type JamFactory interface {
 	DeleteJamSession(jamLabel string) error
 	// GetJamSessionByLabel returns the JamSession for a given jamLabel
 	GetJamSessionByLabel(jamLabel string) (jamsession.JamSession, error)
-	// GetJamSessionByLabel returns the JamSession a given user belongs to
+	// GetJamSessionByUser returns the JamSession a given user belongs to
 	GetJamSessionByUser(user *users.User) (jamsession.JamSession, error)
 	// NewJamSession creates a new JamSession using the user account provided by the OAuth2 token
 	NewJamSession(host *users.User) (jamsession.JamSession, error)

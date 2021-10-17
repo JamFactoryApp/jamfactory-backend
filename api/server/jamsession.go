@@ -4,6 +4,8 @@ import (
 	"crypto/sha1"
 	"encoding/base32"
 	"encoding/hex"
+	"net/http"
+
 	apierrors "github.com/jamfactoryapp/jamfactory-backend/api/errors"
 	"github.com/jamfactoryapp/jamfactory-backend/api/sessions"
 	"github.com/jamfactoryapp/jamfactory-backend/api/types"
@@ -12,7 +14,6 @@ import (
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/jamsession"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/notifications"
 	log "github.com/sirupsen/logrus"
-	"net/http"
 )
 
 func (s *Server) getMemberResponse(members jamsession.Members) types.GetJamMembersResponse {
@@ -65,6 +66,7 @@ func (s *Server) setMembers(w http.ResponseWriter, r *http.Request) {
 		for _, availableMembers := range jamSession.Members() {
 			if requestMember.Identifier == availableMembers.Identifier() {
 				included = true
+				break
 			}
 		}
 		if !included {

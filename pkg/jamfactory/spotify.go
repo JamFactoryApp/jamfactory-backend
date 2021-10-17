@@ -4,6 +4,10 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"errors"
+	"net/http"
+	"strings"
+	"time"
+
 	apierrors "github.com/jamfactoryapp/jamfactory-backend/api/errors"
 	"github.com/jamfactoryapp/jamfactory-backend/api/server"
 	"github.com/jamfactoryapp/jamfactory-backend/api/users"
@@ -16,9 +20,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"
-	"net/http"
-	"strings"
-	"time"
 )
 
 type SpotifyJamFactory struct {
@@ -88,10 +89,16 @@ func (s *SpotifyJamFactory) Housekeeper() {
 
 func (s *SpotifyJamFactory) Authenticate(state string, r *http.Request) (*oauth2.Token, string, string, error) {
 	token, err := s.authenticator.Token(state, r)
+	if err != nil {
+		return nil, "", "", err
+	}
 	client := s.authenticator.NewClient(token)
 	user, err := client.CurrentUser()
+	if err != nil {
+		return nil, "", "", err
+	}
 	hash := sha1.Sum([]byte(user.Email))
-	return token, hex.EncodeToString(hash[:]), user.DisplayName, err
+	return token, hex.EncodeToString(hash[:]), user.DisplayName, nil
 }
 
 func (s *SpotifyJamFactory) CallbackURL(state string) string {
