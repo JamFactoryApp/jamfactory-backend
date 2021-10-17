@@ -1,12 +1,12 @@
 package types
 
-type MemberRights string
+type Permission string
 
 const (
-	RightsGuest MemberRights = "Guest"
-	RightHost   MemberRights = "Host"
+	RightsGuest Permission = "Guest"
+	RightHost   Permission = "Host"
 )
 
 var (
-	ValidRights = []MemberRights{RightsGuest, RightHost}
+	ValidPermissions = []Permission{RightsGuest, RightHost}
 )

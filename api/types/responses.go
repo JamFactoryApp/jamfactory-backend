@@ -14,9 +14,9 @@ type JamResponse struct {
 }
 
 type JamMember struct {
-	DisplayName string         `json:"display_name"`
-	Identifier  string         `json:"identifier"`
-	Rights      []MemberRights `json:"rights"`
+	DisplayName string       `json:"display_name"`
+	Identifier  string       `json:"identifier"`
+	Permission  []Permission `json:"permissions"`
 }
 
 type JamMemberResponse struct {

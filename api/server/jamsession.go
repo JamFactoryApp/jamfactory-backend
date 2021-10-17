@@ -27,7 +27,7 @@ func (s *Server) getMemberResponse(members jamsession.Members) types.GetJamMembe
 		memberResponse = append(memberResponse, types.JamMember{
 			DisplayName: user.UserName,
 			Identifier:  user.Identifier,
-			Rights:      member.Rights(),
+			Rights:      member.Permissions(),
 		})
 	}
 	return types.GetJamMembersResponse{Members: memberResponse}
@@ -54,11 +54,11 @@ func (s *Server) setMembers(w http.ResponseWriter, r *http.Request) {
 	}
 	hostCount := 0
 	for _, requestMember := range body.Members {
-		if jamsession.ContainsRight(types.RightHost, requestMember.Rights) {
+		if jamsession.ContainsPermissions(types.RightHost, requestMember.Rights) {
 			hostCount++
 		}
 
-		if !jamsession.ValidRights(requestMember.Rights) {
+		if !jamsession.ValidPermissions(requestMember.Rights) {
 			s.errBadRequest(w, apierrors.ErrBadRight, log.DebugLevel)
 			return
 		}
@@ -82,7 +82,7 @@ func (s *Server) setMembers(w http.ResponseWriter, r *http.Request) {
 	for _, availableMembers := range jamSession.Members() {
 		for _, requestMember := range body.Members {
 			if requestMember.Identifier == availableMembers.Identifier() {
-				availableMembers.SetRights(requestMember.Rights)
+				availableMembers.SetPermissions(requestMember.Rights)
 			}
 		}
 	}
@@ -257,7 +257,7 @@ func (s *Server) joinJamSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jamSession.Members().Add(user.Identifier, []types.MemberRights{types.RightsGuest})
+	jamSession.Members().Add(user.Identifier, []types.Permission{types.RightsGuest})
 
 	jamSession.NotifyClients(&notifications.Message{
 		Event:   notifications.Members,
@@ -278,7 +278,7 @@ func (s *Server) leaveJamSession(w http.ResponseWriter, r *http.Request) {
 			s.errBadRequest(w, err, log.DebugLevel)
 			return
 		}
-		isHost := member.HasRights([]types.MemberRights{types.RightHost})
+		isHost := member.HasPermissions([]types.Permission{types.RightHost})
 		if isHost {
 			if jamSession.Members().Remove(user.Identifier) {
 				jamSession.NotifyClients(&notifications.Message{

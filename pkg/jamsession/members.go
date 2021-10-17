@@ -2,6 +2,7 @@ package jamsession
 
 import (
 	"errors"
+
 	"github.com/jamfactoryapp/jamfactory-backend/api/types"
 )
 
@@ -9,7 +10,7 @@ type Members map[string]*Member
 
 type Member struct {
 	userIdentifier string
-	rights         []types.MemberRights
+	permissions    []types.Permission
 }
 
 func (m Members) Get(identifier string) (*Member, error) {
@@ -19,11 +20,11 @@ func (m Members) Get(identifier string) (*Member, error) {
 	return nil, errors.New("not a member")
 }
 
-func (m Members) Add(identifier string, rights []types.MemberRights) bool {
+func (m Members) Add(identifier string, permissions []types.Permission) bool {
 	if _, ok := m[identifier]; !ok {
 		m[identifier] = &Member{
 			userIdentifier: identifier,
-			rights:         rights,
+			permissions:    permissions,
 		}
 		return true
 	}
@@ -42,47 +43,47 @@ func (m *Member) Identifier() string {
 	return m.userIdentifier
 }
 
-func (m *Member) Rights() []types.MemberRights {
-	return m.rights
+func (m *Member) Permissions() []types.Permission {
+	return m.permissions
 }
 
-func (m *Member) SetRights(rights []types.MemberRights) {
-	m.rights = rights
+func (m *Member) SetPermissions(permissions []types.Permission) {
+	m.permissions = permissions
 }
 
-func (m *Member) HasRights(rights []types.MemberRights) bool {
+func (m *Member) HasPermissions(permissions []types.Permission) bool {
 	hasAllRights := true
-	for _, wanted := range rights {
-		if !ContainsRight(wanted, m.rights) {
+	for _, wanted := range permissions {
+		if !ContainsPermissions(wanted, m.permissions) {
 			hasAllRights = false
 		}
 	}
 	return hasAllRights
 }
 
-func (m *Member) AddRights(rights []types.MemberRights) error {
-	for _, toAdd := range rights {
-		if !ContainsRight(toAdd, m.rights) {
-			m.rights = append(m.rights, toAdd)
+func (m *Member) AddPermissions(permissions []types.Permission) error {
+	for _, toAdd := range permissions {
+		if !ContainsPermissions(toAdd, m.permissions) {
+			m.permissions = append(m.permissions, toAdd)
 		}
 	}
 	return nil
 }
 
-func (m *Member) RemoveRights(rights []types.MemberRights) {
-	for _, toRemove := range rights {
-		for i, right := range m.rights {
+func (m *Member) RemovePermissions(permissions []types.Permission) {
+	for _, toRemove := range permissions {
+		for i, right := range m.permissions {
 			if toRemove == right {
-				m.rights = append(m.rights[:i], m.rights[i+1:]...)
+				m.permissions = append(m.permissions[:i], m.permissions[i+1:]...)
 				break
 			}
 		}
 	}
 }
 
-func ContainsRight(right types.MemberRights, rights []types.MemberRights) bool {
+func ContainsPermissions(right types.Permission, permissions []types.Permission) bool {
 	contains := false
-	for _, r := range rights {
+	for _, r := range permissions {
 		if r == right {
 			contains = true
 		}
@@ -90,9 +91,9 @@ func ContainsRight(right types.MemberRights, rights []types.MemberRights) bool {
 	return contains
 }
 
-func ValidRights(rights []types.MemberRights) bool {
-	for _, r := range rights {
-		if !ContainsRight(r, types.ValidRights) {
+func ValidPermissions(permissions []types.Permission) bool {
+	for _, r := range permissions {
+		if !ContainsPermissions(r, types.ValidPermissions) {
 			return false
 		}
 	}
