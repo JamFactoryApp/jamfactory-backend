@@ -1,13 +1,14 @@
 package config
 
 import (
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"net/url"
 	"os"
 	"path"
 	"strconv"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Config struct {
@@ -17,7 +18,7 @@ type Config struct {
 	CertFile           string
 	KeyFile            string
 	Port               int
-	ClientAddress      *url.URL
+	ClientAddresses    []*url.URL
 	DataDir            string
 	SpotifyID          string
 	SpotifySecret      string
@@ -32,19 +33,20 @@ type Config struct {
 func New() *Config {
 	// Set some default configs
 	clientAddress, _ := url.Parse("http://localhost:4200")
+	clientAddresses := []*url.URL{clientAddress}
 	c := &Config{
-		UseHttps:       false,
-		GenCerts:       false,
-		CertFile:       "./data/cert.pem",
-		KeyFile:        "./data/key.pem",
-		Port:           3000,
-		ClientAddress:  clientAddress,
-		DataDir:        "./data",
-		RedisAddress:   "localhost:6379",
-		RedisDatabase:  "0",
-		RedisPassword:  "",
-		CookieSameSite: http.SameSiteLaxMode,
-		CookieSecure:   true,
+		UseHttps:        false,
+		GenCerts:        false,
+		CertFile:        "./data/cert.pem",
+		KeyFile:         "./data/key.pem",
+		Port:            3000,
+		ClientAddresses: clientAddresses,
+		DataDir:         "./data",
+		RedisAddress:    "localhost:6379",
+		RedisDatabase:   "0",
+		RedisPassword:   "",
+		CookieSameSite:  http.SameSiteLaxMode,
+		CookieSecure:    true,
 	}
 
 	// Set c.LogLevel
@@ -138,16 +140,21 @@ func New() *Config {
 		log.Debug("JAM_PORT is empty. Using ", c.Port)
 	}
 
-	// Set c.ClientAddress
+	// Set c.ClientAddresses
 	clientAddressVal := os.Getenv("JAM_CLIENT_ADDRESS")
 	if clientAddressVal != "" {
-		clientAddress, err := url.Parse(clientAddressVal)
-		if err != nil {
-			log.Fatal("failed to parse JAM_CLIENT_ADDRESS: ", err)
+		clientAddressArr := strings.Split(strings.Replace(clientAddressVal, " ", "", -1), ",")
+		clientAddresses := make([]*url.URL, len(clientAddressArr))
+		for i := range clientAddressArr {
+			url, err := url.Parse(clientAddressArr[i])
+			if err != nil {
+				log.Fatal("failed to parse JAM_CLIENT_ADDRESS: ", err)
+			}
+			clientAddresses[i] = url
 		}
-		c.ClientAddress = clientAddress
+		c.ClientAddresses = clientAddresses
 	} else {
-		log.Debug("JAM_CLIENT_ADDRESS is empty. Using ", c.ClientAddress)
+		log.Debug("JAM_CLIENT_ADDRESS is empty. Using ", c.ClientAddresses)
 	}
 
 	// Set c.RedisAddress

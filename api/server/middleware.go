@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"net/url"
 
 	apierrors "github.com/jamfactoryapp/jamfactory-backend/api/errors"
 	"github.com/jamfactoryapp/jamfactory-backend/api/sessions"
@@ -15,13 +16,19 @@ const (
 	sessionCookieKey = "user-session"
 )
 
-func (s *Server) corsMiddleware(next http.Handler, allowedOrigin string) http.Handler {
+func (s *Server) corsMiddleware(next http.Handler, allowedOrigin []*url.URL) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if origin := r.Header.Get("Origin"); origin != "" {
-			w.Header().Add("Access-Control-Allow-Origin", allowedOrigin)
-			w.Header().Add("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
-			w.Header().Add("Access-Control-Allow-Methods", "GET, PUT, DELETE, OPTIONS")
-			w.Header().Add("Access-Control-Allow-Credentials", "true")
+			for i := range allowedOrigin {
+				log.Debug(origin)
+				if allowedOrigin[i].String() == origin {
+					w.Header().Add("Access-Control-Allow-Origin", allowedOrigin[i].String())
+					w.Header().Add("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
+					w.Header().Add("Access-Control-Allow-Methods", "GET, PUT, DELETE, OPTIONS")
+					w.Header().Add("Access-Control-Allow-Credentials", "true")
+				}
+			}
+
 		}
 		if r.Method == "OPTIONS" {
 			return
