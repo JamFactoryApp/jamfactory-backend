@@ -30,6 +30,8 @@ const (
 	queueCollectionPath = "/collection"
 	queueVotePath       = "/vote"
 	queueDeletePath     = "/delete"
+	queueHistoryPath    = "/history"
+	queueExportPath     = "/export"
 
 	spotifyPath         = "/spotify"
 	spotifyDevicesPath  = "/devices"
@@ -87,6 +89,8 @@ func (s *Server) registerQueueRoutes(r *mux.Router) {
 	r.Handle(queueCollectionPath, s.jamSessionRequired(s.hostRequired(http.HandlerFunc(s.addCollection)))).Methods("PUT")
 	r.Handle(queueVotePath, s.jamSessionRequired(http.HandlerFunc(s.vote))).Methods("PUT")
 	r.Handle(queueDeletePath, s.jamSessionRequired(s.hostRequired(http.HandlerFunc(s.deleteSong)))).Methods("DELETE")
+	r.Handle(queueHistoryPath, s.jamSessionRequired(http.HandlerFunc(s.getQueueHistory))).Methods("GET")
+	r.Handle(queueExportPath, s.jamSessionRequired(s.hostRequired(http.HandlerFunc(s.exportQueue)))).Methods("PUT")
 }
 
 func (s *Server) registerSpotifyRoutes(r *mux.Router) {

@@ -27,6 +27,10 @@ type PutQueueCollectionRequest struct {
 	CollectionType string `json:"type"`
 }
 
+type PutQueueExportRequest struct {
+	PlaylistName string `json:"playlist_name"`
+}
+
 type DeleteQueueSongRequest struct {
 	TrackID string `json:"track"`
 }
