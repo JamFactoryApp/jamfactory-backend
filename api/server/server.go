@@ -63,7 +63,7 @@ func NewServer(pattern string, sessionStore sessions.Store, userStore users.Stor
 	}
 
 	s.initRoutes()
-	http.Handle(pattern, s.corsMiddleware(s.router, jamFactory.ClientAddress()))
+	http.Handle(pattern, s.corsMiddleware(s.router, jamFactory.ClientAddresses()))
 
 	return s
 }

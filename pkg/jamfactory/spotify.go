@@ -194,6 +194,6 @@ func (s *SpotifyJamFactory) Search(jamSession jamsession.JamSession, t string, t
 	return result, nil
 }
 
-func (s *SpotifyJamFactory) ClientAddress() []*url.URL {
+func (s *SpotifyJamFactory) ClientAddresses() []*url.URL {
 	return s.clientAddresses
 }

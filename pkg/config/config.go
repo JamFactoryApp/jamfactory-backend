@@ -141,20 +141,20 @@ func New() *Config {
 	}
 
 	// Set c.ClientAddresses
-	clientAddressVal := os.Getenv("JAM_CLIENT_ADDRESS")
+	clientAddressVal := os.Getenv("JAM_CLIENT_ADDRESSES")
 	if clientAddressVal != "" {
 		clientAddressArr := strings.Split(strings.Replace(clientAddressVal, " ", "", -1), ",")
 		clientAddresses := make([]*url.URL, len(clientAddressArr))
 		for i := range clientAddressArr {
 			url, err := url.Parse(clientAddressArr[i])
 			if err != nil {
-				log.Fatal("failed to parse JAM_CLIENT_ADDRESS: ", err)
+				log.Fatal("failed to parse JAM_CLIENT_ADDRESSES: ", err)
 			}
 			clientAddresses[i] = url
 		}
 		c.ClientAddresses = clientAddresses
 	} else {
-		log.Debug("JAM_CLIENT_ADDRESS is empty. Using ", c.ClientAddresses)
+		log.Debug("JAM_CLIENT_ADDRESSES is empty. Using ", c.ClientAddresses)
 	}
 
 	// Set c.RedisAddress
