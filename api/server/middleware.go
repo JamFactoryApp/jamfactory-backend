@@ -20,7 +20,7 @@ func (s *Server) corsMiddleware(next http.Handler, allowedOrigin []*url.URL) htt
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if origin := r.Header.Get("Origin"); origin != "" {
 			for i := range allowedOrigin {
-				log.Debug(origin)
+				log.Trace("Cors-Middleware Origin ", origin)
 				if allowedOrigin[i].String() == origin {
 					w.Header().Add("Access-Control-Allow-Origin", allowedOrigin[i].String())
 					w.Header().Add("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
@@ -28,7 +28,6 @@ func (s *Server) corsMiddleware(next http.Handler, allowedOrigin []*url.URL) htt
 					w.Header().Add("Access-Control-Allow-Credentials", "true")
 				}
 			}
-
 		}
 		if r.Method == "OPTIONS" {
 			return
