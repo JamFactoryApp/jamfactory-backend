@@ -141,9 +141,9 @@ func New() *Config {
 	}
 
 	// Set c.ClientAddresses
-	clientAddressVal := os.Getenv("JAM_CLIENT_ADDRESSES")
-	if clientAddressVal != "" {
-		clientAddressArr := strings.Split(strings.Replace(clientAddressVal, " ", "", -1), ",")
+	clientAddressesVal := os.Getenv("JAM_CLIENT_ADDRESSES")
+	if clientAddressesVal != "" {
+		clientAddressArr := strings.Split(strings.Replace(clientAddressesVal, " ", "", -1), ",")
 		clientAddresses := make([]*url.URL, len(clientAddressArr))
 		for i := range clientAddressArr {
 			url, err := url.Parse(clientAddressArr[i])
