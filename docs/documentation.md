@@ -1,6 +1,6 @@
 # JamFactory
 
-***V0.1.0 Documentation***
+***V0.2.0 Documentation***
 
 ## Table of contents
 
@@ -43,6 +43,8 @@
         * [Delete a song in the queue of the JamSession joined by the user](#2-delete-a-song-in-the-queue-of-the-jamsession-joined-by-the-user)
         * [Get the queue of the JamSession joined by the user](#3-get-the-queue-of-the-jamsession-joined-by-the-user)
         * [Vote for a song in the queue of the JamSession joined by the user](#4-vote-for-a-song-in-the-queue-of-the-jamsession-joined-by-the-user)
+        * [Get the played song history of the JamSession joined by the user](#5-get-the-played-song-history-of-the-jamsession-joined-by-the-user)
+        * [Export the queue to a Playlist](#6-export-the-queue-to-a-playlist)
     * [Spotify](#spotify)
         * [Get the User's Available Spotify Playback Devices](#1-get-the-users-available-spotify-playback-devices)
         * [Get the User's Available Spotify Playlists](#2-get-the-users-available-spotify-playlists)
@@ -619,11 +621,11 @@ URL: jamfactory.app/api/v1/jam
 
 ***Response Body (JSON):***
 
-| key         | value type                                | value description                                                                                           |
-|-- --------  | -------------------                       | ----------------------------------------------------------------------------------------------------------- |
-| ``label``   | string                                    | *JamLabel* of the currently joined *JamSession*                                                             |
-| ``name``    | string                                    | *Name* of the currently joined *JamSession*                                                                 |
-| ``active``  | string                                    | *State* of the currently joined *JamSession*. See [JamSession State](#jamsession-state)                     |
+| key        | value type          | value description                                                                                           |
+|-- -------- | ------------------- | ----------------------------------------------------------------------------------------------------------- |
+| ``label``  | string              | *JamLabel* of the currently joined *JamSession*                                                             |
+| ``name``   | string              | *Name* of the currently joined *JamSession*                                                                 |
+| ``active`` | string              | *State* of the currently joined *JamSession*. See [JamSession State](#jamsession-state)                     |
 
 ```json
 {
@@ -858,11 +860,11 @@ URL: jamfactory.app/api/v1/queue
 
 | key        | value type          | value description                                                                                                                                         |
 |-- -------- | ------------------- | ---------------------------------------------------                                                                                                       |
-| ``queue``  | array               | Array of the songs in the current *queue*. See [Queue Song](#queue-song). The *queue song objects* are personalized to the *user* requesting the *queue*. |
+| ``tracks`` | array               | Array of the songs in the current *queue*. See [Queue Song](#queue-song). The *queue song objects* are personalized to the *user* requesting the *queue*. |
 
 ```json
 {
-  "queue": "[]<Queue Song Object>"
+  "tracks": "[]<Queue Song Object>"
 }
 ```
 
@@ -903,6 +905,76 @@ URL: jamfactory.app/api/v1/queue/vote
 ```json
 {
   "queue": "[]<Queue Song Object>"
+}
+```
+
+#### 5. Get the played song history of the JamSession joined by the user
+
+***Description***
+
+Returns the history of the queue including all played songs of the JamSession joined by the user.
+Requires the user to have joined the JamSession.
+
+***Endpoint:***
+
+```bash
+Method: GET
+URL: jamfactory.app/api/v1/queue/history
+```
+
+***Request Body (Empty):***
+
+***Response Body (JSON):***
+
+| key         | value type          | value description                                                                                                                                                |
+|-- --------  | ------------------- | ---------------------------------------------------                                                                                                              |
+| ``history`` | array               | Array of the played songs of the current *queue*. See [Queue Song](#queue-song). The *queue song objects* are personalized to the *user* requesting the *queue*. |
+
+```json
+{
+  "history": "[]<Queue Song Object>"
+}
+```
+
+#### 6. Export the queue to a Playlist
+
+***Description***
+
+Creates a Playlist containing the history and/or the queued songs of the current queue of the JamSession joined by the user.
+Requires the user be the Host of a JamSession.
+
+***Endpoint:***
+
+```bash
+Method: PUT
+URL: jamfactory.app/api/v1/queue/export
+```
+
+***Request Body (JSON):***
+
+| key                 | value type          | value description                                   |
+|-- --------          | ------------------- | --------------------------------------------------- |
+| ``playlist_name``   | string              | The Spotify playlist name                          |
+| ``include_history`` | boolean             | Include the history of the queue                            |
+| ``include_queue``   | boolean             | Include the queued songs                           |
+
+```json
+{
+  "playlist_name": "Songs of my birthday party",
+  "include_history": true,
+  "include_queue": false
+}
+```
+
+***Response Body (JSON):***
+
+| key         | value type          | value description                                   |
+|-- --------  | ------------------- | --------------------------------------------------- |
+| ``success`` | boolean             | Result of the operation.                            |
+
+```json
+{
+  "success": true
 }
 ```
 
@@ -1039,11 +1111,11 @@ The setting of the JamSession changed.
 
 ***Message (JSON):***
 
-| key         | value type                                | value description                                                                                                       |
-|-- --------  | -------------------                       | ----------------------------------------------------------------------------------------------------------------------- |
-| ``label``   | string                                    | *JamLabel* of the *JamSession* currently joined by the user.                                                            |
-| ``name``    | string                                    | *Name* of the *JamSession* currently joined by the user.                                                                |
-| ``active``  | boolean                                   | *State* of the *JamSession* currently joined by the user. See [JamSession State](#jamsession-state)                     |
+| key        | value type          | value description                                                                                                       |
+|-- -------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| ``label``  | string              | *JamLabel* of the *JamSession* currently joined by the user.                                                            |
+| ``name``   | string              | *Name* of the *JamSession* currently joined by the user.                                                                |
+| ``active`` | boolean             | *State* of the *JamSession* currently joined by the user. See [JamSession State](#jamsession-state)                     |
 
 ```json
 {
