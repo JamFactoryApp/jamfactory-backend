@@ -23,6 +23,6 @@ var (
 	ErrNoDevice              = errors.New("no playback device")
 	ErrOnlyOneHost           = errors.New("only one host allowed")
 	ErrBadRight              = errors.New("bad right")
-	ErrWrongMemberCount = errors.New("wrong member count")
-	ErrMissingMember = errors.New("member missing")
+	ErrWrongMemberCount      = errors.New("wrong member count")
+	ErrMissingMember         = errors.New("member missing")
 )
