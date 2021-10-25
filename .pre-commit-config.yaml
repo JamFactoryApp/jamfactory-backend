@@ -1,10 +1,10 @@
 repos:
-- repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.0.1
-  hooks:
-  - id: check-yaml
-  - id: end-of-file-fixer
-- repo: https://github.com/lietu/go-pre-commit
-  rev: master
-  hooks:
-  - id: go-fmt-goimports
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.0.1
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+  - repo: https://github.com/lietu/go-pre-commit
+    rev: master
+    hooks:
+      - id: go-fmt-goimports

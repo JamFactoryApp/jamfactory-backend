@@ -1,15 +1,17 @@
 package queue
 
 import (
+	"sort"
+	"time"
+
 	"github.com/jamfactoryapp/jamfactory-backend/api/types"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/song"
 	"github.com/zmb3/spotify"
-	"sort"
-	"time"
 )
 
 type SpotifyQueue struct {
-	songs []song.Song
+	songs   []song.Song
+	history []song.Song
 }
 
 func NewSpotify() *SpotifyQueue {
@@ -66,6 +68,18 @@ func (q *SpotifyQueue) GetNext() (song.Song, error) {
 	return s, nil
 }
 
+func (q *SpotifyQueue) GetHistory(voteID string) []types.Song {
+	songs := make([]types.Song, 0)
+	for _, s := range q.history {
+		songs = append(songs, types.Song{
+			Song:  s.Song(),
+			Votes: len(s.Votes()),
+			Voted: s.HasVote(voteID),
+		})
+	}
+	return songs
+}
+
 func (q *SpotifyQueue) Vote(songID string, voteID string, s interface{}) error {
 	if q.containsSong(songID) {
 		so := q.songs[q.indexOf(songID)]
@@ -90,6 +104,7 @@ func (q *SpotifyQueue) Advance() error {
 	if len(q.songs) == 0 {
 		return ErrQueueEmpty
 	}
+	q.history = append(q.history, q.songs[0])
 	q.songs = append(q.songs[:0], q.songs[1:]...)
 	return nil
 }

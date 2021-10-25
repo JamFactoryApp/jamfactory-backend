@@ -78,6 +78,10 @@ type GetQueueResponse struct {
 	Tracks []Song `json:"tracks"`
 }
 
+type GetQueueHistoryResponse struct {
+	History []Song `json:"history"`
+}
+
 type PutQueuePlaylistsResponse GetQueueResponse
 type PutQueueVoteResponse GetQueueResponse
 type DeleteQueueSongResponse GetQueueResponse

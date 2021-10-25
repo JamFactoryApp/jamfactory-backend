@@ -59,7 +59,7 @@ func main() {
 	log.Debug("Initialized redis cache")
 
 	// Create JamFactory
-	spotifyJamFactory := jamfactory.NewSpotify(redisCache, conf.SpotifyRedirectURL, conf.SpotifyID, conf.SpotifySecret, conf.ClientAddress.String())
+	spotifyJamFactory := jamfactory.NewSpotify(redisCache, conf.SpotifyRedirectURL, conf.SpotifyID, conf.SpotifySecret, conf.ClientAddresses)
 	log.Debug("Initialized JamFactory")
 
 	// Create app server

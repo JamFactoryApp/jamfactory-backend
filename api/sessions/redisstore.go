@@ -14,8 +14,8 @@ import (
 	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
-	"github.com/jamfactoryapp/jamfactory-backend/internal/ioutils"
 	pkgredis "github.com/jamfactoryapp/jamfactory-backend/internal/redis"
+	"github.com/jamfactoryapp/jamfactory-backend/internal/utils"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -119,7 +119,7 @@ func (s *RedisSessionStore) MaxAge(age int) {
 
 func (s *RedisSessionStore) LoadCookieKeyPairs() {
 	var keyPairs [][]byte
-	if ioutils.FileExists(s.keyPairsFile) {
+	if utils.FileExists(s.keyPairsFile) {
 		keyPairs = s.readCookieKeyPairs()
 	} else {
 		keyPairs = s.generateCookieKeyPairs()
@@ -175,7 +175,7 @@ func (s *RedisSessionStore) readCookieKeyPairs() [][]byte {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer ioutils.CloseProperly(file)
+	defer utils.CloseProperly(file)
 
 	r := bufio.NewReader(file)
 
@@ -203,7 +203,7 @@ func (s *RedisSessionStore) writeCookieKeyPairs(keyPairs [][]byte) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer ioutils.CloseProperly(file)
+	defer utils.CloseProperly(file)
 
 	w := bufio.NewWriter(file)
 

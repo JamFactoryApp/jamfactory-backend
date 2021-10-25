@@ -2,8 +2,11 @@ package jamsession
 
 import (
 	"fmt"
+	"os"
 	"sync"
 	"time"
+
+	"github.com/jamfactoryapp/jamfactory-backend/internal/utils"
 
 	"github.com/gorilla/websocket"
 	"github.com/jamfactoryapp/jamfactory-backend/api/types"
@@ -133,20 +136,15 @@ func (s *SpotifyJamSession) Play(device spotify.PlayerDevice, song song.Song) er
 		return ErrDeviceNotActive
 	}
 
-	track, ok := song.Song().(*spotify.FullTrack)
-	if !ok {
-		return ErrSongMalformed
-	}
-
 	playOptions := spotify.PlayOptions{
-		URIs: []spotify.URI{track.URI},
+		URIs: []spotify.URI{song.Song().URI},
 	}
 
 	err := s.client.PlayOpt(&playOptions)
 	if err != nil {
 		return err
 	}
-	s.currentSong = track
+	s.currentSong = song.Song()
 	if err := s.queue.Advance(); err != nil {
 		return err
 	}
@@ -317,6 +315,38 @@ func (s *SpotifyJamSession) AddCollection(collectionType string, collectionID st
 	}
 	s.SocketQueueUpdate()
 	return nil
+}
+
+func (s *SpotifyJamSession) CreatePlaylist(name string, desc string, ids []spotify.ID) error {
+	user, err := s.client.CurrentUser()
+	if err != nil {
+		return err
+	}
+	playlist, err := s.client.CreatePlaylistForUser(user.ID, name, desc, false)
+	if err != nil {
+		return err
+	}
+	if utils.FileExists("./assets/playlist_cover.png") {
+		file, err := os.Open("./assets/playlist_cover.png")
+		defer utils.CloseProperly(file)
+		if err != nil {
+			return err
+		}
+		err = s.client.SetPlaylistImage(playlist.ID, file)
+		if err != nil {
+			return err
+		}
+	}
+
+	idChunks := utils.SplitsIds(ids, 100)
+	for i := range idChunks {
+		_, err := s.client.AddTracksToPlaylist(playlist.ID, idChunks[i]...)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+
 }
 
 func (s *SpotifyJamSession) GetSong(songID string) (song.Song, error) {

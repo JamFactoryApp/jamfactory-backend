@@ -2,13 +2,14 @@ package jamsession
 
 import (
 	"context"
+	"time"
+
 	"github.com/gorilla/websocket"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/notifications"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/queue"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/song"
 	"github.com/pkg/errors"
 	"github.com/zmb3/spotify"
-	"time"
 )
 
 var (
@@ -59,6 +60,8 @@ type JamSession interface {
 	Search(index string, searchType spotify.SearchType, options *spotify.Options) (interface{}, error)
 	// Playlists TODO
 	Playlists() (*spotify.SimplePlaylistPage, error)
+	// CreatePlaylist TODO
+	CreatePlaylist(name string, desc string, songs []spotify.ID) error
 	// Devices TODO
 	Devices() ([]spotify.PlayerDevice, error)
 	// GetSong TODO

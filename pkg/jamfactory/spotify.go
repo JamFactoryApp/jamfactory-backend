@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -23,12 +24,12 @@ import (
 )
 
 type SpotifyJamFactory struct {
-	authenticator spotify.Authenticator
-	cache         cache.Cache
-	labelManager  jamlabel.Manager
-	jamSessions   map[string]jamsession.JamSession
-	clientAddress string
-	log           *log.Logger
+	authenticator   spotify.Authenticator
+	cache           cache.Cache
+	labelManager    jamlabel.Manager
+	jamSessions     map[string]jamsession.JamSession
+	clientAddresses []*url.URL
+	log             *log.Logger
 }
 
 const (
@@ -42,19 +43,21 @@ var (
 		spotify.ScopeUserReadEmail,
 		spotify.ScopeUserModifyPlaybackState,
 		spotify.ScopeUserReadPlaybackState,
+		spotify.ScopePlaylistModifyPrivate,
+		spotify.ScopeImageUpload,
 	}
 )
 
-func NewSpotify(ca *cache.RedisCache, redirectURL string, clientID string, secretKey string, clientAdress string) server.JamFactory {
+func NewSpotify(ca *cache.RedisCache, redirectURL string, clientID string, secretKey string, clientAddresses []*url.URL) server.JamFactory {
 	a := spotify.NewAuthenticator(redirectURL, scopes...)
 	a.SetAuthInfo(clientID, secretKey)
 	spotifyJamFactory := &SpotifyJamFactory{
-		authenticator: a,
-		cache:         ca,
-		labelManager:  jamlabel.NewDefault(),
-		jamSessions:   make(map[string]jamsession.JamSession),
-		clientAddress: clientAdress,
-		log:           logutils.NewDefault(),
+		authenticator:   a,
+		cache:           ca,
+		labelManager:    jamlabel.NewDefault(),
+		jamSessions:     make(map[string]jamsession.JamSession),
+		clientAddresses: clientAddresses,
+		log:             logutils.NewDefault(),
 	}
 	go spotifyJamFactory.Housekeeper()
 	return spotifyJamFactory
@@ -191,6 +194,6 @@ func (s *SpotifyJamFactory) Search(jamSession jamsession.JamSession, t string, t
 	return result, nil
 }
 
-func (s *SpotifyJamFactory) ClientAddress() string {
-	return s.clientAddress
+func (s *SpotifyJamFactory) ClientAddresses() []*url.URL {
+	return s.clientAddresses
 }

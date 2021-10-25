@@ -1,10 +1,11 @@
 package queue
 
 import (
+	"sort"
+
 	"github.com/jamfactoryapp/jamfactory-backend/api/types"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/song"
 	"github.com/pkg/errors"
-	"sort"
 )
 
 var (
@@ -27,6 +28,8 @@ type Queue interface {
 	Advance() error
 	// Advance returns the first song in this Queue
 	GetNext() (song.Song, error)
+	// GetHistory returns the history of the Queue
+	GetHistory(voteID string) []types.Song
 	// Vote toggles a vote on a song in this Queue
 	Vote(songID string, voteID string, song interface{}) error
 	// Delete deletes a song from this Queue
