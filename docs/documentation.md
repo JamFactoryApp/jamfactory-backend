@@ -775,7 +775,7 @@ URL: jamfactory.app/api/v1/jam/play
 
 | key         | value type          | value description                                                                                                                                    |
 | ----------- | ------------------- | ---------------------------------------------------                                                                                                  |
-| ``track``   | string *required*   | *Spotify ID* of the track. See [Spotify Track Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#track-object-full) |
+| ``track``   | string              | *Spotify ID* of the track. See [Spotify Track Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#track-object-full) |
 | ``remove``  | boolean             | Remove the song, if present, from the current queue                                                                                                  |
 
 
