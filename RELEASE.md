@@ -12,8 +12,9 @@
 * :sparkles: Keep track which members have joined a JamSession. Each member is linked to a User.
   See [What are Members](./docs/documentation.md#what-is-a-member)
 * :sparkles: Add rights management for the joined members. See [Member Rights](./docs/documentation.md#member-rights). Currently, there is no way to remove members from the JamSession.
-* :sparkles: Keep history of the played songs of a JamSession
-* :sparkles: You can now export the history and queued songs of a JamSession to a Spotify Playlist
+* :sparkles: Keep history of the played songs of a JamSession.
+* :sparkles: You can now export the history and queued songs of a JamSession to a Spotify Playlist.
+* :lock: Access to a JamSession can now be protected with a password.
 
 ### Features Removed
 
@@ -41,6 +42,9 @@
   request and response.
 * :sparkles: Add [``GET: /api/v1/queue/history``](./docs/documentation.md#5-get-the-played-song-history-of-the-jamsession-joined-by-the-user) to get the history of the JamSession.
 * :sparkles: Add [``PUT: /api/v1/queue/export``](./docs/documentation.md#6-export-the-queue-to-a-playlist) to export the queue to a Playlist.
+* :heavy_plus_sign: Add optional ``password`` key to [``PUT: /api/v1/jam``](./docs/documentation.md#7-set-the-information-of-the-jamsession-joined-by-the-user) request to set the password of a JamSession. 
+* :heavy_plus_sign: Add ``password`` key to [``PUT: /api/v1/jam/join``](./docs/documentation.md#4-join-an-existing-jamsession) request. 
+
 
 ### Websocket Changes
 
