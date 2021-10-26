@@ -442,11 +442,11 @@ URL: jamfactory.app/api/v1/jam
 
 ***Response Body (JSON):***
 
-| key          | value type          | value description                                                                                           |
-| -----------  | ------------------- | ----------------------------------------------------------------------------------------------------------- |
-| ``label``    | string              | *JamLabel* of the currently joined *JamSession*                                                             |
-| ``name``     | string              | *Name* of the currently joined *JamSession*                                                                 |
-| ``active``   | bool                | *State* of the currently joined *JamSession*. See [JamSession State](#jamsession-state)                     |
+| key         | value type          | value description                                                                                           |
+| ----------- | ------------------- | ----------------------------------------------------------------------------------------------------------- |
+| ``label``   | string              | *JamLabel* of the currently joined *JamSession*                                                             |
+| ``name``    | string              | *Name* of the currently joined *JamSession*                                                                 |
+| ``active``  | bool                | *State* of the currently joined *JamSession*. See [JamSession State](#jamsession-state)                     |
 
 ```json
 {
@@ -490,8 +490,7 @@ URL: jamfactory.app/api/v1/jam/playback
 ***Description***
 
 Join an existing JamSession. The user will join the JamSession as a guest.
-The information if a JamSession requires a password can be obtained by trying to join the JamSession without a password.
-If the request results in a ``Error: wrong password`` a password is required and a second join attempt with the password included can be done.
+The default password for a JamSession is an empty string ``"""``.
 
 ***Endpoint:***
 
@@ -504,8 +503,8 @@ URL: jamfactory.app/api/v1/jam/join
 
 | key          | value type          | value description                                            |
 | -----------  | ------------------- | ---------------------------------------------------          |
-| ``label``    | string    | The *JamLabel* of the *JamSession* the *User* wants to join. |
-| ``password`` | string    | The *Password* of the *JamSession* the *User* wants to join. |
+| ``label``    | string              | The *JamLabel* of the *JamSession* the *User* wants to join. |
+| ``password`` | string              | The *Password* of the *JamSession* the *User* wants to join. |
 
 ```json
 {
@@ -627,11 +626,11 @@ URL: jamfactory.app/api/v1/jam
 
 ***Response Body (JSON):***
 
-| key          | value type          | value description                                                                                           |
-| -----------  | ------------------- | ----------------------------------------------------------------------------------------------------------- |
-| ``label``    | string              | *JamLabel* of the currently joined *JamSession*                                                             |
-| ``name``     | string              | *Name* of the currently joined *JamSession*                                                                 |
-| ``active``   | string              | *State* of the currently joined *JamSession*. See [JamSession State](#jamsession-state)                     |
+| key         | value type          | value description                                                                                           |
+| ----------- | ------------------- | ----------------------------------------------------------------------------------------------------------- |
+| ``label``   | string              | *JamLabel* of the currently joined *JamSession*                                                             |
+| ``name``    | string              | *Name* of the currently joined *JamSession*                                                                 |
+| ``active``  | string              | *State* of the currently joined *JamSession*. See [JamSession State](#jamsession-state)                     |
 ```json
 {
   "label": "TPMU4",
@@ -1117,11 +1116,11 @@ The setting of the JamSession changed.
 
 ***Message (JSON):***
 
-| key          | value type          | value description                                                                                                       |
-| -----------  | ------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| ``label``    | string              | *JamLabel* of the *JamSession* currently joined by the user.                                                            |
-| ``name``     | string              | *Name* of the *JamSession* currently joined by the user.                                                                |
-| ``active``   | boolean             | *State* of the *JamSession* currently joined by the user. See [JamSession State](#jamsession-state)                     |
+| key         | value type          | value description                                                                                                       |
+| ----------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| ``label``   | string              | *JamLabel* of the *JamSession* currently joined by the user.                                                            |
+| ``name``    | string              | *Name* of the *JamSession* currently joined by the user.                                                                |
+| ``active``  | boolean             | *State* of the *JamSession* currently joined by the user. See [JamSession State](#jamsession-state)                     |
 
 ```json
 {
