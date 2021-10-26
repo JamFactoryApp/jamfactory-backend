@@ -99,10 +99,9 @@ func (s *Server) getJamSession(w http.ResponseWriter, r *http.Request) {
 	jamSession := s.CurrentJamSession(r)
 
 	utils.EncodeJSONBody(w, types.GetJamResponse{
-		Label:    jamSession.JamLabel(),
-		Name:     jamSession.Name(),
-		Active:   jamSession.Active(),
-		Password: jamSession.Password() != "",
+		Label:  jamSession.JamLabel(),
+		Name:   jamSession.Name(),
+		Active: jamSession.Active(),
 	})
 
 }
@@ -148,17 +147,15 @@ func (s *Server) setJamSession(w http.ResponseWriter, r *http.Request) {
 	jamSession.NotifyClients(&notifications.Message{
 		Event: notifications.Jam,
 		Message: types.SocketJamMessage{
-			Label:    jamSession.JamLabel(),
-			Name:     jamSession.Name(),
-			Active:   jamSession.Active(),
-			Password: jamSession.Password() != "",
+			Label:  jamSession.JamLabel(),
+			Name:   jamSession.Name(),
+			Active: jamSession.Active(),
 		},
 	})
 	utils.EncodeJSONBody(w, types.GetJamResponse{
-		Label:    jamSession.JamLabel(),
-		Name:     jamSession.Name(),
-		Active:   jamSession.Active(),
-		Password: jamSession.Password() != "",
+		Label:  jamSession.JamLabel(),
+		Name:   jamSession.Name(),
+		Active: jamSession.Active(),
 	})
 }
 
@@ -245,16 +242,9 @@ func (s *Server) joinJamSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the password is correct
-	log.Info(jamSession.Password(), body.Password.Value)
-	if jamSession.Password() != "" {
-		if !(body.Password.Set && body.Password.Valid) {
-			s.errUnauthorized(w, apierrors.ErrWrongPassword, log.DebugLevel)
-			return
-		}
-		if body.Password.Value != jamSession.Password() {
-			s.errUnauthorized(w, apierrors.ErrWrongPassword, log.DebugLevel)
-			return
-		}
+	if body.Password != jamSession.Password() {
+		s.errUnauthorized(w, apierrors.ErrWrongPassword, log.DebugLevel)
+		return
 	}
 
 	//Check if a user for the request already exits

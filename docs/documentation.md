@@ -403,7 +403,7 @@ URL: jamfactory.app/api/v1/me
 ***Description***
 
 Create a new JamSession. Requires the user to be authorized by Spotify. The user will join the JamSession as the host.
-
+The default password for a newly created JamSession is an empty string.
 ***Endpoint:***
 
 ```bash
@@ -447,15 +447,12 @@ URL: jamfactory.app/api/v1/jam
 | ``label``    | string              | *JamLabel* of the currently joined *JamSession*                                                             |
 | ``name``     | string              | *Name* of the currently joined *JamSession*                                                                 |
 | ``active``   | bool                | *State* of the currently joined *JamSession*. See [JamSession State](#jamsession-state)                     |
-| ``password`` | bool                | Indicate if the *JamSession* is password protected.                                                         |
-
 
 ```json
 {
   "label": "TPMU4",
   "name": "Joe's Birthday Party",
-  "active": true,
-  "password": false
+  "active": true
 }
 ```
 
@@ -507,12 +504,13 @@ URL: jamfactory.app/api/v1/jam/join
 
 | key          | value type          | value description                                            |
 | -----------  | ------------------- | ---------------------------------------------------          |
-| ``label``    | string *required*   | The *JamLabel* of the *JamSession* the *User* wants to join. |
-| ``password`` | string *optional*   | The *Password* of the *JamSession* the *User* wants to join. |
+| ``label``    | string    | The *JamLabel* of the *JamSession* the *User* wants to join. |
+| ``password`` | string    | The *Password* of the *JamSession* the *User* wants to join. |
 
 ```json
 {
-  "label": "KWXBZ"
+  "label": "KWXBZ",
+  "password": "Birthday"
 }
 ```
 
@@ -634,16 +632,14 @@ URL: jamfactory.app/api/v1/jam
 | ``label``    | string              | *JamLabel* of the currently joined *JamSession*                                                             |
 | ``name``     | string              | *Name* of the currently joined *JamSession*                                                                 |
 | ``active``   | string              | *State* of the currently joined *JamSession*. See [JamSession State](#jamsession-state)                     |
-| ``password`` | bool                | Indicate if the *JamSession* is password protected.                                                         |
-
 ```json
 {
   "label": "TPMU4",
   "name": "Joe's Birthday Party",
-  "active": true,
-  "password": true
+  "active": true
 }
 ```
+
 #### 8. Get the Members of the JamSession joined by the user
 
 ***Description***
@@ -1126,14 +1122,12 @@ The setting of the JamSession changed.
 | ``label``    | string              | *JamLabel* of the *JamSession* currently joined by the user.                                                            |
 | ``name``     | string              | *Name* of the *JamSession* currently joined by the user.                                                                |
 | ``active``   | boolean             | *State* of the *JamSession* currently joined by the user. See [JamSession State](#jamsession-state)                     |
-| ``password`` | bool                | Indicate if the *JamSession* is password protected.                                                                     |
 
 ```json
 {
   "label": "TPMU4",
   "name": "Joe's Birthday Party",
-  "active": true,
-  "password": false
+  "active": true
 }
 ```
 

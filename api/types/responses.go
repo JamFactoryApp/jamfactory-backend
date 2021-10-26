@@ -8,10 +8,9 @@ import (
 // general
 
 type JamResponse struct {
-	Label    string `json:"label"`
-	Name     string `json:"name"`
-	Active   bool   `json:"active"`
-	Password bool   `json:"password"`
+	Label  string `json:"label"`
+	Name   string `json:"name"`
+	Active bool   `json:"active"`
 }
 
 type JamMember struct {

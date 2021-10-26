@@ -4,8 +4,8 @@ package types
 // general
 
 type JoinRequest struct {
-	Label    string     `json:"label"`
-	Password JSONString `json:"password,omitempty"`
+	Label    string `json:"label"`
+	Password string `json:"password"`
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
