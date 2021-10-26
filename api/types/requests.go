@@ -3,8 +3,9 @@ package types
 // ---------------------------------------------------------------------------------------------------------------------
 // general
 
-type LabelRequest struct {
-	Label string `json:"label"`
+type JoinRequest struct {
+	Label    string `json:"label"`
+	Password string `json:"password"`
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -41,8 +42,9 @@ type DeleteQueueSongRequest struct {
 // jamsession controller
 
 type PutJamRequest struct {
-	Name   JSONString `json:"name,omitempty"`
-	Active JSONBool   `json:"active,omitempty"`
+	Name     JSONString `json:"name,omitempty"`
+	Active   JSONBool   `json:"active,omitempty"`
+	Password JSONString `json:"password,omitempty"`
 }
 
 type PutJamPlaybackRequest struct {
@@ -62,7 +64,7 @@ type JamPlaySongRequest struct {
 
 type PutJamMemberRequest JamMemberRequest
 type PutPlaySongRequest JamPlaySongRequest
-type PutJamJoinRequest LabelRequest
+type PutJamJoinRequest JoinRequest
 
 // ---------------------------------------------------------------------------------------------------------------------
 // user controller

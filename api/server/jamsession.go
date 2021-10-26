@@ -139,6 +139,11 @@ func (s *Server) setJamSession(w http.ResponseWriter, r *http.Request) {
 	if body.Name.Set && body.Name.Valid {
 		jamSession.SetName(body.Name.Value)
 	}
+
+	if body.Password.Set && body.Password.Valid {
+		jamSession.SetPassword(body.Password.Value)
+	}
+
 	jamSession.NotifyClients(&notifications.Message{
 		Event: notifications.Jam,
 		Message: types.SocketJamMessage{
@@ -263,6 +268,12 @@ func (s *Server) joinJamSession(w http.ResponseWriter, r *http.Request) {
 	jamSession, err := s.jamFactory.GetJamSessionByLabel(jamLabel)
 	if err != nil {
 		s.errInternalServerError(w, err, log.DebugLevel)
+		return
+	}
+
+	// Check if the password is correct
+	if body.Password != jamSession.Password() {
+		s.errUnauthorized(w, apierrors.ErrWrongPassword, log.DebugLevel)
 		return
 	}
 
