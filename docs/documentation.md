@@ -572,11 +572,13 @@ URL: jamfactory.app/api/v1/jam/playback
 | -----------   | ------------------- | --------------------------------------------------- |
 | ``device_id`` | string *optional*   | *Device ID* of the playback device.                 |
 | ``playing``   | boolean *optional*  | *Playback state*. ``True``= Play ``False`` = Pause  |
+| ``volume``    | number *optional*   | Playback volume in percent 0 - 100                  |
 
 ```json
 {
   "device_id": "abc123456",
-  "playing": false
+  "playing": false,
+  "volume": 60
 }
 ```
 
@@ -753,6 +755,48 @@ URL: jamfactory.app/api/v1/jam/members
 }
 ```
 
+#### 10. Play a song for the JamSession joined by the user
+
+***Description***
+
+Directly play a song for the JamSession joined by the user without corrupting the queue or changing the state.
+A skip functionality can be implemented when setting the key ``delete`` to ``true`` and playing the song on top of the queue.
+
+Requires the user to be the host of a JamSession.
+
+***Endpoint:***
+
+```bash
+Method: PUT
+URL: jamfactory.app/api/v1/jam/play
+```
+
+***Request Body (JSON):***
+
+| key         | value type          | value description                                                                                                                                    |
+| ----------- | ------------------- | ---------------------------------------------------                                                                                                  |
+| ``track``   | string *required*   | *Spotify ID* of the track. See [Spotify Track Object](https://developer.spotify.com/documentation/web-api/reference/object-model/#track-object-full) |
+| ``remove``  | boolean             | Remove the song, if present, from the current queue                                                                                                  |
+
+
+```json
+{
+  "track": "2374M0fQpWi3dLnB54qaLX",
+  "remove": true
+}
+```
+
+***Response Body (JSON):***
+
+| key         | value type          | value description                                   |
+| ----------- | ------------------- | --------------------------------------------------- |
+| ``success`` | boolean             | Result of the operation.                            |
+
+```json
+{
+  "success": true
+}
+```
 
 ### Queue
 

@@ -15,6 +15,9 @@
 * :sparkles: Keep history of the played songs of a JamSession.
 * :sparkles: You can now export the history and queued songs of a JamSession to a Spotify Playlist.
 * :lock: Access to a JamSession can now be protected with a password.
+* :sparkles: You can now control the playback volume directly from JamFactory.
+* :sparkles: Option to directly play a song without chaining the queue or state.
+* :sparkles: Option to skip the current playback to any song in the queue.
 
 ### Features Removed
 
@@ -35,7 +38,7 @@
 * :sparkles: Add [``PUT: /api/v1/me``](./docs/documentation.md#2-set-the-current-user-information) to set the current user information.
 * :sparkles: Add [``DELETE: /api/v1/me``](./docs/documentation.md#3-delete-the-current-user-information) to delete the current user information.
 * :sparkles: Add [``GET: /api/v1/jam/members``](./docs/documentation.md#8-get-the-members-of-the-jamsession-joined-by-the-user) to get the joined members of the JamSession.
-* :sparkles: Add [``SET: /api/v1/jam/members``](./docs/documentation.md#9-set-the-members-of-the-jamsession-joined-by-the-user) to set the joined members of the JamSession.
+* :sparkles: Add [``PUT: /api/v1/jam/members``](./docs/documentation.md#9-set-the-members-of-the-jamsession-joined-by-the-user) to set the joined members of the JamSession.
 * :boom: Remove ``voting_type`` key from [``GET: /api/v1/jam``](./docs/documentation.md#2-get-the-information-of-the-jamsession-joined-by-the-user)
   response.
 * :boom: Remove ``voting_type`` key from [``PUT: /api/v1/jam``](./docs/documentation.md#2-get-the-information-of-the-jamsession-joined-by-the-user)
@@ -44,6 +47,8 @@
 * :sparkles: Add [``PUT: /api/v1/queue/export``](./docs/documentation.md#6-export-the-queue-to-a-playlist) to export the queue to a Playlist.
 * :heavy_plus_sign: Add optional ``password`` key to [``PUT: /api/v1/jam``](./docs/documentation.md#7-set-the-information-of-the-jamsession-joined-by-the-user) request to set the password of a JamSession. 
 * :heavy_plus_sign: Add ``password`` key to [``PUT: /api/v1/jam/join``](./docs/documentation.md#4-join-an-existing-jamsession) request. 
+* :heavy_plus_sign: Add ``volume`` key to [``PUT: /api/v1/jam/playback``](./docs/documentation.md#6-set-playback-of-the-jamsession-joined-by-the-user) request. 
+* :sparkles: Add [``PUT: /api/v1/jam/play``](./docs/documentation.md#10-play-a-song-for-the-jamsession-joined-by-the-user) to directly play or skip a song.
 
 
 ### Websocket Changes
