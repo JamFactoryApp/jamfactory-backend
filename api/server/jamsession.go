@@ -190,12 +190,14 @@ func (s *Server) setPlayback(w http.ResponseWriter, r *http.Request) {
 	if body.Volume.Set && body.Volume.Valid {
 		if err := jamSession.SetVolume(body.Volume.Value); err != nil {
 			s.errInternalServerError(w, err, log.DebugLevel)
+			return
 		}
 	}
 
 	if body.DeviceID.Set && body.DeviceID.Valid {
 		if err := jamSession.SetDevice(body.DeviceID.Value); err != nil {
 			s.errInternalServerError(w, err, log.DebugLevel)
+			return
 		}
 	}
 
