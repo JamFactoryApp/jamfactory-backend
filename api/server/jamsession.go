@@ -219,9 +219,8 @@ func (s *Server) playSong(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.EncodeJSONBody(w, types.PutJamPlaybackResponse{
-		Playback: jamSession.GetPlayerState(),
-		DeviceID: jamSession.GetDevice().ID,
+	utils.EncodeJSONBody(w, types.SuccessResponse{
+		Success: true,
 	})
 }
 
