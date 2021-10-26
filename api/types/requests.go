@@ -55,8 +55,13 @@ type JamMemberRequest struct {
 	Members []JamMember `json:"members"`
 }
 
-type PutJamMemberRequest JamMemberRequest
+type JamPlaySongRequest struct {
+	TrackID string `json:"track"`
+	Remove  bool   `json:"remove"`
+}
 
+type PutJamMemberRequest JamMemberRequest
+type PutPlaySongRequest JamPlaySongRequest
 type PutJamJoinRequest LabelRequest
 
 // ---------------------------------------------------------------------------------------------------------------------
