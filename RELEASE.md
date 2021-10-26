@@ -14,7 +14,7 @@
 * :sparkles: Add rights management for the joined members. See [Member Rights](./docs/documentation.md#member-rights). Currently, there is no way to remove members from the JamSession.
 * :sparkles: Keep history of the played songs of a JamSession.
 * :sparkles: You can now export the history and queued songs of a JamSession to a Spotify Playlist.
-* ::lock:: Access to a JamSession can now be protected with a password.
+* :lock: Access to a JamSession can now be protected with a password.
 
 ### Features Removed
 
