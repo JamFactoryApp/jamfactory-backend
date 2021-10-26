@@ -43,7 +43,7 @@
 * :sparkles: Add [``GET: /api/v1/queue/history``](./docs/documentation.md#5-get-the-played-song-history-of-the-jamsession-joined-by-the-user) to get the history of the JamSession.
 * :sparkles: Add [``PUT: /api/v1/queue/export``](./docs/documentation.md#6-export-the-queue-to-a-playlist) to export the queue to a Playlist.
 * :heavy_plus_sign: Add optional ``password`` key to [``PUT: /api/v1/jam``](./docs/documentation.md#7-set-the-information-of-the-jamsession-joined-by-the-user) request to set the password of a JamSession. 
-* :heavy_plus_sign: Add ``password`` key to [``PUT: /api/v1/jam/join``](./docs/documentation.md#4-join-an-existing-jamsession) request to join a password protected JamSession. 
+* :heavy_plus_sign: Add ``password`` key to [``PUT: /api/v1/jam/join``](./docs/documentation.md#4-join-an-existing-jamsession) request. 
 
 
 ### Websocket Changes
