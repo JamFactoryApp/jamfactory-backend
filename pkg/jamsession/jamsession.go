@@ -34,6 +34,10 @@ type JamSession interface {
 	Active() bool
 	// SetActive activates or deactivates this JamSession
 	SetActive(active bool)
+	// Password returns the current password for the JamSession
+	Password() string
+	// SetPassword sets the current password for the JamSession
+	SetPassword(password string)
 	// Timestamp returns the last timestamp set for the JamSession
 	Timestamp() time.Time
 	// SetTimestamp updates the timestamp of the JamSession

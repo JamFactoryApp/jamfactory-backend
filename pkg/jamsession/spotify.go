@@ -33,6 +33,7 @@ type SpotifyJamSession struct {
 	jamLabel       string
 	name           string
 	active         bool
+	password       string
 	members        Members
 	updateInterval time.Duration
 	lastTimestamp  time.Time
@@ -67,6 +68,7 @@ func NewSpotify(host *users.User, client spotify.Client, label string) (JamSessi
 		jamLabel:       label,
 		name:           fmt.Sprintf("%s's JamSession", u.DisplayName),
 		active:         false,
+		password:       "",
 		members:        members,
 		updateInterval: time.Second,
 		lastTimestamp:  time.Now(),
@@ -165,6 +167,16 @@ func (s *SpotifyJamSession) Name() string {
 
 func (s *SpotifyJamSession) Active() bool {
 	return s.active
+}
+
+func (s *SpotifyJamSession) Password() string {
+	return s.password
+}
+
+func (s *SpotifyJamSession) SetPassword(password string) {
+	s.Lock()
+	defer s.Unlock()
+	s.password = password
 }
 
 func (s *SpotifyJamSession) Timestamp() time.Time {

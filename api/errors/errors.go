@@ -6,6 +6,7 @@ import (
 
 var (
 	ErrJamSessionNotFound    = errors.New("no JamSession found")
+	ErrWrongPassword         = errors.New("wrong password")
 	ErrSearchResultMalformed = errors.New("malformed search result")
 	ErrSearchTypeInvalid     = errors.New("invalid search type")
 	ErrSessionCouldNotSave   = errors.New("could not save session")
