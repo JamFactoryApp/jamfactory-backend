@@ -47,6 +47,7 @@ type PutJamRequest struct {
 
 type PutJamPlaybackRequest struct {
 	Playing  JSONBool   `json:"playing,omitempty"`
+	Volume   JSONInt    `json:"volume,omitempty"`
 	DeviceID JSONString `json:"device_id,omitempty"`
 }
 

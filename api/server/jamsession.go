@@ -126,7 +126,7 @@ func (s *Server) setJamSession(w http.ResponseWriter, r *http.Request) {
 				s.errBadRequest(w, apierrors.ErrNoDevice, log.DebugLevel)
 				return
 			}
-			jamSession.Play(jamSession.GetDevice(), song)
+			jamSession.Play(jamSession.GetDevice(), song, true)
 			message := types.GetQueueResponse{Tracks: jamSession.Queue().Tracks()}
 			jamSession.NotifyClients(&notifications.Message{
 				Event:   notifications.Queue,
@@ -180,6 +180,12 @@ func (s *Server) setPlayback(w http.ResponseWriter, r *http.Request) {
 		playerState := jamSession.GetPlayerState()
 		playerState.Playing = body.Playing.Value
 		jamSession.SetPlayerState(playerState)
+	}
+
+	if body.Volume.Set && body.Volume.Valid {
+		if err := jamSession.SetVolume(body.Volume.Value); err != nil {
+			s.errInternalServerError(w, err, log.DebugLevel)
+		}
 	}
 
 	if body.DeviceID.Set && body.DeviceID.Valid {

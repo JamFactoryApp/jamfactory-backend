@@ -112,7 +112,7 @@ func (s *SpotifyJamSession) Conductor() {
 				switch err {
 				case nil:
 					if (!s.player.Playing && s.player.Progress == 0) || (s.player.Item != nil && s.player.Progress > s.player.Item.Duration-1000) {
-						if err := s.Play(s.player.Device, so); err != nil {
+						if err := s.Play(s.player.Device, so, true); err != nil {
 							log.Error(err)
 							continue
 						}
@@ -131,7 +131,7 @@ func (s *SpotifyJamSession) Conductor() {
 	}
 }
 
-func (s *SpotifyJamSession) Play(device spotify.PlayerDevice, song song.Song) error {
+func (s *SpotifyJamSession) Play(device spotify.PlayerDevice, song song.Song, remove bool) error {
 	if !device.Active {
 		return ErrDeviceNotActive
 	}
@@ -145,7 +145,18 @@ func (s *SpotifyJamSession) Play(device spotify.PlayerDevice, song song.Song) er
 		return err
 	}
 	s.currentSong = song.Song()
-	if err := s.queue.Advance(); err != nil {
+	if remove {
+		if err := s.queue.Delete(song.Song().ID.String()); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *SpotifyJamSession) SetVolume(percent int) error {
+	err := s.client.Volume(percent)
+	if err != nil {
 		return err
 	}
 	return nil
