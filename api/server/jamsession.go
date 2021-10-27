@@ -126,7 +126,7 @@ func (s *Server) setJamSession(w http.ResponseWriter, r *http.Request) {
 				s.errBadRequest(w, apierrors.ErrNoDevice, log.DebugLevel)
 				return
 			}
-			jamSession.Play(jamSession.GetDevice(), song)
+			jamSession.Play(jamSession.GetDevice(), song.Song(), true)
 			message := types.GetQueueResponse{Tracks: jamSession.Queue().Tracks()}
 			jamSession.NotifyClients(&notifications.Message{
 				Event:   notifications.Queue,
@@ -187,15 +187,47 @@ func (s *Server) setPlayback(w http.ResponseWriter, r *http.Request) {
 		jamSession.SetPlayerState(playerState)
 	}
 
+	if body.Volume.Set && body.Volume.Valid {
+		if err := jamSession.SetVolume(body.Volume.Value); err != nil {
+			s.errInternalServerError(w, err, log.DebugLevel)
+			return
+		}
+	}
+
 	if body.DeviceID.Set && body.DeviceID.Valid {
 		if err := jamSession.SetDevice(body.DeviceID.Value); err != nil {
 			s.errInternalServerError(w, err, log.DebugLevel)
+			return
 		}
 	}
 
 	utils.EncodeJSONBody(w, types.PutJamPlaybackResponse{
 		Playback: jamSession.GetPlayerState(),
 		DeviceID: jamSession.GetDevice().ID,
+	})
+}
+
+func (s *Server) playSong(w http.ResponseWriter, r *http.Request) {
+	var body types.PutPlaySongRequest
+	if err := utils.DecodeJSONBody(w, r, &body); err != nil {
+		s.errBadRequest(w, err, log.DebugLevel)
+		return
+	}
+
+	jamSession := s.CurrentJamSession(r)
+	track, err := jamSession.GetTrack(body.TrackID)
+	if err != nil {
+		s.errInternalServerError(w, err, log.DebugLevel)
+		return
+	}
+
+	if err := jamSession.Play(jamSession.GetDevice(), track, body.Remove); err != nil {
+		s.errInternalServerError(w, err, log.DebugLevel)
+		return
+	}
+
+	utils.EncodeJSONBody(w, types.SuccessResponse{
+		Success: true,
 	})
 }
 

@@ -24,9 +24,9 @@ type Queue interface {
 	Tracks() []types.Song
 	// For returns the ordered list of songs from a specific user's perspective
 	For(voteID string) []types.Song
-	// Advance removes the first song in this Queue
+	// Advance advances the Queue
 	Advance() error
-	// Advance returns the first song in this Queue
+	// GetNext returns the first song in this Queue
 	GetNext() (song.Song, error)
 	// GetHistory returns the history of the Queue
 	GetHistory(voteID string) []types.Song

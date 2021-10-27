@@ -38,6 +38,7 @@ type SpotifyJamSession struct {
 	updateInterval time.Duration
 	lastTimestamp  time.Time
 	currentSong    *spotify.FullTrack
+	synchronized   bool
 	client         spotify.Client
 	player         *spotify.PlayerState
 	queue          *queue.SpotifyQueue
@@ -73,6 +74,7 @@ func NewSpotify(host *users.User, client spotify.Client, label string) (JamSessi
 		updateInterval: time.Second,
 		lastTimestamp:  time.Now(),
 		currentSong:    nil,
+		synchronized:   false,
 		client:         client,
 		player:         playerState,
 		queue:          queue.NewSpotify(),
@@ -86,6 +88,7 @@ func NewSpotify(host *users.User, client spotify.Client, label string) (JamSessi
 
 func (s *SpotifyJamSession) Conductor() {
 	ticker := time.NewTicker(s.updateInterval)
+	syncCount := 0
 	defer ticker.Stop()
 	for {
 		select {
@@ -101,8 +104,15 @@ func (s *SpotifyJamSession) Conductor() {
 				continue
 			}
 			s.SetPlayerState(playerState)
+			if !s.synchronized {
+				syncCount++
+				if syncCount >= 3 {
+					s.synchronized = true
+					syncCount = 0
+				}
+			}
 			// Check if the user started a song
-			if s.player.Item != nil && s.currentSong != nil && s.player.Item.ID != s.currentSong.ID {
+			if s.synchronized && s.player.Item != nil && s.currentSong != nil && s.player.Item.ID != s.currentSong.ID {
 				s.SetActive(false)
 				s.currentSong = nil
 				s.SocketJamUpdate()
@@ -114,12 +124,11 @@ func (s *SpotifyJamSession) Conductor() {
 				switch err {
 				case nil:
 					if (!s.player.Playing && s.player.Progress == 0) || (s.player.Item != nil && s.player.Progress > s.player.Item.Duration-1000) {
-						if err := s.Play(s.player.Device, so); err != nil {
+						if err := s.Play(s.player.Device, so.Song(), true); err != nil {
 							log.Error(err)
 							continue
 						}
 						s.SetTimestamp(time.Now())
-						s.SocketQueueUpdate()
 					}
 				case queue.ErrQueueEmpty:
 					continue
@@ -133,21 +142,37 @@ func (s *SpotifyJamSession) Conductor() {
 	}
 }
 
-func (s *SpotifyJamSession) Play(device spotify.PlayerDevice, song song.Song) error {
+func (s *SpotifyJamSession) Play(device spotify.PlayerDevice, track *spotify.FullTrack, remove bool) error {
+	s.Lock()
+	defer s.Unlock()
 	if !device.Active {
 		return ErrDeviceNotActive
 	}
 
 	playOptions := spotify.PlayOptions{
-		URIs: []spotify.URI{song.Song().URI},
+		URIs: []spotify.URI{track.URI},
 	}
 
+	s.synchronized = false
 	err := s.client.PlayOpt(&playOptions)
 	if err != nil {
 		return err
 	}
-	s.currentSong = song.Song()
-	if err := s.queue.Advance(); err != nil {
+	s.currentSong = track
+	if remove {
+		if err := s.queue.Delete(track.ID.String()); err != nil {
+			return err
+		}
+	}
+
+	s.SocketQueueUpdate()
+
+	return nil
+}
+
+func (s *SpotifyJamSession) SetVolume(percent int) error {
+	err := s.client.Volume(percent)
+	if err != nil {
 		return err
 	}
 	return nil
@@ -371,7 +396,7 @@ func (s *SpotifyJamSession) GetSong(songID string) (song.Song, error) {
 }
 
 func (s *SpotifyJamSession) Vote(songID string, voteID string) error {
-	track, err := s.getTrack(songID)
+	track, err := s.GetTrack(songID)
 	if err != nil {
 		return err
 	}
@@ -416,7 +441,7 @@ func (s *SpotifyJamSession) DeleteSong(songID string) error {
 	return nil
 }
 
-func (s *SpotifyJamSession) getTrack(trackID string) (*spotify.FullTrack, error) {
+func (s *SpotifyJamSession) GetTrack(trackID string) (*spotify.FullTrack, error) {
 	return s.client.GetTrack(spotify.ID(trackID))
 }
 

@@ -58,8 +58,10 @@ type JamSession interface {
 	Vote(songID string, voteID string) error
 	// DeleteSong removes a song from this JamSession's queue
 	DeleteSong(songID string) error
-	// Play plays a song
-	Play(device spotify.PlayerDevice, song song.Song) error
+	// Play plays a song. If remove is true, the song will be removed from the queue
+	Play(device spotify.PlayerDevice, track *spotify.FullTrack, remove bool) error
+	// SetVolume set the current volume
+	SetVolume(percent int) error
 	// Search TODO
 	Search(index string, searchType spotify.SearchType, options *spotify.Options) (interface{}, error)
 	// Playlists TODO
@@ -72,6 +74,8 @@ type JamSession interface {
 	GetSong(songID string) (song.Song, error)
 	// CurrentSong TODO
 	CurrentSong() *spotify.FullTrack
+	// GetTrack TODO
+	GetTrack(trackID string) (*spotify.FullTrack, error)
 	// GetPlayerState TODO
 	GetPlayerState() *spotify.PlayerState
 	// SetPlayerState TODO

@@ -49,6 +49,7 @@ type PutJamRequest struct {
 
 type PutJamPlaybackRequest struct {
 	Playing  JSONBool   `json:"playing,omitempty"`
+	Volume   JSONInt    `json:"volume,omitempty"`
 	DeviceID JSONString `json:"device_id,omitempty"`
 }
 
@@ -56,8 +57,13 @@ type JamMemberRequest struct {
 	Members []JamMember `json:"members"`
 }
 
-type PutJamMemberRequest JamMemberRequest
+type JamPlaySongRequest struct {
+	TrackID string `json:"track"`
+	Remove  bool   `json:"remove"`
+}
 
+type PutJamMemberRequest JamMemberRequest
+type PutPlaySongRequest JamPlaySongRequest
 type PutJamJoinRequest JoinRequest
 
 // ---------------------------------------------------------------------------------------------------------------------
