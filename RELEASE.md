@@ -6,6 +6,7 @@
 
 ### Features Added
 
+* :zap: Reduce conductor api calls by 78%
 * :sparkles: Add User support and store all user information persistent in the redis database. No longer save spotify token is the session.
   See [What are Users](./docs/documentation.md#what-is-a-user)
 * :sparkles: Add User management to get, set and delete your current user.
@@ -18,7 +19,6 @@
 * :sparkles: You can now control the playback volume directly from JamFactory.
 * :sparkles: Option to directly play a song without chaining the queue or state.
 * :sparkles: Option to skip the current playback to any song in the queue.
-
 ### Features Removed
 
 * :boom: Remove support for IP and Session voting. Remove changing the voting type of a JamSession. Use new user
