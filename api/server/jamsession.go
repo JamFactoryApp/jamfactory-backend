@@ -230,7 +230,7 @@ func (s *Server) playSong(w http.ResponseWriter, r *http.Request) {
 func (s *Server) createJamSession(w http.ResponseWriter, r *http.Request) {
 	session := s.CurrentSession(r)
 	user := s.CurrentUser(r)
-	if user.SpotifyToken != nil && !user.SpotifyToken.Valid() {
+	if !user.SpotifyToken.Valid() {
 		s.errForbidden(w, apierrors.ErrTokenInvalid, log.DebugLevel)
 		return
 	}
