@@ -127,11 +127,7 @@ func (s *Server) setJamSession(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			jamSession.Play(jamSession.GetDevice(), song.Song(), true)
-			message := types.GetQueueResponse{Tracks: jamSession.Queue().Tracks()}
-			jamSession.NotifyClients(&notifications.Message{
-				Event:   notifications.Queue,
-				Message: message,
-			})
+			jamSession.SocketQueueUpdate()
 		}
 		jamSession.SetActive(body.Active.Value)
 	}
@@ -233,8 +229,7 @@ func (s *Server) playSong(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) createJamSession(w http.ResponseWriter, r *http.Request) {
 	session := s.CurrentSession(r)
-	user, err := s.users.Get(s.CurrentIdentifier(r))
-
+	user := s.CurrentUser(r)
 	if !user.SpotifyToken.Valid() {
 		s.errForbidden(w, apierrors.ErrTokenInvalid, log.DebugLevel)
 		return

@@ -25,25 +25,29 @@ var (
 	ErrCouldNotGetAlbumTracks    = errors.New("could not get album tracks")
 	ErrCouldNotGetPlaylistTracks = errors.New("could not get playlist tracks")
 	ErrDeviceNotActive           = errors.New("device not active")
-	ErrSongMalformed             = errors.New("malformed song")
+)
+
+const (
+	UpdateIntervalInactive int = 10
+	UpdateIntervalPlaying  int = 5
+	UpdateIntervalSync     int = 1
 )
 
 type SpotifyJamSession struct {
 	sync.Mutex
-	jamLabel       string
-	name           string
-	active         bool
-	password       string
-	members        Members
-	updateInterval time.Duration
-	lastTimestamp  time.Time
-	currentSong    *spotify.FullTrack
-	synchronized   bool
-	client         spotify.Client
-	player         *spotify.PlayerState
-	queue          *queue.SpotifyQueue
-	room           *notifications.Room
-	quit           chan bool
+	jamLabel      string
+	name          string
+	active        bool
+	password      string
+	members       Members
+	lastTimestamp time.Time
+	currentSong   *spotify.FullTrack
+	synchronized  bool
+	client        spotify.Client
+	player        *spotify.PlayerState
+	queue         *queue.SpotifyQueue
+	room          *notifications.Room
+	quit          chan bool
 }
 
 func NewSpotify(host *users.User, client spotify.Client, label string) (JamSession, error) {
@@ -66,20 +70,19 @@ func NewSpotify(host *users.User, client spotify.Client, label string) (JamSessi
 	}
 
 	s := &SpotifyJamSession{
-		jamLabel:       label,
-		name:           fmt.Sprintf("%s's JamSession", u.DisplayName),
-		active:         false,
-		password:       "",
-		members:        members,
-		updateInterval: time.Second,
-		lastTimestamp:  time.Now(),
-		currentSong:    nil,
-		synchronized:   false,
-		client:         client,
-		player:         playerState,
-		queue:          queue.NewSpotify(),
-		room:           notifications.NewRoom(),
-		quit:           make(chan bool),
+		jamLabel:      label,
+		name:          fmt.Sprintf("%s's JamSession", u.DisplayName),
+		active:        false,
+		password:      "",
+		members:       members,
+		lastTimestamp: time.Now(),
+		currentSong:   nil,
+		synchronized:  false,
+		client:        client,
+		player:        playerState,
+		queue:         queue.NewSpotify(),
+		room:          notifications.NewRoom(),
+		quit:          make(chan bool),
 	}
 	go s.room.OpenDoors()
 	log.Info("Created new JamSession for ", u.DisplayName)
@@ -87,8 +90,10 @@ func NewSpotify(host *users.User, client spotify.Client, label string) (JamSessi
 }
 
 func (s *SpotifyJamSession) Conductor() {
-	ticker := time.NewTicker(s.updateInterval)
+	ticker := time.NewTicker(time.Second)
 	syncCount := 0
+	intervalCount := 0
+	updateInterval := UpdateIntervalInactive
 	defer ticker.Stop()
 	for {
 		select {
@@ -99,16 +104,21 @@ func (s *SpotifyJamSession) Conductor() {
 
 		// Update player state and send it to all connected clients
 		case <-ticker.C:
-			playerState, err := s.client.PlayerState()
-			if err != nil {
-				continue
-			}
-			s.SetPlayerState(playerState)
-			if !s.synchronized {
-				syncCount++
-				if syncCount >= 3 {
-					s.synchronized = true
-					syncCount = 0
+			intervalCount++
+			if intervalCount >= updateInterval {
+				intervalCount = 0
+				playerState, err := s.client.PlayerState()
+				if err != nil {
+					continue
+				}
+				s.SetPlayerState(playerState)
+				s.SocketPlaybackUpdate()
+				if !s.synchronized {
+					syncCount++
+					if syncCount >= 3 {
+						s.synchronized = true
+						syncCount = 0
+					}
 				}
 			}
 			// Check if the user started a song
@@ -117,8 +127,8 @@ func (s *SpotifyJamSession) Conductor() {
 				s.currentSong = nil
 				s.SocketJamUpdate()
 			}
+
 			// Check if no start or end of song is near
-			s.SocketPlaybackUpdate()
 			if s.active {
 				so, err := s.queue.GetNext()
 				switch err {
@@ -131,13 +141,32 @@ func (s *SpotifyJamSession) Conductor() {
 						s.SetTimestamp(time.Now())
 					}
 				case queue.ErrQueueEmpty:
-					continue
+
 				default:
 					log.Error(err)
-					continue
+					break
+
 				}
 			}
-			ticker.Reset(s.updateInterval)
+			ticker.Reset(time.Second)
+		}
+
+		// Set the current update Interval
+		if s.player.Playing && s.player.Item != nil {
+			if s.player.Progress > s.player.Item.Duration-6000 {
+				// First and last 5 seconds of the current song. Sync fast to correctly display switching the song
+				updateInterval = UpdateIntervalSync
+			} else {
+				// We are in the middle of the song. Decrease sync rate
+				updateInterval = UpdateIntervalPlaying
+			}
+		} else {
+			// JamSession is inactive and no playback needs to be updated
+			updateInterval = UpdateIntervalInactive
+		}
+		if !s.synchronized {
+			// Conductor is not synchronized.
+			updateInterval = UpdateIntervalSync
 		}
 	}
 }
@@ -276,6 +305,7 @@ func (s *SpotifyJamSession) SetState(state bool) error {
 	}
 
 	s.active = state
+	s.synchronized = false
 
 	return nil
 }
