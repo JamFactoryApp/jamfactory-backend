@@ -1,8 +1,9 @@
 package server
 
 import (
-	"github.com/gorilla/mux"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 const (
@@ -12,20 +13,26 @@ const (
 	authCallbackPath = "/callback"
 	authLoginPath    = "/login"
 	authLogoutPath   = "/logout"
-	authCurrentPath  = "/current"
+
+	mePath      = "/me"
+	meIndexPath = ""
 
 	jamSessionPath         = "/jam"
 	jamSessionIndexPath    = ""
 	jamSessionCreatePath   = "/create"
 	jamSessionJoinPath     = "/join"
 	jamSessionLeavePath    = "/leave"
+	jamSessionPlayPath     = "/play"
 	jamSessionPlaybackPath = "/playback"
+	jamSessionMembersPath  = "/members"
 
 	queuePath           = "/queue"
 	queueIndexPath      = ""
 	queueCollectionPath = "/collection"
 	queueVotePath       = "/vote"
 	queueDeletePath     = "/delete"
+	queueHistoryPath    = "/history"
+	queueExportPath     = "/export"
 
 	spotifyPath         = "/spotify"
 	spotifyDevicesPath  = "/devices"
@@ -36,15 +43,18 @@ const (
 )
 
 func (s *Server) initRoutes() {
-	s.router.Use(s.sessionRequired)
+	s.router.Use(s.sessionMiddleware)
+	s.router.Use(s.userMiddleware)
 
 	authRouter := s.router.PathPrefix(apiPath + authPath).Subrouter()
+	meRouter := s.router.PathPrefix(apiPath + mePath).Subrouter()
 	jamSessionRouter := s.router.PathPrefix(apiPath + jamSessionPath).Subrouter()
 	queueRouter := s.router.PathPrefix(apiPath + queuePath).Subrouter()
 	spotifyRouter := s.router.PathPrefix(apiPath + spotifyPath).Subrouter()
 	websocketRouter := s.router.PathPrefix(websocketPath).Subrouter()
 
 	s.registerAuthRoutes(authRouter)
+	s.registerMeRoutes(meRouter)
 	s.registerQueueRoutes(queueRouter)
 	s.registerJamSessionRoutes(jamSessionRouter)
 	s.registerSpotifyRoutes(spotifyRouter)
@@ -55,17 +65,25 @@ func (s *Server) registerAuthRoutes(r *mux.Router) {
 	r.HandleFunc(authCallbackPath, s.callback).Methods("GET")
 	r.HandleFunc(authLoginPath, s.login).Methods("GET")
 	r.HandleFunc(authLogoutPath, s.logout).Methods("GET")
-	r.HandleFunc(authCurrentPath, s.current).Methods("GET")
+}
+
+func (s *Server) registerMeRoutes(r *mux.Router) {
+	r.HandleFunc(meIndexPath, s.getUser).Methods("GET")
+	r.HandleFunc(meIndexPath, s.setUser).Methods("PUT")
+	r.HandleFunc(meIndexPath, s.deleteUser).Methods("DELETE")
 }
 
 func (s *Server) registerJamSessionRoutes(r *mux.Router) {
-	r.HandleFunc(jamSessionCreatePath, s.createJamSession).Methods("GET")
-	r.Handle(jamSessionJoinPath, s.notHostRequired(http.HandlerFunc(s.joinJamSession))).Methods("PUT")
-	r.Handle(jamSessionLeavePath, s.jamSessionRequired(http.HandlerFunc(s.leaveJamSession))).Methods("GET")
+	r.Handle(jamSessionCreatePath, s.nonMemberRequired(http.HandlerFunc(s.createJamSession))).Methods("GET")
+	r.Handle(jamSessionJoinPath, s.nonMemberRequired(http.HandlerFunc(s.joinJamSession))).Methods("PUT")
+	r.Handle(jamSessionLeavePath, http.HandlerFunc(s.leaveJamSession)).Methods("GET")
+	r.Handle(jamSessionPlayPath, s.jamSessionRequired(s.hostRequired(http.HandlerFunc(s.playSong)))).Methods("PUT")
 	r.Handle(jamSessionIndexPath, s.jamSessionRequired(http.HandlerFunc(s.getJamSession))).Methods("GET")
 	r.Handle(jamSessionIndexPath, s.jamSessionRequired(s.hostRequired(http.HandlerFunc(s.setJamSession)))).Methods("PUT")
 	r.Handle(jamSessionPlaybackPath, s.jamSessionRequired(http.HandlerFunc(s.getPlayback))).Methods("GET")
 	r.Handle(jamSessionPlaybackPath, s.jamSessionRequired(s.hostRequired(http.HandlerFunc(s.setPlayback)))).Methods("PUT")
+	r.Handle(jamSessionMembersPath, s.jamSessionRequired(http.HandlerFunc(s.getMembers))).Methods("GET")
+	r.Handle(jamSessionMembersPath, s.jamSessionRequired(s.hostRequired(http.HandlerFunc(s.setMembers)))).Methods("PUT")
 }
 
 func (s *Server) registerQueueRoutes(r *mux.Router) {
@@ -73,6 +91,8 @@ func (s *Server) registerQueueRoutes(r *mux.Router) {
 	r.Handle(queueCollectionPath, s.jamSessionRequired(s.hostRequired(http.HandlerFunc(s.addCollection)))).Methods("PUT")
 	r.Handle(queueVotePath, s.jamSessionRequired(http.HandlerFunc(s.vote))).Methods("PUT")
 	r.Handle(queueDeletePath, s.jamSessionRequired(s.hostRequired(http.HandlerFunc(s.deleteSong)))).Methods("DELETE")
+	r.Handle(queueHistoryPath, s.jamSessionRequired(http.HandlerFunc(s.getQueueHistory))).Methods("GET")
+	r.Handle(queueExportPath, s.jamSessionRequired(s.hostRequired(http.HandlerFunc(s.exportQueue)))).Methods("PUT")
 }
 
 func (s *Server) registerSpotifyRoutes(r *mux.Router) {

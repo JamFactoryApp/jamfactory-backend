@@ -4,22 +4,24 @@ import (
 	"crypto/tls"
 	"encoding/gob"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/gorilla/websocket"
-	"github.com/jamfactoryapp/jamfactory-backend/api/types"
+	"github.com/jamfactoryapp/jamfactory-backend/api/users"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/cache"
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"
-	"net/http"
-	"time"
 )
 
 func init() {
 	gob.Register(&oauth2.Token{})
 	gob.Register(&spotify.SearchResult{})
-	gob.Register(types.UserType(""))
+	gob.Register(users.UserType(""))
+	gob.Register(&users.User{})
 }
 
 const (
@@ -32,12 +34,13 @@ type Server struct {
 	server     *http.Server
 	router     *mux.Router
 	store      sessions.Store
+	users      users.Store
 	cache      cache.Cache
 	jamFactory JamFactory
 	upgrader   websocket.Upgrader
 }
 
-func NewServer(pattern string, store sessions.Store, jamFactory JamFactory) *Server {
+func NewServer(pattern string, sessionStore sessions.Store, userStore users.Store, jamFactory JamFactory) *Server {
 	s := &Server{
 		server: &http.Server{
 			ReadTimeout:  readTimeout,
@@ -45,7 +48,8 @@ func NewServer(pattern string, store sessions.Store, jamFactory JamFactory) *Ser
 			IdleTimeout:  idleTimeout,
 		},
 		router:     mux.NewRouter(),
-		store:      store,
+		store:      sessionStore,
+		users:      userStore,
 		jamFactory: jamFactory,
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
@@ -59,7 +63,7 @@ func NewServer(pattern string, store sessions.Store, jamFactory JamFactory) *Ser
 	}
 
 	s.initRoutes()
-	http.Handle(pattern, s.corsMiddleware(s.router, jamFactory.ClientAddress()))
+	http.Handle(pattern, s.corsMiddleware(s.router, jamFactory.ClientAddresses()))
 
 	return s
 }

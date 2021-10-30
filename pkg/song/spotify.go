@@ -1,9 +1,10 @@
 package song
 
 import (
-	"github.com/zmb3/spotify"
 	"sync"
 	"time"
+
+	"github.com/zmb3/spotify"
 )
 
 type SpotifySong struct {
@@ -27,7 +28,7 @@ func (s *SpotifySong) ID() string {
 	return s.id
 }
 
-func (s *SpotifySong) Song() interface{} {
+func (s *SpotifySong) Song() *spotify.FullTrack {
 	return s.track
 }
 

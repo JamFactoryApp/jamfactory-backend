@@ -4,8 +4,6 @@ import (
 	"context"
 	"github.com/gorilla/sessions"
 	"github.com/jamfactoryapp/jamfactory-backend/api/errors"
-	"github.com/jamfactoryapp/jamfactory-backend/api/types"
-	"golang.org/x/oauth2"
 )
 
 type contextKey string
@@ -13,10 +11,8 @@ type contextKey string
 const key contextKey = "Session"
 
 const (
-	jamLabelKey = "Label"
-	tokenKey    = "CurrentToken"
-	userTypeKey = "User"
-	originKey   = "Origin"
+	identifierKey = "Identifier"
+	originKey     = "Origin"
 )
 
 func NewContext(ctx context.Context, session *sessions.Session) context.Context {
@@ -35,46 +31,6 @@ func FromContext(ctx context.Context) (*sessions.Session, error) {
 	return session, nil
 }
 
-func JamLabel(session *sessions.Session) (string, error) {
-	jamLabelVal := session.Values[jamLabelKey]
-	if jamLabelVal == nil {
-		return "", errors.ErrJamLabelMissing
-	}
-
-	jamLabel, ok := jamLabelVal.(string)
-	if !ok {
-		return "", errors.ErrJamLabelMalformed
-	}
-
-	return jamLabel, nil
-}
-
-func Token(session *sessions.Session) (*oauth2.Token, error) {
-	tokenVal := session.Values[tokenKey]
-	if tokenVal == nil {
-		return nil, errors.ErrTokenMissing
-	}
-
-	token, ok := tokenVal.(*oauth2.Token)
-	if !ok {
-		return nil, errors.ErrTokenMalformed
-	}
-
-	return token, nil
-}
-
-func UserType(session *sessions.Session) (types.UserType, error) {
-	userTypeVal := session.Values[userTypeKey]
-	if userTypeVal == nil {
-		return "", errors.ErrUserTypeMissing
-	}
-	userType, ok := userTypeVal.(types.UserType)
-	if !ok {
-		return "", errors.ErrUserTypeMalformed
-	}
-	return userType, nil
-}
-
 func Origin(session *sessions.Session) (string, error) {
 	originVal := session.Values[originKey]
 	if originVal == nil {
@@ -87,18 +43,22 @@ func Origin(session *sessions.Session) (string, error) {
 	return origin, nil
 }
 
-func SetJamLabel(session *sessions.Session, jamLabel string) {
-	session.Values[jamLabelKey] = jamLabel
-}
-
-func SetToken(session *sessions.Session, token *oauth2.Token) {
-	session.Values[tokenKey] = token
-}
-
-func SetUserType(session *sessions.Session, userType types.UserType) {
-	session.Values[userTypeKey] = userType
+func Identifier(session *sessions.Session) (string, error) {
+	identifierVal := session.Values[identifierKey]
+	if identifierVal == nil {
+		return "", errors.ErrIdentifierMissing
+	}
+	identifier, ok := identifierVal.(string)
+	if !ok {
+		return "", errors.ErrIdentifierMalformed
+	}
+	return identifier, nil
 }
 
 func SetOrigin(session *sessions.Session, origin string) {
 	session.Values[originKey] = origin
+}
+
+func SetIdentifier(session *sessions.Session, identifier string) {
+	session.Values[identifierKey] = identifier
 }

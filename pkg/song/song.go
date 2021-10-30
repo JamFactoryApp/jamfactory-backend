@@ -2,6 +2,8 @@ package song
 
 import (
 	"time"
+
+	"github.com/zmb3/spotify"
 )
 
 // Song holds metadata for a song that can be played in a JamSession
@@ -9,7 +11,7 @@ type Song interface {
 	// ID returns a unique id for this song
 	ID() string
 	// Song returns an object containing data specific to the music streaming provider
-	Song() interface{}
+	Song() *spotify.FullTrack
 	// Votes returns all votes that have been cast on this song
 	Votes() []string
 	// Vote toggles a vote on this song

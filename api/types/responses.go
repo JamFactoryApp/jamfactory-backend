@@ -8,10 +8,19 @@ import (
 // general
 
 type JamResponse struct {
-	Label      string     `json:"label"`
-	Name       string     `json:"name"`
-	Active     bool       `json:"active"`
-	VotingType VotingType `json:"voting_type"`
+	Label  string `json:"label"`
+	Name   string `json:"name"`
+	Active bool   `json:"active"`
+}
+
+type JamMember struct {
+	DisplayName string       `json:"display_name"`
+	Identifier  string       `json:"identifier"`
+	Permission  []Permission `json:"permissions"`
+}
+
+type JamMemberResponse struct {
+	Members []JamMember `json:"members"`
 }
 
 type PlaybackBody struct {
@@ -23,11 +32,15 @@ type LabelResponse struct {
 	Label string `json:"label"`
 }
 
+type SuccessResponse struct {
+	Success bool `json:"success"`
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 // auth controller
 
 type GetAuthCurrentResponse struct {
-	User       string `json:"user"`
+	UserType   string `json:"user"`
 	Label      string `json:"label"`
 	Authorized bool   `json:"authorized"`
 }
@@ -36,9 +49,7 @@ type GetAuthLoginResponse struct {
 	URL string `json:"url"`
 }
 
-type GetAuthLogoutResponse struct {
-	Success bool `json:"success"`
-}
+type GetAuthLogoutResponse SuccessResponse
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -49,6 +60,9 @@ type PutJamResponse JamResponse
 
 type GetJamPlaybackResponse PlaybackBody
 type PutJamPlaybackResponse PlaybackBody
+
+type GetJamMembersResponse JamMemberResponse
+type PutJamMembersResponse JamMemberResponse
 
 type GetJamCreateResponse LabelResponse
 type PutJamJoinResponse LabelResponse
@@ -62,6 +76,10 @@ type GetJamLeaveResponse struct {
 
 type GetQueueResponse struct {
 	Tracks []Song `json:"tracks"`
+}
+
+type GetQueueHistoryResponse struct {
+	History []Song `json:"history"`
 }
 
 type PutQueuePlaylistsResponse GetQueueResponse
@@ -85,3 +103,18 @@ type PutSpotifySearchResponse struct {
 	Playlists *spotify.SimplePlaylistPage `json:"playlists"`
 	Tracks    *spotify.FullTrackPage      `json:"tracks"`
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// user controller
+
+type UserResponse struct {
+	Identifier        string `json:"identifier"`
+	DisplayName       string `json:"display_name"`
+	UserType          string `json:"type"`
+	JoinedLabel       string `json:"joined_label"`
+	SpotifyAuthorized bool   `json:"spotify_authorized"`
+}
+
+type GetUserResponse UserResponse
+type PutUserResponse UserResponse
+type DeleteUserResponse SuccessResponse

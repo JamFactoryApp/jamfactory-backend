@@ -1,25 +1,17 @@
 package server
 
 import (
+	"net/http"
+
+	"github.com/pkg/errors"
+
 	apierrors "github.com/jamfactoryapp/jamfactory-backend/api/errors"
 	"github.com/jamfactoryapp/jamfactory-backend/api/sessions"
 	"github.com/jamfactoryapp/jamfactory-backend/api/types"
+	"github.com/jamfactoryapp/jamfactory-backend/api/users"
 	"github.com/jamfactoryapp/jamfactory-backend/api/utils"
 	log "github.com/sirupsen/logrus"
-	"net/http"
 )
-
-func (s *Server) current(w http.ResponseWriter, r *http.Request) {
-	userType := s.CurrentUserType(r)
-	jamLabel := s.CurrentJamLabel(r)
-	token := s.CurrentToken(r)
-
-	utils.EncodeJSONBody(w, types.GetAuthCurrentResponse{
-		User:       string(userType),
-		Label:      jamLabel,
-		Authorized: token != nil && token.Valid(),
-	})
-}
 
 func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 	session := s.CurrentSession(r)
@@ -39,13 +31,17 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) logout(w http.ResponseWriter, r *http.Request) {
+
 	session := s.CurrentSession(r)
+	identifier := s.CurrentIdentifier(r)
 	session.Options.MaxAge = -1
 
 	if err := session.Save(r, w); err != nil {
 		s.errSessionSave(w, err)
 		return
 	}
+
+	s.users.Delete(identifier)
 
 	utils.EncodeJSONBody(w, types.GetAuthLogoutResponse{
 		Success: true,
@@ -55,7 +51,7 @@ func (s *Server) logout(w http.ResponseWriter, r *http.Request) {
 func (s *Server) callback(w http.ResponseWriter, r *http.Request) {
 	session := s.CurrentSession(r)
 
-	token, err := s.jamFactory.Authenticate(session.ID, r)
+	token, id, username, err := s.jamFactory.Authenticate(session.ID, r)
 	if err != nil {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return
@@ -66,8 +62,24 @@ func (s *Server) callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessions.SetToken(session, token)
-	sessions.SetUserType(session, types.UserTypeNew)
+	user, err := s.users.Get(id)
+	if err != nil {
+		if errors.Is(err, users.ErrUserNotFound) {
+			user = users.New(id, username, users.UserTypeSpotify, token)
+		} else {
+			s.errInternalServerError(w, err, log.DebugLevel)
+			return
+		}
+	} else {
+		user.UserType = users.UserTypeSpotify
+		user.SpotifyToken = token
+	}
+
+	if err := s.users.Save(user); err != nil {
+		s.errInternalServerError(w, err, log.DebugLevel)
+		return
+	}
+	sessions.SetIdentifier(session, id)
 
 	if err := session.Save(r, w); err != nil {
 		s.errSessionSave(w, err)

@@ -2,16 +2,21 @@ package jamsession
 
 import (
 	"fmt"
+	"os"
+	"sync"
+	"time"
+
+	"github.com/jamfactoryapp/jamfactory-backend/internal/utils"
+
 	"github.com/gorilla/websocket"
 	"github.com/jamfactoryapp/jamfactory-backend/api/types"
+	"github.com/jamfactoryapp/jamfactory-backend/api/users"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/notifications"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/queue"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/song"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
-	"sync"
-	"time"
 )
 
 var (
@@ -20,27 +25,33 @@ var (
 	ErrCouldNotGetAlbumTracks    = errors.New("could not get album tracks")
 	ErrCouldNotGetPlaylistTracks = errors.New("could not get playlist tracks")
 	ErrDeviceNotActive           = errors.New("device not active")
-	ErrSongMalformed             = errors.New("malformed song")
-	ErrVotingTypeInvalid         = errors.New("voting type invalid")
+)
+
+const (
+	UpdateIntervalInactive int = 10
+	UpdateIntervalPlaying  int = 5
+	UpdateIntervalSync     int = 1
 )
 
 type SpotifyJamSession struct {
 	sync.Mutex
-	jamLabel       string
-	name           string
-	active         bool
-	updateInterval time.Duration
-	lastTimestamp  time.Time
-	currentSong    *spotify.FullTrack
-	votingType     types.VotingType
-	client         spotify.Client
-	player         *spotify.PlayerState
-	queue          *queue.SpotifyQueue
-	room           *notifications.Room
-	quit           chan bool
+	jamLabel      string
+	name          string
+	active        bool
+	password      string
+	members       Members
+	lastTimestamp time.Time
+	currentSong   *spotify.FullTrack
+	synchronized  bool
+	client        spotify.Client
+	player        *spotify.PlayerState
+	queue         *queue.SpotifyQueue
+	room          *notifications.Room
+	quit          chan bool
 }
 
-func NewSpotify(client spotify.Client, label string) (JamSession, error) {
+func NewSpotify(host *users.User, client spotify.Client, label string) (JamSession, error) {
+
 	u, err := client.CurrentUser()
 	if err != nil {
 		return nil, err
@@ -51,28 +62,38 @@ func NewSpotify(client spotify.Client, label string) (JamSession, error) {
 		return nil, err
 	}
 
-	s := &SpotifyJamSession{
-		jamLabel:       label,
-		name:           fmt.Sprintf("%s's JamSession", u.DisplayName),
-		active:         false,
-		updateInterval: time.Second,
-		lastTimestamp:  time.Now(),
-		currentSong:    nil,
-		votingType:     types.SessionVoting,
-		client:         client,
-		player:         playerState,
-		queue:          queue.NewSpotify(),
-		room:           notifications.NewRoom(),
-		quit:           make(chan bool),
+	members := Members{
+		host.Identifier: &Member{
+			userIdentifier: host.Identifier,
+			permissions:    []types.Permission{types.RightHost, types.RightsGuest},
+		},
 	}
 
+	s := &SpotifyJamSession{
+		jamLabel:      label,
+		name:          fmt.Sprintf("%s's JamSession", u.DisplayName),
+		active:        false,
+		password:      "",
+		members:       members,
+		lastTimestamp: time.Now(),
+		currentSong:   nil,
+		synchronized:  false,
+		client:        client,
+		player:        playerState,
+		queue:         queue.NewSpotify(),
+		room:          notifications.NewRoom(),
+		quit:          make(chan bool),
+	}
 	go s.room.OpenDoors()
 	log.Info("Created new JamSession for ", u.DisplayName)
 	return s, nil
 }
 
 func (s *SpotifyJamSession) Conductor() {
-	ticker := time.NewTicker(s.updateInterval)
+	ticker := time.NewTicker(time.Second)
+	syncCount := 0
+	intervalCount := 0
+	updateInterval := UpdateIntervalInactive
 	defer ticker.Stop()
 	for {
 		select {
@@ -83,63 +104,104 @@ func (s *SpotifyJamSession) Conductor() {
 
 		// Update player state and send it to all connected clients
 		case <-ticker.C:
-			playerState, err := s.client.PlayerState()
-			if err != nil {
-				continue
+			intervalCount++
+			if intervalCount >= updateInterval {
+				intervalCount = 0
+				playerState, err := s.client.PlayerState()
+				if err != nil {
+					continue
+				}
+				s.SetPlayerState(playerState)
+				s.SocketPlaybackUpdate()
+				if !s.synchronized {
+					syncCount++
+					if syncCount >= 3 {
+						s.synchronized = true
+						syncCount = 0
+					}
+				}
 			}
-			s.SetPlayerState(playerState)
 			// Check if the user started a song
-			if s.player.Item != nil && s.currentSong != nil && s.player.Item.ID != s.currentSong.ID {
+			if s.synchronized && s.player.Item != nil && s.currentSong != nil && s.player.Item.ID != s.currentSong.ID {
 				s.SetActive(false)
 				s.currentSong = nil
 				s.SocketJamUpdate()
 			}
+
 			// Check if no start or end of song is near
-			s.SocketPlaybackUpdate()
 			if s.active {
 				so, err := s.queue.GetNext()
 				switch err {
 				case nil:
 					if (!s.player.Playing && s.player.Progress == 0) || (s.player.Item != nil && s.player.Progress > s.player.Item.Duration-1000) {
-						if err := s.Play(s.player.Device, so); err != nil {
+						if err := s.Play(s.player.Device, so.Song(), true); err != nil {
 							log.Error(err)
 							continue
 						}
 						s.SetTimestamp(time.Now())
-						s.SocketQueueUpdate()
 					}
 				case queue.ErrQueueEmpty:
-					continue
+
 				default:
 					log.Error(err)
-					continue
+					break
+
 				}
 			}
-			ticker.Reset(s.updateInterval)
+			ticker.Reset(time.Second)
+		}
+
+		// Set the current update Interval
+		if s.player.Playing && s.player.Item != nil {
+			if s.player.Progress > s.player.Item.Duration-6000 {
+				// First and last 5 seconds of the current song. Sync fast to correctly display switching the song
+				updateInterval = UpdateIntervalSync
+			} else {
+				// We are in the middle of the song. Decrease sync rate
+				updateInterval = UpdateIntervalPlaying
+			}
+		} else {
+			// JamSession is inactive and no playback needs to be updated
+			updateInterval = UpdateIntervalInactive
+		}
+		if !s.synchronized {
+			// Conductor is not synchronized.
+			updateInterval = UpdateIntervalSync
 		}
 	}
 }
 
-func (s *SpotifyJamSession) Play(device spotify.PlayerDevice, song song.Song) error {
+func (s *SpotifyJamSession) Play(device spotify.PlayerDevice, track *spotify.FullTrack, remove bool) error {
+	s.Lock()
+	defer s.Unlock()
 	if !device.Active {
 		return ErrDeviceNotActive
-	}
-
-	track, ok := song.Song().(*spotify.FullTrack)
-	if !ok {
-		return ErrSongMalformed
 	}
 
 	playOptions := spotify.PlayOptions{
 		URIs: []spotify.URI{track.URI},
 	}
 
+	s.synchronized = false
 	err := s.client.PlayOpt(&playOptions)
 	if err != nil {
 		return err
 	}
 	s.currentSong = track
-	if err := s.queue.Advance(); err != nil {
+	if remove {
+		if err := s.queue.Delete(track.ID.String()); err != nil {
+			return err
+		}
+	}
+
+	s.SocketQueueUpdate()
+
+	return nil
+}
+
+func (s *SpotifyJamSession) SetVolume(percent int) error {
+	err := s.client.Volume(percent)
+	if err != nil {
 		return err
 	}
 	return nil
@@ -147,6 +209,10 @@ func (s *SpotifyJamSession) Play(device spotify.PlayerDevice, song song.Song) er
 
 func (s *SpotifyJamSession) JamLabel() string {
 	return s.jamLabel
+}
+
+func (s *SpotifyJamSession) Members() Members {
+	return s.members
 }
 
 func (s *SpotifyJamSession) Name() string {
@@ -157,33 +223,24 @@ func (s *SpotifyJamSession) Active() bool {
 	return s.active
 }
 
-func (s *SpotifyJamSession) Timestamp() time.Time {
-	return s.lastTimestamp
+func (s *SpotifyJamSession) Password() string {
+	return s.password
 }
 
-func (s *SpotifyJamSession) VotingType() types.VotingType {
-	return s.votingType
+func (s *SpotifyJamSession) SetPassword(password string) {
+	s.Lock()
+	defer s.Unlock()
+	s.password = password
+}
+
+func (s *SpotifyJamSession) Timestamp() time.Time {
+	return s.lastTimestamp
 }
 
 func (s *SpotifyJamSession) SetName(name string) {
 	s.Lock()
 	defer s.Unlock()
 	s.name = name
-}
-
-func (s *SpotifyJamSession) SetVotingType(votingType string) error {
-	s.Lock()
-	defer s.Unlock()
-
-	switch votingType {
-	case string(types.SessionVoting):
-		s.votingType = types.SessionVoting
-	case string(types.IPVoting):
-		s.votingType = types.IPVoting
-	default:
-		return ErrVotingTypeInvalid
-	}
-	return nil
 }
 
 func (s *SpotifyJamSession) SetActive(active bool) {
@@ -248,6 +305,7 @@ func (s *SpotifyJamSession) SetState(state bool) error {
 	}
 
 	s.active = state
+	s.synchronized = false
 
 	return nil
 }
@@ -287,7 +345,7 @@ func (s *SpotifyJamSession) AddCollection(collectionType string, collectionID st
 			if err != nil {
 				return err
 			}
-			if err := s.queue.Vote(so.ID(), string(types.UserTypeHost), so.Song()); err != nil {
+			if err := s.queue.Vote(so.ID(), queue.HostVoteIdentifier, so.Song()); err != nil {
 				return err
 			}
 		}
@@ -314,7 +372,7 @@ func (s *SpotifyJamSession) AddCollection(collectionType string, collectionID st
 			if err != nil {
 				return err
 			}
-			if err := s.queue.Vote(so.ID(), string(types.UserTypeHost), so.Song()); err != nil {
+			if err := s.queue.Vote(so.ID(), queue.HostVoteIdentifier, so.Song()); err != nil {
 				return err
 			}
 		}
@@ -324,6 +382,38 @@ func (s *SpotifyJamSession) AddCollection(collectionType string, collectionID st
 	}
 	s.SocketQueueUpdate()
 	return nil
+}
+
+func (s *SpotifyJamSession) CreatePlaylist(name string, desc string, ids []spotify.ID) error {
+	user, err := s.client.CurrentUser()
+	if err != nil {
+		return err
+	}
+	playlist, err := s.client.CreatePlaylistForUser(user.ID, name, desc, false)
+	if err != nil {
+		return err
+	}
+	if utils.FileExists("./assets/playlist_cover.png") {
+		file, err := os.Open("./assets/playlist_cover.png")
+		defer utils.CloseProperly(file)
+		if err != nil {
+			return err
+		}
+		err = s.client.SetPlaylistImage(playlist.ID, file)
+		if err != nil {
+			return err
+		}
+	}
+
+	idChunks := utils.SplitsIds(ids, 100)
+	for i := range idChunks {
+		_, err := s.client.AddTracksToPlaylist(playlist.ID, idChunks[i]...)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+
 }
 
 func (s *SpotifyJamSession) GetSong(songID string) (song.Song, error) {
@@ -336,7 +426,7 @@ func (s *SpotifyJamSession) GetSong(songID string) (song.Song, error) {
 }
 
 func (s *SpotifyJamSession) Vote(songID string, voteID string) error {
-	track, err := s.getTrack(songID)
+	track, err := s.GetTrack(songID)
 	if err != nil {
 		return err
 	}
@@ -381,7 +471,7 @@ func (s *SpotifyJamSession) DeleteSong(songID string) error {
 	return nil
 }
 
-func (s *SpotifyJamSession) getTrack(trackID string) (*spotify.FullTrack, error) {
+func (s *SpotifyJamSession) GetTrack(trackID string) (*spotify.FullTrack, error) {
 	return s.client.GetTrack(spotify.ID(trackID))
 }
 
@@ -389,10 +479,9 @@ func (s *SpotifyJamSession) SocketJamUpdate() {
 	s.NotifyClients(&notifications.Message{
 		Event: notifications.Jam,
 		Message: types.SocketJamMessage{
-			Label:      s.jamLabel,
-			Name:       s.name,
-			Active:     s.active,
-			VotingType: s.votingType,
+			Label:  s.jamLabel,
+			Name:   s.name,
+			Active: s.active,
 		},
 	})
 }

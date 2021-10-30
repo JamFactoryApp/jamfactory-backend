@@ -1,7 +1,9 @@
 package types
 
+import "github.com/zmb3/spotify"
+
 type Song struct {
-	Song  interface{} `json:"spotifyTrackFull"`
-	Votes int         `json:"votes"`
-	Voted bool        `json:"voted"`
+	Song  *spotify.FullTrack `json:"spotifyTrackFull"`
+	Votes int                `json:"votes"`
+	Voted bool               `json:"voted"`
 }

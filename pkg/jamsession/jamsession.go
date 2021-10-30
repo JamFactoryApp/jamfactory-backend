@@ -2,14 +2,14 @@ package jamsession
 
 import (
 	"context"
+	"time"
+
 	"github.com/gorilla/websocket"
-	"github.com/jamfactoryapp/jamfactory-backend/api/types"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/notifications"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/queue"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/song"
 	"github.com/pkg/errors"
 	"github.com/zmb3/spotify"
-	"time"
 )
 
 var (
@@ -28,18 +28,20 @@ type JamSession interface {
 	Name() string
 	// SetName updates this JamSession's name
 	SetName(name string)
+	// Members returns the JamSession's members
+	Members() Members
 	// Active returns whether this JamSession is active
 	Active() bool
 	// SetActive activates or deactivates this JamSession
 	SetActive(active bool)
+	// Password returns the current password for the JamSession
+	Password() string
+	// SetPassword sets the current password for the JamSession
+	SetPassword(password string)
 	// Timestamp returns the last timestamp set for the JamSession
 	Timestamp() time.Time
 	// SetTimestamp updates the timestamp of the JamSession
 	SetTimestamp(time.Time)
-	// VotingType returns this JamSession's voting type
-	VotingType() types.VotingType
-	// SetVotingType updates this JamSession's voting type
-	SetVotingType(votingType string) error
 	// SetState updates this JamSession's playback state
 	SetState(state bool) error
 	// Deconstruct this JamSession
@@ -56,18 +58,24 @@ type JamSession interface {
 	Vote(songID string, voteID string) error
 	// DeleteSong removes a song from this JamSession's queue
 	DeleteSong(songID string) error
-	// Play plays a song
-	Play(device spotify.PlayerDevice, song song.Song) error
+	// Play plays a song. If remove is true, the song will be removed from the queue
+	Play(device spotify.PlayerDevice, track *spotify.FullTrack, remove bool) error
+	// SetVolume set the current volume
+	SetVolume(percent int) error
 	// Search TODO
 	Search(index string, searchType spotify.SearchType, options *spotify.Options) (interface{}, error)
 	// Playlists TODO
 	Playlists() (*spotify.SimplePlaylistPage, error)
+	// CreatePlaylist TODO
+	CreatePlaylist(name string, desc string, songs []spotify.ID) error
 	// Devices TODO
 	Devices() ([]spotify.PlayerDevice, error)
 	// GetSong TODO
 	GetSong(songID string) (song.Song, error)
 	// CurrentSong TODO
 	CurrentSong() *spotify.FullTrack
+	// GetTrack TODO
+	GetTrack(trackID string) (*spotify.FullTrack, error)
 	// GetPlayerState TODO
 	GetPlayerState() *spotify.PlayerState
 	// SetPlayerState TODO
