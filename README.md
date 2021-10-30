@@ -36,7 +36,7 @@ JamFactory is built among others using these awesome projects:
 
 ### Latest Release
 
-``v0.1.0`` [Release Notes](./RELEASE.md)
+``v0.2.0`` [Release Notes](./RELEASE.md#v020)
 
 ## Getting started
 

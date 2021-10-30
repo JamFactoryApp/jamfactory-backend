@@ -1,8 +1,11 @@
 # JamFactory Backend Release Notes
 
-* [v0.1.0 (Latest)](#v010)
+* [v0.2.0 (Latest)](#v020)
+* [v0.1.0](#v010)
 
-## vx.x.x
+## v0.2.0
+
+See [v0.2.0 Documentation](./docs/documentation.md)
 
 ### Features Added
 
@@ -19,6 +22,7 @@
 * :sparkles: You can now control the playback volume directly from JamFactory.
 * :sparkles: Option to directly play a song without chaining the queue or state.
 * :sparkles: Option to skip the current playback to any song in the queue.
+
 ### Features Removed
 
 * :boom: Remove support for IP and Session voting. Remove changing the voting type of a JamSession. Use new user
@@ -49,7 +53,6 @@
 * :heavy_plus_sign: Add ``password`` key to [``PUT: /api/v1/jam/join``](./docs/documentation.md#4-join-an-existing-jamsession) request. 
 * :heavy_plus_sign: Add ``volume`` key to [``PUT: /api/v1/jam/playback``](./docs/documentation.md#6-set-playback-of-the-jamsession-joined-by-the-user) request. 
 * :sparkles: Add [``PUT: /api/v1/jam/play``](./docs/documentation.md#10-play-a-song-for-the-jamsession-joined-by-the-user) to directly play or skip a song.
-
 
 ### Websocket Changes
 
