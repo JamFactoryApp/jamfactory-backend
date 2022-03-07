@@ -158,28 +158,32 @@ func (s *SpotifyJamFactory) NewJamSession(host *users.User) (jamsession.JamSessi
 	return jamSession, nil
 }
 
-func (s *SpotifyJamFactory) Search(jamSession jamsession.JamSession, t string, text string) (interface{}, error) {
+func (s *SpotifyJamFactory) Search(jamSession jamsession.JamSession, searchType string, text string) (interface{}, error) {
 	country := spotify.CountryGermany
 	opts := spotify.Options{
 		Country: &country,
 	}
 
-	var searchType spotify.SearchType
-	switch t {
+	var spotifySearchType spotify.SearchType
+	var key = pkgredis.NewKey("search")
+	switch searchType {
 	case "track":
-		searchType = spotify.SearchTypeTrack
+		spotifySearchType = spotify.SearchTypeTrack
+		key = key.Append(searchType)
 	case "playlist":
-		searchType = spotify.SearchTypePlaylist
+		spotifySearchType = spotify.SearchTypePlaylist
+		key = key.Append(searchType)
 	case "album":
-		searchType = spotify.SearchTypeAlbum
+		spotifySearchType = spotify.SearchTypeAlbum
+		key = key.Append(searchType)
 	}
-	if searchType == 0 {
+	if spotifySearchType == 0 {
 		return nil, apierrors.ErrSearchTypeInvalid
 	}
 
 	searchString := []string{text, "*"}
-	entry, err := s.cache.Query(pkgredis.NewKey("search"), strings.Join(searchString, ""), func(index string) (interface{}, error) {
-		return jamSession.Search(index, searchType, &opts)
+	entry, err := s.cache.Query(key, strings.Join(searchString, ""), func(index string) (interface{}, error) {
+		return jamSession.Search(index, spotifySearchType, &opts)
 	})
 
 	if err != nil {
