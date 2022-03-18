@@ -5,7 +5,6 @@ docker-compose*
 .git
 .gitignore
 
-.env
 .env.example
 ./redis/users.acl
 ./redis/users.acl.example
