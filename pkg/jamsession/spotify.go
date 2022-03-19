@@ -304,9 +304,7 @@ func (s *SpotifyJamSession) SetState(state bool) error {
 		return err
 	}
 
-	s.active = state
 	s.synchronized = false
-
 	return nil
 }
 
