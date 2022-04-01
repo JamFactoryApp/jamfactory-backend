@@ -1,11 +1,21 @@
 # JamFactory Backend Release Notes
 
-* [v0.2.0 (Latest)](#v020)
+* [v0.2.1 (Latest)](#v021)
+* [v0.2.0](#v020)
 * [v0.1.0](#v010)
+
+## v0.2.1
+
+See [v0.2.1 Documentation](./docs/documentation.md)
+
+### Bug Fixes
+ 
+:bug: Add the search type to the Redis cache key so that search results can be cached in parallel with the same query for each search type.
+:bug: A bug caused a JamSession to become inactive when playback via the API was paused.
 
 ## v0.2.0
 
-See [v0.2.0 Documentation](./docs/documentation.md)
+See [v0.2.0 Documentation](.blob/v0.2.0/docs/documentation.md)
 
 ### Features Added
 
@@ -62,7 +72,7 @@ See [v0.2.0 Documentation](./docs/documentation.md)
 ## v0.1.0
 
 :sparkles: This is the initial release of the JamFactory Backend project!
-See [v0.1.0 Documentation](./docs/documentation.md)
+See [v0.1.0 Documentation](.blob/v0.1.0/docs/documentation.md)
 
 ### Features Added
 
