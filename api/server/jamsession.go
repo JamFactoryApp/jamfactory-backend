@@ -4,12 +4,13 @@ import (
 	"crypto/sha1"
 	"encoding/base32"
 	"encoding/hex"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/permissions"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/users"
 	"net/http"
 
 	apierrors "github.com/jamfactoryapp/jamfactory-backend/api/errors"
 	"github.com/jamfactoryapp/jamfactory-backend/api/sessions"
 	"github.com/jamfactoryapp/jamfactory-backend/api/types"
-	"github.com/jamfactoryapp/jamfactory-backend/api/users"
 	"github.com/jamfactoryapp/jamfactory-backend/api/utils"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/jamsession"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/notifications"
@@ -27,7 +28,7 @@ func (s *Server) getMemberResponse(members jamsession.Members) types.GetJamMembe
 		memberResponse = append(memberResponse, types.JamMember{
 			DisplayName: user.UserName,
 			Identifier:  user.Identifier,
-			Permission:  member.Permissions(),
+			Permissions: member.Permissions(),
 		})
 	}
 	return types.GetJamMembersResponse{Members: memberResponse}
@@ -54,14 +55,16 @@ func (s *Server) setMembers(w http.ResponseWriter, r *http.Request) {
 	}
 	hostCount := 0
 	for _, requestMember := range body.Members {
-		if jamsession.ContainsPermissions(types.RightHost, requestMember.Permission) {
-			hostCount++
-		}
-
-		if !jamsession.ValidPermissions(requestMember.Permission) {
+		if !requestMember.Permissions.Valid() {
 			s.errBadRequest(w, apierrors.ErrBadRight, log.DebugLevel)
 			return
 		}
+
+		member := jamsession.NewMember(requestMember.Identifier, requestMember.Permissions...)
+		if member.HasPermissions(permissions.Host) {
+			hostCount++
+		}
+
 		included := false
 		for _, availableMembers := range jamSession.Members() {
 			if requestMember.Identifier == availableMembers.Identifier() {
@@ -82,7 +85,7 @@ func (s *Server) setMembers(w http.ResponseWriter, r *http.Request) {
 	for _, availableMembers := range jamSession.Members() {
 		for _, requestMember := range body.Members {
 			if requestMember.Identifier == availableMembers.Identifier() {
-				availableMembers.SetPermissions(requestMember.Permission)
+				availableMembers.SetPermissions(requestMember.Permissions...)
 			}
 		}
 	}
@@ -103,7 +106,6 @@ func (s *Server) getJamSession(w http.ResponseWriter, r *http.Request) {
 		Name:   jamSession.Name(),
 		Active: jamSession.Active(),
 	})
-
 }
 
 func (s *Server) setJamSession(w http.ResponseWriter, r *http.Request) {
@@ -281,7 +283,7 @@ func (s *Server) joinJamSession(w http.ResponseWriter, r *http.Request) {
 		hash := sha1.Sum([]byte(session.ID))
 		identifier := hex.EncodeToString(hash[:])
 		username := "Guest " + string([]rune(base32.StdEncoding.EncodeToString(hash[:]))[0:5])
-		user = users.New(identifier, username, users.UserTypeSession, nil)
+		user = users.New(identifier, username, users.UserTypeSession, nil, s.authenticator)
 		if err := s.users.Save(user); err != nil {
 			s.errInternalServerError(w, err, log.DebugLevel)
 			return
@@ -295,7 +297,7 @@ func (s *Server) joinJamSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jamSession.Members().Add(user.Identifier, []types.Permission{types.RightsGuest})
+	jamSession.Members().Add(user.Identifier, permissions.Guest)
 
 	jamSession.NotifyClients(&notifications.Message{
 		Event:   notifications.Members,
@@ -316,7 +318,7 @@ func (s *Server) leaveJamSession(w http.ResponseWriter, r *http.Request) {
 			s.errBadRequest(w, err, log.DebugLevel)
 			return
 		}
-		isHost := member.HasPermissions([]types.Permission{types.RightHost})
+		isHost := member.HasPermissions(permissions.Host)
 		if isHost {
 			if jamSession.Members().Remove(user.Identifier) {
 				jamSession.NotifyClients(&notifications.Message{

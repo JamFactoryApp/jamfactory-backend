@@ -1,13 +1,13 @@
 package server
 
 import (
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/permissions"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/users"
 	"net/http"
 	"net/url"
 
 	apierrors "github.com/jamfactoryapp/jamfactory-backend/api/errors"
 	"github.com/jamfactoryapp/jamfactory-backend/api/sessions"
-	"github.com/jamfactoryapp/jamfactory-backend/api/types"
-	"github.com/jamfactoryapp/jamfactory-backend/api/users"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/jamsession"
 	log "github.com/sirupsen/logrus"
 )
@@ -59,7 +59,6 @@ func (s *Server) sessionMiddleware(next http.Handler) http.Handler {
 
 func (s *Server) userMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 		identifier := s.CurrentIdentifier(r)
 		user, err := s.users.Get(identifier)
 		if err != nil {
@@ -93,7 +92,7 @@ func (s *Server) hostRequired(next http.Handler) http.Handler {
 		user := s.CurrentUser(r)
 		jamSession := s.CurrentJamSession(r)
 		member, err := jamSession.Members().Get(user.Identifier)
-		if err != nil || !member.HasPermissions([]types.Permission{types.RightHost}) {
+		if err != nil || !member.HasPermissions(permissions.Host) {
 			s.errUnauthorized(w, apierrors.ErrUserTypeInvalid, log.DebugLevel)
 			return
 		}

@@ -1,35 +1,26 @@
 package jamfactory
 
 import (
-	"crypto/sha1"
-	"encoding/hex"
 	"errors"
-	"net/http"
-	"net/url"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/users"
 	"strings"
 	"time"
 
 	apierrors "github.com/jamfactoryapp/jamfactory-backend/api/errors"
-	"github.com/jamfactoryapp/jamfactory-backend/api/server"
-	"github.com/jamfactoryapp/jamfactory-backend/api/users"
 	"github.com/jamfactoryapp/jamfactory-backend/internal/logutils"
 	pkgredis "github.com/jamfactoryapp/jamfactory-backend/internal/redis"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/cache"
-	"github.com/jamfactoryapp/jamfactory-backend/pkg/jamlabel"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/jamsession"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/notifications"
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
-	"golang.org/x/oauth2"
 )
 
-type SpotifyJamFactory struct {
-	authenticator   spotify.Authenticator
-	cache           cache.Cache
-	labelManager    jamlabel.Manager
-	jamSessions     map[string]jamsession.JamSession
-	clientAddresses []*url.URL
-	log             *log.Logger
+type JamFactory struct {
+	cache *cache.Cache
+	store *jamsession.Store
+	users *users.Store
+	log   *log.Logger
 }
 
 const (
@@ -37,38 +28,27 @@ const (
 	inactiveWarning = 1*time.Hour + 30*time.Minute
 )
 
-var (
-	scopes = []string{
-		spotify.ScopeUserReadPrivate,
-		spotify.ScopeUserReadEmail,
-		spotify.ScopeUserModifyPlaybackState,
-		spotify.ScopeUserReadPlaybackState,
-		spotify.ScopePlaylistModifyPrivate,
-		spotify.ScopeImageUpload,
+func New(store *jamsession.Store, users *users.Store, ca *cache.Cache) *JamFactory {
+	jamFactory := &JamFactory{
+		cache: ca,
+		store: store,
+		users: users,
+		log:   logutils.NewDefault(),
 	}
-)
-
-func NewSpotify(ca *cache.RedisCache, redirectURL string, clientID string, secretKey string, clientAddresses []*url.URL) server.JamFactory {
-	a := spotify.NewAuthenticator(redirectURL, scopes...)
-	a.SetAuthInfo(clientID, secretKey)
-	spotifyJamFactory := &SpotifyJamFactory{
-		authenticator:   a,
-		cache:           ca,
-		labelManager:    jamlabel.NewDefault(),
-		jamSessions:     make(map[string]jamsession.JamSession),
-		clientAddresses: clientAddresses,
-		log:             logutils.NewDefault(),
-	}
-	go spotifyJamFactory.Housekeeper()
-	return spotifyJamFactory
+	go jamFactory.Housekeeper()
+	return jamFactory
 }
 
-func (s *SpotifyJamFactory) Housekeeper() {
+func (s *JamFactory) Housekeeper() {
 	ticker := time.NewTicker(10 * time.Minute)
 	defer ticker.Stop()
 	for {
 		<-ticker.C
-		for jamLabel, jamSession := range s.jamSessions {
+		jamSessions, err := s.store.GetAll()
+		if err != nil {
+			log.Warn(err)
+		}
+		for _, jamSession := range jamSessions {
 			if time.Now().After(jamSession.Timestamp().Add(inactiveWarning)) {
 				jamSession.NotifyClients(&notifications.Message{
 					Event:   notifications.Close,
@@ -77,12 +57,12 @@ func (s *SpotifyJamFactory) Housekeeper() {
 			}
 
 			if time.Now().After(jamSession.Timestamp().Add(inactiveTime)) {
-				log.Debug(jamLabel, ": inactive, closing")
+				log.Debug(jamSession.JamLabel(), ": inactive, closing")
 				jamSession.NotifyClients(&notifications.Message{
 					Event:   notifications.Close,
 					Message: notifications.Inactive,
 				})
-				if err := s.DeleteJamSession(jamLabel); err != nil {
+				if err := s.DeleteJamSession(jamSession.JamLabel()); err != nil {
 					s.log.Debug(err)
 				}
 			}
@@ -90,53 +70,37 @@ func (s *SpotifyJamFactory) Housekeeper() {
 	}
 }
 
-func (s *SpotifyJamFactory) Authenticate(state string, r *http.Request) (*oauth2.Token, string, string, error) {
-	token, err := s.authenticator.Token(state, r)
+func (s *JamFactory) DeleteJamSession(jamLabel string) error {
+	jamSession, err := s.store.Get(jamLabel)
 	if err != nil {
-		return nil, "", "", err
-	}
-	client := s.authenticator.NewClient(token)
-	user, err := client.CurrentUser()
-	if err != nil {
-		return nil, "", "", err
-	}
-	hash := sha1.Sum([]byte(user.Email))
-	return token, hex.EncodeToString(hash[:]), user.DisplayName, nil
-}
-
-func (s *SpotifyJamFactory) CallbackURL(state string) string {
-	return s.authenticator.AuthURL(state)
-}
-
-func (s *SpotifyJamFactory) DeleteJamSession(jamLabel string) error {
-	jamSession, exists := s.jamSessions[jamLabel]
-	if !exists {
 		return apierrors.ErrJamSessionNotFound
-	}
-
-	if err := s.labelManager.Delete(jamLabel); err != nil {
-		s.log.Debug(err)
 	}
 
 	if err := jamSession.Deconstruct(); err != nil {
 		return err
 	}
 
-	delete(s.jamSessions, jamLabel)
+	if err := s.store.Delete(jamLabel); err != nil {
+		return err
+	}
 
 	return nil
 }
 
-func (s *SpotifyJamFactory) GetJamSessionByLabel(jamLabel string) (jamsession.JamSession, error) {
-	jamSession, exists := s.jamSessions[strings.ToUpper(jamLabel)]
-	if !exists {
+func (s *JamFactory) GetJamSessionByLabel(jamLabel string) (*jamsession.JamSession, error) {
+	jamSession, err := s.store.Get(strings.ToUpper(jamLabel))
+	if err != nil {
 		return nil, apierrors.ErrJamSessionNotFound
 	}
 	return jamSession, nil
 }
 
-func (s *SpotifyJamFactory) GetJamSessionByUser(user *users.User) (jamsession.JamSession, error) {
-	for _, jamSession := range s.jamSessions {
+func (s *JamFactory) GetJamSessionByUser(user *users.User) (*jamsession.JamSession, error) {
+	jamSessions, err := s.store.GetAll()
+	if err != nil {
+		log.Warn(err)
+	}
+	for _, jamSession := range jamSessions {
 		if _, err := jamSession.Members().Get(user.Identifier); err == nil {
 			return jamSession, nil
 		}
@@ -144,21 +108,24 @@ func (s *SpotifyJamFactory) GetJamSessionByUser(user *users.User) (jamsession.Ja
 	return nil, apierrors.ErrJamSessionNotFound
 }
 
-func (s *SpotifyJamFactory) NewJamSession(host *users.User) (jamsession.JamSession, error) {
+func (s *JamFactory) NewJamSession(host *users.User) (*jamsession.JamSession, error) {
 	// Check if correct user type was passed
 	if host.UserType != users.UserTypeSpotify {
 		return nil, errors.New("Wrong userIdentifier Type for Spotify JamSession with UserType: " + string(host.UserType))
 	}
-	client := s.authenticator.NewClient(host.SpotifyToken)
-	jamSession, err := jamsession.NewSpotify(host, client, s.labelManager.Create())
+
+	jamSession, err := jamsession.New(host, s.users, s.CreateLabel(0))
 	if err != nil {
 		return nil, err
 	}
-	s.jamSessions[jamSession.JamLabel()] = jamSession
+	err = s.store.Save(jamSession)
+	if err != nil {
+		return nil, err
+	}
 	return jamSession, nil
 }
 
-func (s *SpotifyJamFactory) Search(jamSession jamsession.JamSession, searchType string, text string) (interface{}, error) {
+func (s *JamFactory) Search(jamSession *jamsession.JamSession, searchType string, text string) (interface{}, error) {
 	country := spotify.CountryGermany
 	opts := spotify.Options{
 		Country: &country,
@@ -196,8 +163,4 @@ func (s *SpotifyJamFactory) Search(jamSession jamsession.JamSession, searchType 
 	}
 
 	return result, nil
-}
-
-func (s *SpotifyJamFactory) ClientAddresses() []*url.URL {
-	return s.clientAddresses
 }

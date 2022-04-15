@@ -2,7 +2,6 @@ package users
 
 import (
 	"context"
-
 	"github.com/jamfactoryapp/jamfactory-backend/api/errors"
 	"golang.org/x/oauth2"
 )
@@ -19,27 +18,30 @@ const (
 )
 
 type User struct {
-	Identifier   string
-	UserType     UserType
-	UserName     string
-	SpotifyToken *oauth2.Token
+	Identifier string
+	UserType   UserType
+	UserName   string
+	player
 }
 
-func New(identifier string, username string, usertype UserType, token *oauth2.Token) *User {
+func New(identifier string, username string, usertype UserType, token *oauth2.Token, auth *Authenticator) *User {
 	return &User{
-		Identifier:   identifier,
-		UserType:     usertype,
-		UserName:     username,
-		SpotifyToken: token,
+		Identifier: identifier,
+		UserType:   usertype,
+		UserName:   username,
+		player: player{
+			authenticator: auth,
+			SpotifyToken:  token,
+		},
 	}
 }
 
 func NewEmpty() *User {
 	return &User{
-		Identifier:   "",
-		UserType:     UserTypeEmpty,
-		UserName:     "",
-		SpotifyToken: nil,
+		Identifier: "",
+		UserType:   UserTypeEmpty,
+		UserName:   "",
+		player:     player{},
 	}
 }
 

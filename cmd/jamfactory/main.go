@@ -2,6 +2,8 @@ package main
 
 import (
 	"crypto/tls"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/jamsession"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/users"
 	"math/rand"
 	"os"
 	"path"
@@ -10,7 +12,6 @@ import (
 	"github.com/jamfactoryapp/jamfactory-backend/api/sessions"
 
 	"github.com/jamfactoryapp/jamfactory-backend/api/server"
-	"github.com/jamfactoryapp/jamfactory-backend/api/users"
 	pkgredis "github.com/jamfactoryapp/jamfactory-backend/internal/redis"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/cache"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/config"
@@ -51,7 +52,7 @@ func main() {
 
 	// Create redis stores
 	redisStore := sessions.NewRedisSessionStore(pool, path.Join(conf.DataDir, ".keypairs"), conf.CookieSameSite, conf.CookieSecure)
-	userStore := users.NewRedisUserStore(pool)
+	userStore := users.NewStore(pool)
 	log.Debug("Initialized redis stores")
 
 	// Create redis cache
@@ -59,11 +60,12 @@ func main() {
 	log.Debug("Initialized redis cache")
 
 	// Create JamFactory
-	spotifyJamFactory := jamfactory.NewSpotify(redisCache, conf.SpotifyRedirectURL, conf.SpotifyID, conf.SpotifySecret, conf.ClientAddresses)
+	jamStore := jamsession.NewRedisJamStore(pool)
+	spotifyJamFactory := jamfactory.New(jamStore, userStore, redisCache)
 	log.Debug("Initialized JamFactory")
 
 	// Create app server
-	appServer := server.NewServer("/", redisStore, userStore, spotifyJamFactory).
+	appServer := server.NewServer("/", conf, redisStore, userStore, spotifyJamFactory).
 		WithPort(conf.Port).
 		WithCache(redisCache)
 

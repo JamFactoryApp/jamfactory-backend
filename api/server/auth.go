@@ -1,6 +1,7 @@
 package server
 
 import (
+	users2 "github.com/jamfactoryapp/jamfactory-backend/pkg/users"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -8,7 +9,6 @@ import (
 	apierrors "github.com/jamfactoryapp/jamfactory-backend/api/errors"
 	"github.com/jamfactoryapp/jamfactory-backend/api/sessions"
 	"github.com/jamfactoryapp/jamfactory-backend/api/types"
-	"github.com/jamfactoryapp/jamfactory-backend/api/users"
 	"github.com/jamfactoryapp/jamfactory-backend/api/utils"
 	log "github.com/sirupsen/logrus"
 )
@@ -16,7 +16,7 @@ import (
 func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 	session := s.CurrentSession(r)
 	state := session.ID
-	url := s.jamFactory.CallbackURL(state)
+	url := s.authenticator.CallbackURL(state)
 
 	sessions.SetOrigin(session, r.Header.Get("Referer"))
 
@@ -51,7 +51,7 @@ func (s *Server) logout(w http.ResponseWriter, r *http.Request) {
 func (s *Server) callback(w http.ResponseWriter, r *http.Request) {
 	session := s.CurrentSession(r)
 
-	token, id, username, err := s.jamFactory.Authenticate(session.ID, r)
+	token, id, username, err := s.authenticator.Authenticate(session.ID, r)
 	if err != nil {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return
@@ -64,14 +64,14 @@ func (s *Server) callback(w http.ResponseWriter, r *http.Request) {
 
 	user, err := s.users.Get(id)
 	if err != nil {
-		if errors.Is(err, users.ErrUserNotFound) {
-			user = users.New(id, username, users.UserTypeSpotify, token)
+		if errors.Is(err, users2.ErrUserNotFound) {
+			user = users2.New(id, username, users2.UserTypeSpotify, token, s.authenticator)
 		} else {
 			s.errInternalServerError(w, err, log.DebugLevel)
 			return
 		}
 	} else {
-		user.UserType = users.UserTypeSpotify
+		user.UserType = users2.UserTypeSpotify
 		user.SpotifyToken = token
 	}
 

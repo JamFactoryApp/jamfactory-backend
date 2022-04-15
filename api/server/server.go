@@ -4,13 +4,15 @@ import (
 	"crypto/tls"
 	"encoding/gob"
 	"fmt"
+	"github.com/jamfactoryapp/jamfactory-backend/api/sessions"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/config"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/jamfactory"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/users"
 	"net/http"
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	"github.com/gorilla/websocket"
-	"github.com/jamfactoryapp/jamfactory-backend/api/users"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/cache"
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
@@ -31,26 +33,30 @@ const (
 )
 
 type Server struct {
-	server     *http.Server
-	router     *mux.Router
-	store      sessions.Store
-	users      users.Store
-	cache      cache.Cache
-	jamFactory JamFactory
-	upgrader   websocket.Upgrader
+	store         *sessions.Store
+	server        *http.Server
+	router        *mux.Router
+	users         *users.Store
+	cache         *cache.Cache
+	authenticator *users.Authenticator
+	jamFactory    *jamfactory.JamFactory
+	upgrader      websocket.Upgrader
 }
 
-func NewServer(pattern string, sessionStore sessions.Store, userStore users.Store, jamFactory JamFactory) *Server {
+func NewServer(pattern string, config *config.Config, sessionStore *sessions.Store, userStore *users.Store, jamFactory *jamfactory.JamFactory) *Server {
+	// Create Authenticator
+	authenticator := users.NewAuthenticator(config.SpotifyRedirectURL, config.SpotifyID, config.SpotifySecret)
 	s := &Server{
 		server: &http.Server{
 			ReadTimeout:  readTimeout,
 			WriteTimeout: writeTimeout,
 			IdleTimeout:  idleTimeout,
 		},
-		router:     mux.NewRouter(),
-		store:      sessionStore,
-		users:      userStore,
-		jamFactory: jamFactory,
+		router:        mux.NewRouter(),
+		authenticator: authenticator,
+		store:         sessionStore,
+		users:         userStore,
+		jamFactory:    jamFactory,
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
@@ -63,7 +69,7 @@ func NewServer(pattern string, sessionStore sessions.Store, userStore users.Stor
 	}
 
 	s.initRoutes()
-	http.Handle(pattern, s.corsMiddleware(s.router, jamFactory.ClientAddresses()))
+	http.Handle(pattern, s.corsMiddleware(s.router, config.ClientAddresses))
 
 	return s
 }
@@ -81,7 +87,7 @@ func (s *Server) WithPort(port int) *Server {
 	return s
 }
 
-func (s *Server) WithCache(cache cache.Cache) *Server {
+func (s *Server) WithCache(cache *cache.Cache) *Server {
 	s.cache = cache
 	return s
 }

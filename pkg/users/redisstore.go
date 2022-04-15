@@ -13,19 +13,19 @@ const (
 	defaultRedisUserKey = "user"
 )
 
-type RedisUserStore struct {
+type Store struct {
 	pool     *redis.Pool
 	redisKey pkgredis.Key
 }
 
-func NewRedisUserStore(pool *redis.Pool) *RedisUserStore {
-	return &RedisUserStore{
+func NewStore(pool *redis.Pool) *Store {
+	return &Store{
 		pool:     pool,
 		redisKey: pkgredis.Key{}.Append(defaultRedisUserKey),
 	}
 }
 
-func (s *RedisUserStore) Get(identifier string) (*User, error) {
+func (s *Store) Get(identifier string) (*User, error) {
 	conn := s.pool.Get()
 	reply, err := conn.Do("GET", s.redisKey.Append(identifier))
 	var user User
@@ -44,7 +44,7 @@ func (s *RedisUserStore) Get(identifier string) (*User, error) {
 	return &user, err
 }
 
-func (s *RedisUserStore) Save(user *User) error {
+func (s *Store) Save(user *User) error {
 	conn := s.pool.Get()
 	serialized, err := s.serialize(user)
 	if err != nil {
@@ -55,13 +55,13 @@ func (s *RedisUserStore) Save(user *User) error {
 	return err
 }
 
-func (s *RedisUserStore) Delete(identifier string) error {
+func (s *Store) Delete(identifier string) error {
 	conn := s.pool.Get()
 	_, err := conn.Do("DEL", s.redisKey.Append(identifier))
 	return err
 }
 
-func (s *RedisUserStore) serialize(user *User) ([]byte, error) {
+func (s *Store) serialize(user *User) ([]byte, error) {
 	var buffer bytes.Buffer
 	encoder := gob.NewEncoder(&buffer)
 	err := encoder.Encode(user)
@@ -72,7 +72,7 @@ func (s *RedisUserStore) serialize(user *User) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func (s *RedisUserStore) deserialize(data []byte, user *User) error {
+func (s *Store) deserialize(data []byte, user *User) error {
 	buffer := bytes.NewBuffer(data)
 	decoder := gob.NewDecoder(buffer)
 	return decoder.Decode(user)
