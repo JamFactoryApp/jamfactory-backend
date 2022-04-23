@@ -52,8 +52,9 @@ func main() {
 
 	// Create redis stores
 	redisStore := sessions.NewRedisSessionStore(pool, path.Join(conf.DataDir, ".keypairs"), conf.CookieSameSite, conf.CookieSecure)
+	log.Debug("Initialized session store")
 	userStore := users.NewStore(pool)
-	log.Debug("Initialized redis stores")
+	log.Debug("Initialized user store")
 
 	// Create redis cache
 	redisCache := cache.NewRedis(pool)
@@ -61,8 +62,9 @@ func main() {
 
 	// Create JamFactory
 	jamStore := jamsession.NewRedisJamStore(pool)
+	log.Debug("Initialized JamFactory store")
 	spotifyJamFactory := jamfactory.New(jamStore, userStore, redisCache)
-	log.Debug("Initialized JamFactory")
+	log.Info("Initialized JamFactory")
 
 	// Create app server
 	appServer := server.NewServer("/", conf, redisStore, userStore, spotifyJamFactory).

@@ -3,14 +3,14 @@ package jamsession
 import (
 	"bytes"
 	"encoding/gob"
-
 	"github.com/gomodule/redigo/redis"
 	pkgredis "github.com/jamfactoryapp/jamfactory-backend/internal/redis"
 	log "github.com/sirupsen/logrus"
+	"strconv"
 )
 
 const (
-	defaultRedisJamKey = "key"
+	defaultRedisJamKey = "jam"
 )
 
 type Store struct {
@@ -26,8 +26,13 @@ func NewRedisJamStore(pool *redis.Pool) *Store {
 }
 
 func (s *Store) Get(label string) (*JamSession, error) {
+	jam, err := s.get(s.redisKey.Append(label).String())
+	return jam, err
+}
+
+func (s *Store) get(key string) (*JamSession, error) {
 	conn := s.pool.Get()
-	reply, err := conn.Do("GET", s.redisKey.Append(label))
+	reply, err := conn.Do("GET", key)
 	var jam *JamSession
 	if err != nil {
 		return nil, err
@@ -46,18 +51,43 @@ func (s *Store) Get(label string) (*JamSession, error) {
 
 func (s *Store) GetAll() ([]*JamSession, error) {
 	conn := s.pool.Get()
-	reply, err := conn.Do("SCAN", s.redisKey.Append("*"))
-	var jams []*JamSession
-	if err != nil {
-		return nil, err
-	}
-	if reply == nil {
-		return nil, ErrJamNotFound
-	}
+	cursor := 0
+	maxRecursion := 100
+	keys := make(map[string]bool, 0)
+	for {
+		maxRecursion--
+		reply, err := conn.Do("SCAN", cursor, "MATCH", s.redisKey.Append("*"))
+		if err != nil {
+			return nil, err
+		}
+		replyArr := reply.([]interface{})
+		cursorString := string(replyArr[0].([]uint8))
+		cursor, err = strconv.Atoi(cursorString)
+		if err != nil {
+			return nil, err
+		}
 
-	log.Info(reply)
+		for _, key := range replyArr[1].([]interface{}) {
+			keys[string(key.([]byte))] = true
+		}
 
-	return jams, err
+		if cursor == 0 || maxRecursion == 0 {
+			break
+		}
+	}
+	jams := make([]*JamSession, len(keys))
+	i := 0
+	for key, _ := range keys {
+		jam, err := s.get(key)
+		if err != nil {
+			return nil, err
+		}
+		jams[i] = jam
+		i++
+	}
+	log.Info(jams)
+
+	return jams, nil
 }
 
 func (s *Store) Save(jam *JamSession) error {
