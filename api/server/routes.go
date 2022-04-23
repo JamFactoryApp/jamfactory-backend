@@ -13,7 +13,7 @@ const (
 	authLogin    = "/login"
 	authLogout   = "/logout"
 
-	user          = "/user"
+	user          = "/me"
 	userIndex     = ""
 	userPlayback  = "/playback"
 	userDevices   = "/devices"
@@ -51,14 +51,14 @@ func (s *Server) initRoutes() {
 	chain := alice.New(s.sessionMiddleware, s.userMiddleware)
 
 	authRouter := s.router.PathPrefix(api + auth).Subrouter()
-	meRouter := s.router.PathPrefix(api + user).Subrouter()
+	userRouter := s.router.PathPrefix(api + user).Subrouter()
 	jamSessionRouter := s.router.PathPrefix(api + jamSession).Subrouter()
 	queueRouter := s.router.PathPrefix(api + queue).Subrouter()
 	spotifyRouter := s.router.PathPrefix(api + spotifyIndex).Subrouter()
 	websocketRouter := s.router.PathPrefix(websocketPath).Subrouter()
 
 	s.registerAuthRoutes(authRouter, chain)
-	s.registerUserRoutes(meRouter, chain)
+	s.registerUserRoutes(userRouter, chain)
 	s.registerQueueRoutes(queueRouter, chain)
 	s.registerJamSessionRoutes(jamSessionRouter, chain)
 	s.registerSpotifyRoutes(spotifyRouter, chain)
