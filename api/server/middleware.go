@@ -2,7 +2,6 @@ package server
 
 import (
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/permissions"
-	"github.com/jamfactoryapp/jamfactory-backend/pkg/users"
 	"net/http"
 	"net/url"
 
@@ -52,19 +51,6 @@ func (s *Server) sessionMiddleware(next http.Handler) http.Handler {
 		}
 
 		ctx := sessions.NewContext(r.Context(), session)
-		r = r.WithContext(ctx)
-		next.ServeHTTP(w, r)
-	})
-}
-
-func (s *Server) userMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		identifier := s.CurrentIdentifier(r)
-		user, err := s.users.Get(identifier)
-		if err != nil {
-			user = users.NewEmpty()
-		}
-		ctx := users.NewContext(r.Context(), user)
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})

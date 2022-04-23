@@ -17,6 +17,7 @@ type player struct {
 	SpotifyToken  *oauth2.Token
 	CurrentSong   *spotify.FullTrack
 	Synchronized  bool
+	SyncCount     int
 	Active        bool
 	client        *spotify.Client
 	spotifyPlayer *spotify.PlayerState
@@ -52,7 +53,7 @@ func (p player) SetState(state bool) error {
 		return err
 	}
 
-	p.synchronized = false
+	p.Synchronized = false
 	return nil
 }
 
@@ -65,12 +66,12 @@ func (p player) Play(track *spotify.FullTrack) error {
 		URIs: []spotify.URI{track.URI},
 	}
 
-	p.synchronized = false
+	p.Synchronized = false
 	err := p.Client().PlayOpt(&playOptions)
 	if err != nil {
 		return err
 	}
-	p.currentSong = track
+	p.CurrentSong = track
 
 	return nil
 }
@@ -82,7 +83,7 @@ func (p player) SetDevice(id string) error {
 	}
 	deviceID := spotify.ID(id)
 	if deviceID != playerState.Device.ID {
-		err := p.Client().TransferPlayback(deviceID, p.active)
+		err := p.Client().TransferPlayback(deviceID, p.Active)
 		if err != nil {
 			return err
 		}

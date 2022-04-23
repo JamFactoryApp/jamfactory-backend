@@ -47,7 +47,7 @@ type PutJamRequest struct {
 	Password JSONString `json:"password,omitempty"`
 }
 
-type PutJamPlaybackRequest struct {
+type PutPlaybackRequest struct {
 	Playing  JSONBool   `json:"playing,omitempty"`
 	Volume   JSONInt    `json:"volume,omitempty"`
 	DeviceID JSONString `json:"device_id,omitempty"`

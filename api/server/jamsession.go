@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/permissions"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/users"
+	"github.com/zmb3/spotify"
 	"net/http"
 
 	apierrors "github.com/jamfactoryapp/jamfactory-backend/api/errors"
@@ -116,6 +117,11 @@ func (s *Server) setJamSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jamSession := s.CurrentJamSession(r)
+	host, err := jamSession.Members().Host().ToUser(s.users)
+	if err != nil {
+		s.errInternalServerError(w, apierrors.ErrMissingMember, log.WarnLevel)
+		return
+	}
 
 	if body.Active.Set && body.Active.Valid {
 		if body.Active.Value && !jamSession.Active() {
@@ -124,11 +130,13 @@ func (s *Server) setJamSession(w http.ResponseWriter, r *http.Request) {
 				s.errBadRequest(w, apierrors.ErrQueueEmpty, log.DebugLevel)
 				return
 			}
-			if jamSession.GetDevice().ID == "" {
+			if host.GetPlayerState().Device.ID == "" {
 				s.errBadRequest(w, apierrors.ErrNoDevice, log.DebugLevel)
 				return
 			}
-			jamSession.Play(jamSession.GetDevice(), song.Song(), true)
+
+			// TODO: jamSession.Play or user.Play ???
+			jamSession.Play(song.Song(), true)
 			jamSession.SocketQueueUpdate()
 		}
 		jamSession.SetActive(body.Active.Value)
@@ -159,49 +167,59 @@ func (s *Server) setJamSession(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) getPlayback(w http.ResponseWriter, r *http.Request) {
 	jamSession := s.CurrentJamSession(r)
+	host, err := jamSession.Members().Host().ToUser(s.users)
+	if err != nil {
+		s.errInternalServerError(w, apierrors.ErrMissingMember, log.WarnLevel)
+		return
+	}
 
-	utils.EncodeJSONBody(w, types.GetJamPlaybackResponse{
-		Playback: jamSession.GetPlayerState(),
-		DeviceID: jamSession.GetDevice().ID,
+	utils.EncodeJSONBody(w, types.GetPlaybackResponse{
+		Playback: host.GetPlayerState(),
+		DeviceID: host.GetPlayerState().Device.ID,
 	})
 }
 
 func (s *Server) setPlayback(w http.ResponseWriter, r *http.Request) {
-	var body types.PutJamPlaybackRequest
+	var body types.PutPlaybackRequest
 	if err := utils.DecodeJSONBody(w, r, &body); err != nil {
 		s.errBadRequest(w, err, log.DebugLevel)
 		return
 	}
 
 	jamSession := s.CurrentJamSession(r)
+	host, err := jamSession.Members().Host().ToUser(s.users)
+	if err != nil {
+		s.errInternalServerError(w, apierrors.ErrMissingMember, log.WarnLevel)
+		return
+	}
 
 	if body.Playing.Set && body.Playing.Valid {
-		if err := jamSession.SetState(body.Playing.Value); err != nil {
+		if err := host.SetState(body.Playing.Value); err != nil {
 			s.errInternalServerError(w, err, log.DebugLevel)
 			return
 		}
-		playerState := jamSession.GetPlayerState()
+		playerState := host.GetPlayerState()
 		playerState.Playing = body.Playing.Value
-		jamSession.SetPlayerState(playerState)
+		host.SetPlayerState(playerState)
 	}
 
 	if body.Volume.Set && body.Volume.Valid {
-		if err := jamSession.SetVolume(body.Volume.Value); err != nil {
+		if err := host.SetVolume(body.Volume.Value); err != nil {
 			s.errInternalServerError(w, err, log.DebugLevel)
 			return
 		}
 	}
 
 	if body.DeviceID.Set && body.DeviceID.Valid {
-		if err := jamSession.SetDevice(body.DeviceID.Value); err != nil {
+		if err := host.SetDevice(body.DeviceID.Value); err != nil {
 			s.errInternalServerError(w, err, log.DebugLevel)
 			return
 		}
 	}
 
 	utils.EncodeJSONBody(w, types.PutJamPlaybackResponse{
-		Playback: jamSession.GetPlayerState(),
-		DeviceID: jamSession.GetDevice().ID,
+		Playback: host.GetPlayerState(),
+		DeviceID: host.GetPlayerState().Device.ID,
 	})
 }
 
@@ -213,13 +231,14 @@ func (s *Server) playSong(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jamSession := s.CurrentJamSession(r)
-	track, err := jamSession.GetTrack(body.TrackID)
+	host, err := jamSession.Members().Host().ToUser(s.users)
+	track, err := host.GetTrack(body.TrackID)
 	if err != nil {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return
 	}
 
-	if err := jamSession.Play(jamSession.GetDevice(), track, body.Remove); err != nil {
+	if err := jamSession.Play(track, body.Remove); err != nil {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return
 	}
@@ -341,5 +360,33 @@ func (s *Server) leaveJamSession(w http.ResponseWriter, r *http.Request) {
 
 	utils.EncodeJSONBody(w, types.GetJamLeaveResponse{
 		Success: true,
+	})
+}
+
+func (s *Server) search(w http.ResponseWriter, r *http.Request) {
+	var body types.PutSpotifySearchRequest
+	if err := utils.DecodeJSONBody(w, r, &body); err != nil {
+		return
+	}
+
+	jamSession := s.CurrentJamSession(r)
+
+	entry, err := s.jamFactory.Search(jamSession, body.SearchType, body.SearchText)
+	if err != nil {
+		s.errInternalServerError(w, err, log.DebugLevel)
+		return
+	}
+
+	searchResult, ok := entry.(*spotify.SearchResult)
+	if !ok {
+		s.errInternalServerError(w, err, log.ErrorLevel)
+		return
+	}
+
+	utils.EncodeJSONBody(w, types.PutSpotifySearchResponse{
+		Artists:   searchResult.Artists,
+		Albums:    searchResult.Albums,
+		Playlists: searchResult.Playlists,
+		Tracks:    searchResult.Tracks,
 	})
 }

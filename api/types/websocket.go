@@ -2,5 +2,5 @@ package types
 
 type SocketJamMessage = JamResponse
 type SocketQueueMessage = GetQueueResponse
-type SocketPlaybackMessage = GetJamPlaybackResponse
+type SocketPlaybackMessage = GetPlaybackResponse
 type SocketMemberMessage = GetJamMembersResponse

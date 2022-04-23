@@ -1,6 +1,7 @@
 package server
 
 import (
+	apierrors "github.com/jamfactoryapp/jamfactory-backend/api/errors"
 	"net/http"
 	"time"
 
@@ -39,6 +40,12 @@ func (s *Server) exportQueue(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jamSession := s.CurrentJamSession(r)
+	host, err := jamSession.Members().Host().ToUser(s.users)
+	if err != nil {
+		s.errInternalServerError(w, apierrors.ErrMissingMember, log.WarnLevel)
+		return
+	}
+
 	voteID := s.CurrentVoteID(r)
 	tracks := make([]types.Song, 0)
 	if body.IncludeHistory {
@@ -58,7 +65,7 @@ func (s *Server) exportQueue(w http.ResponseWriter, r *http.Request) {
 		ids[i] = tracks[i].Song.ID
 	}
 	desc := jamSession.Name() + "  exported queue at " + time.Now().Format("02.01.2006, 15:01") + ". https://jamfactory.app"
-	err := jamSession.CreatePlaylist(body.PlaylistName, desc, ids)
+	err = host.CreatePlaylist(body.PlaylistName, desc, ids)
 	if err != nil {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return

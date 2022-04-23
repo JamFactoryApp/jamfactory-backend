@@ -37,12 +37,12 @@ const (
 	queueHistory    = "/history"
 	queueExport     = "/export"
 
-	spotify         = "/spotify"
+	spotifyIndex    = "/spotify"
 	spotifyDevices  = "/devices"
 	spotifyPlaylist = "/playlists"
 	spotifySearch   = "/search"
 
-	websocket      = "/ws"
+	websocketPath  = "/ws"
 	websocketIndex = ""
 )
 
@@ -54,8 +54,8 @@ func (s *Server) initRoutes() {
 	meRouter := s.router.PathPrefix(api + user).Subrouter()
 	jamSessionRouter := s.router.PathPrefix(api + jamSession).Subrouter()
 	queueRouter := s.router.PathPrefix(api + queue).Subrouter()
-	spotifyRouter := s.router.PathPrefix(api + spotify).Subrouter()
-	websocketRouter := s.router.PathPrefix(websocket).Subrouter()
+	spotifyRouter := s.router.PathPrefix(api + spotifyIndex).Subrouter()
+	websocketRouter := s.router.PathPrefix(websocketPath).Subrouter()
 
 	s.registerAuthRoutes(authRouter, chain)
 	s.registerUserRoutes(meRouter, chain)
@@ -185,12 +185,12 @@ func (s *Server) registerSpotifyRoutes(r *mux.Router, chain alice.Chain) {
 	// TODO: Deprecate endpoint in favour of /api/v1/user/devices
 	// GET: /api/v1/spotify/devices
 	r.Methods("GET").Path(spotifyDevices).Handler(
-		chain.Append(s.jamSessionRequired, s.hostRequired).ThenFunc(s.devices))
+		chain.Append(s.jamSessionRequired, s.hostRequired).ThenFunc(s.getUserDevices))
 
 	// TODO: Deprecate endpoint in favour of /api/v1/user/playlists
 	// GET: /api/v1/spotify/playlists
 	r.Methods("GET").Path(spotifyPlaylist).Handler(
-		chain.Append(s.jamSessionRequired, s.hostRequired).ThenFunc(s.playlist))
+		chain.Append(s.jamSessionRequired, s.hostRequired).ThenFunc(s.getUserPlaylists))
 
 	// TODO: Deprecate endpoint in favour of /api/v1/jam/search
 	// PUT: /api/v1/spotify/search

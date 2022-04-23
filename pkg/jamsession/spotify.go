@@ -67,7 +67,6 @@ func New(host *users.User, users *users.Store, label string) (*JamSession, error
 
 func (s *JamSession) Conductor() {
 	ticker := time.NewTicker(time.Second)
-	syncCount := 0
 	intervalCount := 0
 	updateInterval := UpdateIntervalInactive
 	defer ticker.Stop()
@@ -80,41 +79,64 @@ func (s *JamSession) Conductor() {
 
 		// Update player state and send it to all connected clients
 		case <-ticker.C:
+
+			// Get the host user
 			host, err := s.members.Host().ToUser(s.users)
 			if err != nil {
 				continue
 			}
-			intervalCount++
-			if intervalCount >= updateInterval {
-				intervalCount = 0
-				playerState, err := host.Client().PlayerState()
+
+			// Go to all members joined by the JamSession
+			for _, member := range s.members {
+				// Get the user for the member
+				user, err := member.ToUser(s.users)
 				if err != nil {
 					continue
 				}
-				host.SetPlayerState(playerState)
-				s.SocketPlaybackUpdate(host)
-				if !host.Synchronized {
-					syncCount++
-					if syncCount >= 3 {
-						host.Synchronized = true
-						syncCount = 0
+				// Conductor operation is only relevant for spotify users
+				if user.UserType != users.UserTypeSpotify {
+					continue
+				}
+				// If the intervalCount is reached, update the PlayerState for each spotify user
+				if intervalCount >= updateInterval {
+
+					playerState, err := user.Client().PlayerState()
+					if err != nil {
+						continue
+					}
+
+					user.SetPlayerState(playerState)
+
+					if !user.Synchronized {
+						user.SyncCount++
+						if user.SyncCount >= 1 {
+							user.Synchronized = true
+							user.SyncCount = 0
+						}
+					}
+				}
+
+				// Check if the user started a song
+				if user.Synchronized && user.GetPlayerState().Item != nil && user.CurrentSong != nil && user.GetPlayerState().Item.ID != user.CurrentSong.ID {
+					user.Active = false
+					user.CurrentSong = nil
+					if user.Identifier == host.Identifier {
+						s.SetActive(false)
+						s.SocketJamUpdate()
 					}
 				}
 			}
-			// Check if the user started a song
-			if s.synchronized && s.player.Item != nil && s.currentSong != nil && s.player.Item.ID != s.currentSong.ID {
-				s.SetActive(false)
-				s.currentSong = nil
-				s.SocketJamUpdate()
-			}
 
-			// Check if no start or end of song is near
+			s.SocketPlaybackUpdate(host)
+
+			// Check if no start or end of song is near for the host
 			if s.active {
 				so, err := s.queue.GetNext()
 				switch err {
 				case nil:
-					if (!s.player.Playing && s.player.Progress == 0) || (s.player.Item != nil && s.player.Progress > s.player.Item.Duration-1000) {
-						if err := s.Play(s.player.Device, so.Song(), true); err != nil {
+					if (!host.GetPlayerState().Playing && host.GetPlayerState().Progress == 0) ||
+						(host.GetPlayerState().Item != nil && host.GetPlayerState().Progress > host.GetPlayerState().Item.Duration-1000) {
+						if err := s.Play(so.Song(), true); err != nil {
 							log.Error(err)
 							continue
 						}
@@ -128,25 +150,33 @@ func (s *JamSession) Conductor() {
 
 				}
 			}
-			ticker.Reset(time.Second)
-		}
 
-		// Set the current update Interval
-		if s.player.Playing && s.player.Item != nil {
-			if s.player.Progress > s.player.Item.Duration-6000 {
-				// First and last 5 seconds of the current song. Sync fast to correctly display switching the song
-				updateInterval = UpdateIntervalSync
+			// Reset the interval count
+			if intervalCount >= updateInterval {
+				intervalCount = 0
 			} else {
-				// We are in the middle of the song. Decrease sync rate
-				updateInterval = UpdateIntervalPlaying
+				intervalCount++
 			}
-		} else {
-			// JamSession is inactive and no playback needs to be updated
-			updateInterval = UpdateIntervalInactive
-		}
-		if !s.synchronized {
-			// Conductor is not synchronized.
-			updateInterval = UpdateIntervalSync
+
+			// Set the current update Interval
+			if host.GetPlayerState().Playing && host.GetPlayerState().Item != nil {
+				if host.GetPlayerState().Progress > host.GetPlayerState().Item.Duration-6000 {
+					// First and last 5 seconds of the current song. Sync fast to correctly display switching the song
+					updateInterval = UpdateIntervalSync
+				} else {
+					// We are in the middle of the song. Decrease sync rate
+					updateInterval = UpdateIntervalPlaying
+				}
+			} else {
+				// JamSession is inactive and no playback needs to be updated
+				updateInterval = UpdateIntervalInactive
+			}
+			if !host.Synchronized {
+				// Conductor is not synchronized.
+				updateInterval = UpdateIntervalSync
+			}
+
+			ticker.Reset(time.Second)
 		}
 	}
 }

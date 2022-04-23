@@ -59,7 +59,7 @@ type GetAuthLogoutResponse SuccessResponse
 type GetJamResponse JamResponse
 type PutJamResponse JamResponse
 
-type GetJamPlaybackResponse PlaybackBody
+type GetPlaybackResponse PlaybackBody
 type PutJamPlaybackResponse PlaybackBody
 
 type GetJamMembersResponse JamMemberResponse
