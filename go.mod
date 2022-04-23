@@ -3,10 +3,6 @@ module github.com/jamfactoryapp/jamfactory-backend
 go 1.16
 
 require (
-	github.com/cosmtrek/air v1.29.0 // indirect
-	github.com/creack/pty v1.1.11 // indirect
-	github.com/fatih/color v1.13.0 // indirect
-	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/gorilla/mux v1.7.4
@@ -14,8 +10,7 @@ require (
 	github.com/gorilla/sessions v1.2.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/joho/godotenv v1.3.0
-	github.com/mattn/go-colorable v0.1.12 // indirect
-	github.com/pelletier/go-toml v1.9.4 // indirect
+	github.com/justinas/alice v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.6.0
 	github.com/zmb3/spotify v1.1.2-0.20210407153121-db261801914e

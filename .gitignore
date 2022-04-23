@@ -3,7 +3,7 @@
 ./redis/users.acl
 .keypairs
 data
-
+tmp
 # Binaries for programs and plugins
 *.exe
 *.exe~
