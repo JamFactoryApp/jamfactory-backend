@@ -75,7 +75,7 @@ func (s *Server) callback(w http.ResponseWriter, r *http.Request) {
 		user.SpotifyToken = token
 	}
 
-	if err := s.users.Save(user); err != nil {
+	if err := s.users.Save(user, user.Identifier); err != nil {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return
 	}

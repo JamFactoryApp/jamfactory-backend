@@ -21,7 +21,7 @@ type User struct {
 	Identifier string
 	UserType   UserType
 	UserName   string
-	player
+	Player
 }
 
 func New(identifier string, username string, usertype UserType, token *oauth2.Token, auth *Authenticator) *User {
@@ -29,7 +29,7 @@ func New(identifier string, username string, usertype UserType, token *oauth2.To
 		Identifier: identifier,
 		UserType:   usertype,
 		UserName:   username,
-		player: player{
+		Player: Player{
 			authenticator: auth,
 			SpotifyToken:  token,
 		},
@@ -41,7 +41,7 @@ func NewEmpty() *User {
 		Identifier: "",
 		UserType:   UserTypeEmpty,
 		UserName:   "",
-		player:     player{},
+		Player:     Player{},
 	}
 }
 

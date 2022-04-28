@@ -2,6 +2,7 @@ package jamfactory
 
 import (
 	"errors"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/store"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/users"
 	"strings"
 	"time"
@@ -18,8 +19,8 @@ import (
 
 type JamFactory struct {
 	cache *cache.Cache
-	store *jamsession.Store
-	users *users.Store
+	store store.Store[jamsession.JamSession]
+	users store.Store[users.User]
 	log   *log.Logger
 }
 
@@ -28,7 +29,7 @@ const (
 	inactiveWarning = 1*time.Hour + 30*time.Minute
 )
 
-func New(store *jamsession.Store, users *users.Store, ca *cache.Cache) *JamFactory {
+func New(store store.Store[jamsession.JamSession], users store.Store[users.User], ca *cache.Cache) *JamFactory {
 	jamFactory := &JamFactory{
 		cache: ca,
 		store: store,
@@ -118,7 +119,7 @@ func (s *JamFactory) NewJamSession(host *users.User) (*jamsession.JamSession, er
 	if err != nil {
 		return nil, err
 	}
-	err = s.store.Save(jamSession)
+	err = s.store.Save(jamSession, jamSession.JamLabel())
 	if err != nil {
 		return nil, err
 	}

@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/jamsession"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/store"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/users"
 	"math/rand"
 	"os"
@@ -53,7 +54,8 @@ func main() {
 	// Create redis stores
 	redisStore := sessions.NewRedisSessionStore(pool, path.Join(conf.DataDir, ".keypairs"), conf.CookieSameSite, conf.CookieSecure)
 	log.Debug("Initialized session store")
-	userStore := users.NewStore(pool)
+
+	userStore := store.NewRedisStore[users.User](pool, "users")
 	log.Debug("Initialized user store")
 
 	// Create redis cache
@@ -61,7 +63,7 @@ func main() {
 	log.Debug("Initialized redis cache")
 
 	// Create JamFactory
-	jamStore := jamsession.NewRedisJamStore(pool)
+	jamStore := store.NewRedisStore[jamsession.JamSession](pool, "jam")
 	log.Debug("Initialized JamFactory store")
 	spotifyJamFactory := jamfactory.New(jamStore, userStore, redisCache)
 	log.Info("Initialized JamFactory")

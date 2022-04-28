@@ -303,7 +303,7 @@ func (s *Server) joinJamSession(w http.ResponseWriter, r *http.Request) {
 		identifier := hex.EncodeToString(hash[:])
 		username := "Guest " + string([]rune(base32.StdEncoding.EncodeToString(hash[:]))[0:5])
 		user = users.New(identifier, username, users.UserTypeSession, nil, s.authenticator)
-		if err := s.users.Save(user); err != nil {
+		if err := s.users.Save(user, user.Identifier); err != nil {
 			s.errInternalServerError(w, err, log.DebugLevel)
 			return
 		}

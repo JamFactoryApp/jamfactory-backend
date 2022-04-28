@@ -7,6 +7,8 @@ import (
 	"github.com/jamfactoryapp/jamfactory-backend/api/sessions"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/config"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/jamfactory"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/jamsession"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/store"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/users"
 	"net/http"
 	"time"
@@ -23,7 +25,8 @@ func init() {
 	gob.Register(&oauth2.Token{})
 	gob.Register(&spotify.SearchResult{})
 	gob.Register(users.UserType(""))
-	gob.Register(&users.User{})
+	gob.Register(users.User{})
+	gob.Register(jamsession.JamSession{})
 }
 
 const (
@@ -36,14 +39,14 @@ type Server struct {
 	store         *sessions.Store
 	server        *http.Server
 	router        *mux.Router
-	users         *users.Store
+	users         store.Store[users.User]
 	cache         *cache.Cache
 	authenticator *users.Authenticator
 	jamFactory    *jamfactory.JamFactory
 	upgrader      websocket.Upgrader
 }
 
-func NewServer(pattern string, config *config.Config, sessionStore *sessions.Store, userStore *users.Store, jamFactory *jamfactory.JamFactory) *Server {
+func NewServer(pattern string, config *config.Config, sessionStore *sessions.Store, userStore store.Store[users.User], jamFactory *jamfactory.JamFactory) *Server {
 	// Create Authenticator
 	authenticator := users.NewAuthenticator(config.SpotifyRedirectURL, config.SpotifyID, config.SpotifySecret)
 	s := &Server{

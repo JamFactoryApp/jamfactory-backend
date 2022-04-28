@@ -1,55 +1,57 @@
-package jamsession
+package store
 
 import (
 	"bytes"
 	"encoding/gob"
+	"errors"
 	"github.com/gomodule/redigo/redis"
 	pkgredis "github.com/jamfactoryapp/jamfactory-backend/internal/redis"
 	log "github.com/sirupsen/logrus"
 	"strconv"
 )
 
-const (
-	defaultRedisJamKey = "jam"
+var (
+	ErrObjNotFound      = errors.New("store: obj not found")
+	ErrInterfaceConvert = errors.New("store: Failed to convert user from interface{} to []bytes")
 )
 
-type Store struct {
+type RedisStore[T any] struct {
 	pool     *redis.Pool
 	redisKey pkgredis.Key
 }
 
-func NewRedisJamStore(pool *redis.Pool) *Store {
-	return &Store{
+func NewRedisStore[T any](pool *redis.Pool, key string) *RedisStore[T] {
+	return &RedisStore[T]{
 		pool:     pool,
-		redisKey: pkgredis.Key{}.Append(defaultRedisJamKey),
+		redisKey: pkgredis.Key{}.Append(key),
 	}
 }
 
-func (s *Store) Get(label string) (*JamSession, error) {
-	jam, err := s.get(s.redisKey.Append(label).String())
-	return jam, err
+func (s RedisStore[T]) Get(key string) (*T, error) {
+	obj, err := s.get(s.redisKey.Append(key).String())
+	return obj, err
 }
 
-func (s *Store) get(key string) (*JamSession, error) {
+func (s RedisStore[T]) get(key string) (*T, error) {
 	conn := s.pool.Get()
 	reply, err := conn.Do("GET", key)
-	var jam *JamSession
+	var obj *T
 	if err != nil {
 		return nil, err
 	}
 	if reply == nil {
-		return nil, ErrJamNotFound
+		return nil, ErrObjNotFound
 	}
 	if data, ok := reply.([]byte); ok {
-		err = s.deserialize(data, jam)
+		err = s.deserialize(data, obj)
 	} else {
-		err = ErrInterfaceConvert
+		return nil, ErrInterfaceConvert
 	}
 
-	return jam, err
+	return obj, err
 }
 
-func (s *Store) GetAll() ([]*JamSession, error) {
+func (s RedisStore[T]) GetAll() ([]*T, error) {
 	conn := s.pool.Get()
 	cursor := 0
 	maxRecursion := 100
@@ -75,7 +77,7 @@ func (s *Store) GetAll() ([]*JamSession, error) {
 			break
 		}
 	}
-	jams := make([]*JamSession, len(keys))
+	jams := make([]*T, len(keys))
 	i := 0
 	for key, _ := range keys {
 		jam, err := s.get(key)
@@ -90,27 +92,27 @@ func (s *Store) GetAll() ([]*JamSession, error) {
 	return jams, nil
 }
 
-func (s *Store) Save(jam *JamSession) error {
+func (s RedisStore[T]) Save(obj *T, key string) error {
 	conn := s.pool.Get()
-	serialized, err := s.serialize(jam)
+	serialized, err := s.serialize(obj)
 	if err != nil {
 		return err
 	}
-	reply, err := conn.Do("SET", s.redisKey.Append(jam.JamLabel()), serialized)
+	reply, err := conn.Do("SET", s.redisKey.Append(key), serialized)
 	log.Trace("redis reply (DO SET): ", reply, " with err: ", err)
 	return err
 }
 
-func (s *Store) Delete(identifier string) error {
+func (s RedisStore[T]) Delete(key string) error {
 	conn := s.pool.Get()
-	_, err := conn.Do("DEL", s.redisKey.Append(identifier))
+	_, err := conn.Do("DEL", s.redisKey.Append(key))
 	return err
 }
 
-func (s *Store) serialize(jam *JamSession) ([]byte, error) {
+func (s RedisStore[T]) serialize(obj *T) ([]byte, error) {
 	var buffer bytes.Buffer
 	encoder := gob.NewEncoder(&buffer)
-	err := encoder.Encode(jam)
+	err := encoder.Encode(obj)
 	if err != nil {
 		return nil, err
 	}
@@ -118,8 +120,8 @@ func (s *Store) serialize(jam *JamSession) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func (s *Store) deserialize(data []byte, jam *JamSession) error {
+func (s RedisStore[T]) deserialize(data []byte, obj *T) error {
 	buffer := bytes.NewBuffer(data)
 	decoder := gob.NewDecoder(buffer)
-	return decoder.Decode(jam)
+	return decoder.Decode(obj)
 }

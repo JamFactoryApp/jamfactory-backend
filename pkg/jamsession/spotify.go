@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/permissions"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/store"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/users"
-	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -30,8 +30,7 @@ var (
 )
 
 type JamSession struct {
-	sync.Mutex
-	users         *users.Store
+	users         store.Store[users.User]
 	jamLabel      string
 	name          string
 	active        bool
@@ -43,7 +42,7 @@ type JamSession struct {
 	quit          chan bool
 }
 
-func New(host *users.User, users *users.Store, label string) (*JamSession, error) {
+func New(host *users.User, users store.Store[users.User], label string) (*JamSession, error) {
 	members := Members{
 		host.Identifier: NewMember(host.Identifier, permissions.Guest, permissions.Host),
 	}
@@ -221,8 +220,6 @@ func (s *JamSession) Password() string {
 }
 
 func (s *JamSession) SetPassword(password string) {
-	s.Lock()
-	defer s.Unlock()
 	s.password = password
 }
 
@@ -231,20 +228,14 @@ func (s *JamSession) Timestamp() time.Time {
 }
 
 func (s *JamSession) SetName(name string) {
-	s.Lock()
-	defer s.Unlock()
 	s.name = name
 }
 
 func (s *JamSession) SetActive(active bool) {
-	s.Lock()
-	defer s.Unlock()
 	s.active = active
 }
 
 func (s *JamSession) SetTimestamp(time time.Time) {
-	s.Lock()
-	defer s.Unlock()
 	s.lastTimestamp = time
 }
 

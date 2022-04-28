@@ -54,7 +54,7 @@ func (s *Server) setUser(w http.ResponseWriter, r *http.Request) {
 	}
 	user := s.CurrentUser(r)
 	user.UserName = body.DisplayName
-	err := s.users.Save(user)
+	err := s.users.Save(user, user.Identifier)
 	if err != nil {
 		s.errBadRequest(w, err, log.DebugLevel)
 		return

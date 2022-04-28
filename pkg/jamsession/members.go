@@ -3,6 +3,7 @@ package jamsession
 import (
 	"errors"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/permissions"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/store"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/users"
 )
 
@@ -20,7 +21,7 @@ func NewMember(userIdentifier string, p ...permissions.Permission) *Member {
 	return m
 }
 
-func (m *Member) ToUser(users *users.Store) (*users.User, error) {
+func (m *Member) ToUser(users store.Store[users.User]) (*users.User, error) {
 	return users.Get(m.Identifier())
 }
 
