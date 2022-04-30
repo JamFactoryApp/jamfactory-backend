@@ -3,6 +3,8 @@ package users
 import (
 	"context"
 	"github.com/jamfactoryapp/jamfactory-backend/api/errors"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/authenticator"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/store"
 	"golang.org/x/oauth2"
 )
 
@@ -17,31 +19,68 @@ const (
 	UserTypeSpotify UserType = "Spotify"
 )
 
-type User struct {
-	Identifier string
-	UserType   UserType
-	UserName   string
-	Player
+type UserInformation struct {
+	SpotifyToken *oauth2.Token
+	UserType     UserType
+	UserName     string
 }
 
-func New(identifier string, username string, usertype UserType, token *oauth2.Token, auth *Authenticator) *User {
+type User struct {
+	Identifier string
+	userInfo   store.Store[UserInformation]
+	player
+}
+
+func New(identifier string, username string, usertype UserType, store store.Store[UserInformation], token *oauth2.Token, auth *authenticator.Authenticator) *User {
+	info := &UserInformation{
+		UserType:     usertype,
+		UserName:     username,
+		SpotifyToken: token,
+	}
+
+	store.Save(info, identifier)
+
 	return &User{
 		Identifier: identifier,
-		UserType:   usertype,
-		UserName:   username,
-		Player: Player{
-			authenticator: auth,
-			SpotifyToken:  token,
-		},
+		userInfo:   store,
+		player:     NewPlayer(auth, token),
 	}
 }
 
 func NewEmpty() *User {
 	return &User{
 		Identifier: "",
-		UserType:   UserTypeEmpty,
-		UserName:   "",
-		Player:     Player{},
+		player:     player{},
+	}
+}
+
+func (u *User) GetInfo() *UserInformation {
+	if u.Identifier == "" {
+		return &UserInformation{
+			UserType: UserTypeEmpty,
+			UserName: "",
+		}
+	} else {
+		info, _ := u.userInfo.Get(u.Identifier)
+		return info
+	}
+}
+
+func (u *User) SetInfo(info *UserInformation) {
+	if u.Identifier == "" {
+		return
+	} else {
+		u.userInfo.Save(info, u.Identifier)
+		return
+	}
+}
+
+func Load(identifier string, store store.Store[UserInformation], authenticator *authenticator.Authenticator) *User {
+	info, _ := store.Get(identifier)
+	return &User{
+		Identifier: identifier,
+		userInfo:   store,
+		player:     NewPlayer(authenticator, info.SpotifyToken),
 	}
 }
 

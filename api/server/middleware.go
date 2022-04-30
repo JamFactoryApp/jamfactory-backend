@@ -19,14 +19,17 @@ func (s *Server) corsMiddleware(next http.Handler, allowedOrigin []*url.URL) htt
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if origin := r.Header.Get("Origin"); origin != "" {
 			for i := range allowedOrigin {
-				log.Trace("Cors-Middleware Origin ", origin)
 				if allowedOrigin[i].String() == origin {
+					log.Trace("Cors-Middleware Origin ", origin)
 					w.Header().Add("Access-Control-Allow-Origin", allowedOrigin[i].String())
 					w.Header().Add("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 					w.Header().Add("Access-Control-Allow-Methods", "GET, PUT, DELETE, OPTIONS")
 					w.Header().Add("Access-Control-Allow-Credentials", "true")
+					next.ServeHTTP(w, r)
+					return
 				}
 			}
+			log.Trace("Cors-Middleware Not-Allowed ", origin)
 		}
 		if r.Method == "OPTIONS" {
 			return
@@ -77,7 +80,7 @@ func (s *Server) hostRequired(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := s.CurrentUser(r)
 		jamSession := s.CurrentJamSession(r)
-		member, err := jamSession.Members().Get(user.Identifier)
+		member, err := jamSession.GetMembers().Get(user.Identifier)
 		if err != nil || !member.HasPermissions(permissions.Host) {
 			s.errUnauthorized(w, apierrors.ErrUserTypeInvalid, log.DebugLevel)
 			return

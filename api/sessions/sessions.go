@@ -11,7 +11,7 @@ type contextKey string
 const key contextKey = "Session"
 
 const (
-	identifierKey = "Identifier"
+	identifierKey = "GetIdentifier"
 	originKey     = "Origin"
 )
 

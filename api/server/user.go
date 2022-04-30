@@ -12,7 +12,7 @@ import (
 func (s *Server) userMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		identifier := s.CurrentIdentifier(r)
-		user, err := s.users.Get(identifier)
+		user, err := s.users.GetUserByIdentifier(identifier)
 		if err != nil {
 			user = users.NewEmpty()
 		}
@@ -24,23 +24,23 @@ func (s *Server) userMiddleware(next http.Handler) http.Handler {
 
 func (s *Server) getUser(w http.ResponseWriter, r *http.Request) {
 	user := s.CurrentUser(r)
-
+	userInfo := user.GetInfo()
 	var jamLabel string
 	if jamSession, err := s.jamFactory.GetJamSessionByUser(user); err != nil {
 		jamLabel = ""
 	} else {
-		jamLabel = jamSession.JamLabel()
+		jamLabel = jamSession.JamLabel
 	}
 
 	spotifyAuthorized := false
-	if user.SpotifyToken != nil && user.SpotifyToken.Valid() {
+	if userInfo.SpotifyToken != nil && userInfo.SpotifyToken.Valid() {
 		spotifyAuthorized = true
 	}
 
 	utils.EncodeJSONBody(w, types.GetUserResponse{
 		Identifier:        user.Identifier,
-		DisplayName:       user.UserName,
-		UserType:          string(user.UserType),
+		DisplayName:       userInfo.UserName,
+		UserType:          string(userInfo.UserType),
 		JoinedLabel:       jamLabel,
 		SpotifyAuthorized: spotifyAuthorized,
 	})
@@ -53,29 +53,26 @@ func (s *Server) setUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user := s.CurrentUser(r)
-	user.UserName = body.DisplayName
-	err := s.users.Save(user, user.Identifier)
-	if err != nil {
-		s.errBadRequest(w, err, log.DebugLevel)
-		return
-	}
+	userInfo := user.GetInfo()
+	userInfo.UserName = body.DisplayName
+	user.SetInfo(userInfo)
 
 	var jamLabel string
 	if jamSession, err := s.jamFactory.GetJamSessionByUser(user); err != nil {
 		jamLabel = ""
 	} else {
-		jamLabel = jamSession.JamLabel()
+		jamLabel = jamSession.JamLabel
 	}
 
 	spotifyAuthorized := false
-	if user.SpotifyToken != nil && user.SpotifyToken.Valid() {
+	if userInfo.SpotifyToken != nil && userInfo.SpotifyToken.Valid() {
 		spotifyAuthorized = true
 	}
 
 	utils.EncodeJSONBody(w, types.GetUserResponse{
 		Identifier:        user.Identifier,
-		DisplayName:       user.UserName,
-		UserType:          string(user.UserType),
+		DisplayName:       userInfo.UserName,
+		UserType:          string(userInfo.UserType),
 		JoinedLabel:       jamLabel,
 		SpotifyAuthorized: spotifyAuthorized,
 	})
@@ -83,11 +80,7 @@ func (s *Server) setUser(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) deleteUser(w http.ResponseWriter, r *http.Request) {
 	user := s.CurrentUser(r)
-	err := s.users.Delete(user.Identifier)
-	if err != nil {
-		s.errBadRequest(w, err, log.DebugLevel)
-		return
-	}
+	s.users.DeleteUser(user.Identifier)
 	utils.EncodeJSONBody(w, types.DeleteUserResponse{
 		Success: true,
 	})
@@ -95,9 +88,9 @@ func (s *Server) deleteUser(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) getUserPlayback(w http.ResponseWriter, r *http.Request) {
 	user := s.CurrentUser(r)
-
+	userInfo := user.GetInfo()
 	// Getting the playback only makes sense for Spotify Users
-	if !(user.UserType == users.UserTypeSpotify) {
+	if !(userInfo.UserType == users.UserTypeSpotify) {
 		s.errUnauthorized(w, apierrors.ErrUserTypeInvalid, log.TraceLevel)
 		return
 	}
@@ -116,9 +109,9 @@ func (s *Server) setUserPlayback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := s.CurrentUser(r)
-
+	userInfo := user.GetInfo()
 	// Setting the playback only makes sense for Spotify Users
-	if !(user.UserType == users.UserTypeSpotify) {
+	if !(userInfo.UserType == users.UserTypeSpotify) {
 		s.errUnauthorized(w, apierrors.ErrUserTypeInvalid, log.TraceLevel)
 		return
 	}

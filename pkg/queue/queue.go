@@ -20,37 +20,37 @@ const (
 )
 
 type Queue struct {
-	songs   []*song.Song
-	history []*song.Song
+	Songs   []*song.Song
+	History []*song.Song
 }
 
 func New() *Queue {
 	return &Queue{
-		songs: make([]*song.Song, 0),
+		Songs: make([]*song.Song, 0),
 	}
 }
 
 func (q *Queue) Len() int {
-	return len(q.songs)
+	return len(q.Songs)
 }
 
 func (q *Queue) Less(i, j int) bool {
-	if len(q.songs[i].Votes()) != len(q.songs[j].Votes()) {
-		return len(q.songs[i].Votes()) > len(q.songs[j].Votes())
+	if len(q.Songs[i].GetVotes()) != len(q.Songs[j].GetVotes()) {
+		return len(q.Songs[i].GetVotes()) > len(q.Songs[j].GetVotes())
 	}
-	return q.songs[i].Date().Before(q.songs[j].Date())
+	return q.Songs[i].Date.Before(q.Songs[j].Date)
 }
 
 func (q *Queue) Swap(i, j int) {
-	q.songs[i], q.songs[j] = q.songs[j], q.songs[i]
+	q.Songs[i], q.Songs[j] = q.Songs[j], q.Songs[i]
 }
 
 func (q *Queue) Tracks() []types.Song {
-	songs := make([]types.Song, len(q.songs))
-	for i, s := range q.songs {
+	songs := make([]types.Song, len(q.Songs))
+	for i, s := range q.Songs {
 		songs[i] = types.Song{
-			Song:  s.Song(),
-			Votes: len(s.Votes()),
+			Song:  s.Track,
+			Votes: len(s.GetVotes()),
 			Voted: false,
 		}
 	}
@@ -59,10 +59,10 @@ func (q *Queue) Tracks() []types.Song {
 
 func (q *Queue) For(voteID string) []types.Song {
 	songs := make([]types.Song, 0)
-	for _, s := range q.songs {
+	for _, s := range q.Songs {
 		songs = append(songs, types.Song{
-			Song:  s.Song(),
-			Votes: len(s.Votes()),
+			Song:  s.Track,
+			Votes: len(s.GetVotes()),
 			Voted: s.HasVote(voteID),
 		})
 	}
@@ -70,20 +70,20 @@ func (q *Queue) For(voteID string) []types.Song {
 }
 
 func (q *Queue) GetNext() (*song.Song, error) {
-	if len(q.songs) == 0 {
+	if len(q.Songs) == 0 {
 		return nil, ErrQueueEmpty
 	}
 	var s *song.Song
-	s = q.songs[0]
+	s = q.Songs[0]
 	return s, nil
 }
 
 func (q *Queue) GetHistory(voteID string) []types.Song {
 	songs := make([]types.Song, 0)
-	for _, s := range q.history {
+	for _, s := range q.History {
 		songs = append(songs, types.Song{
-			Song:  s.Song(),
-			Votes: len(s.Votes()),
+			Song:  s.Track,
+			Votes: len(s.GetVotes()),
 			Voted: s.HasVote(voteID),
 		})
 	}
@@ -92,7 +92,7 @@ func (q *Queue) GetHistory(voteID string) []types.Song {
 
 func (q *Queue) Vote(songID string, voteID string, s interface{}) error {
 	if q.containsSong(songID) {
-		so := q.songs[q.indexOf(songID)]
+		so := q.Songs[q.indexOf(songID)]
 		so.Vote(voteID)
 	} else {
 		so, err := q.add(s)
@@ -100,7 +100,7 @@ func (q *Queue) Vote(songID string, voteID string, s interface{}) error {
 			return err
 		}
 		if voteID == HostVoteIdentifier {
-			so.SetDate(so.Date().Add(time.Hour * 24 * 365))
+			so.Date = so.Date.Add(time.Hour * 24 * 365)
 		}
 		so.Vote(voteID)
 	}
@@ -111,11 +111,11 @@ func (q *Queue) Vote(songID string, voteID string, s interface{}) error {
 }
 
 func (q *Queue) Advance() error {
-	if len(q.songs) == 0 {
+	if len(q.Songs) == 0 {
 		return ErrQueueEmpty
 	}
-	q.history = append(q.history, q.songs[0])
-	q.songs = append(q.songs[:0], q.songs[1:]...)
+	q.History = append(q.History, q.Songs[0])
+	q.Songs = append(q.Songs[:0], q.Songs[1:]...)
 	return nil
 }
 
@@ -124,19 +124,19 @@ func (q *Queue) Delete(songID string) error {
 		return ErrSongNotFound
 	}
 	index := q.indexOf(songID)
-	q.songs = append(q.songs[:index], q.songs[index+1:]...)
+	q.Songs = append(q.Songs[:index], q.Songs[index+1:]...)
 	return nil
 }
 
 func (q *Queue) add(s interface{}) (*song.Song, error) {
 	so := song.New(s.(*spotify.FullTrack))
-	q.songs = append(q.songs, so)
+	q.Songs = append(q.Songs, so)
 	return so, nil
 }
 
 func (q *Queue) containsSong(songID string) bool {
-	for _, s := range q.songs {
-		if s.ID() == songID {
+	for _, s := range q.Songs {
+		if s.ID == songID {
 			return true
 		}
 	}
@@ -144,8 +144,8 @@ func (q *Queue) containsSong(songID string) bool {
 }
 
 func (q *Queue) indexOf(songID string) int {
-	for i, s := range q.songs {
-		if s.ID() == songID {
+	for i, s := range q.Songs {
+		if s.ID == songID {
 			return i
 		}
 	}
@@ -153,9 +153,9 @@ func (q *Queue) indexOf(songID string) int {
 }
 
 func (q *Queue) removeEmptySongs() {
-	for _, s := range q.songs {
-		if len(s.Votes()) == 0 {
-			_ = q.Delete(s.ID())
+	for _, s := range q.Songs {
+		if len(s.GetVotes()) == 0 {
+			_ = q.Delete(s.ID)
 		}
 	}
 }

@@ -34,7 +34,7 @@ func (s *Server) CurrentJamSession(r *http.Request) *jamsession.JamSession {
 		// Panic because JamSession middleware is missing
 		panic(err)
 	}
-	jamSession.SetTimestamp(time.Now())
+	jamSession.Timestamp = time.Now()
 	return jamSession
 }
 

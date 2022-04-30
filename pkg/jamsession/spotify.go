@@ -3,6 +3,7 @@ package jamsession
 import (
 	"errors"
 	"fmt"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/hub"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/permissions"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/store"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/users"
@@ -29,39 +30,121 @@ var (
 	ErrCouldNotGetPlaylistTracks = errors.New("could not get playlist tracks")
 )
 
-type JamSession struct {
-	users         store.Store[users.User]
-	jamLabel      string
-	name          string
-	active        bool
-	password      string
-	members       Members
-	lastTimestamp time.Time
-	queue         *queue.Queue
-	room          *notifications.Room
-	quit          chan bool
+type Stores struct {
+	Members  store.Store[Members]
+	Queues   store.Store[queue.Queue]
+	Settings store.Store[Settings]
 }
 
-func New(host *users.User, users store.Store[users.User], label string) (*JamSession, error) {
+type Settings struct {
+	Name     string
+	Active   bool
+	Password string
+}
+
+type JamLabel string
+
+type JamSession struct {
+	JamLabel  string
+	stores    Stores
+	hub       *hub.Hub
+	Timestamp time.Time
+	room      *notifications.Room
+	quit      chan bool
+}
+
+func CreateNew(host *users.User, stores Stores, hub *hub.Hub, label string) (*JamSession, error) {
 	members := Members{
 		host.Identifier: NewMember(host.Identifier, permissions.Guest, permissions.Host),
 	}
 
-	s := &JamSession{
-		users:         users,
-		jamLabel:      label,
-		name:          fmt.Sprintf("%s's JamSession", host.UserName),
-		active:        false,
-		password:      "",
-		members:       members,
-		lastTimestamp: time.Now(),
-		queue:         queue.New(),
-		room:          notifications.NewRoom(),
-		quit:          make(chan bool),
+	settings := &Settings{
+		Name:     fmt.Sprintf("%s's JamSession", host.GetInfo().UserName),
+		Active:   false,
+		Password: "",
 	}
+
+	queue := queue.New()
+
+	s := &JamSession{
+		JamLabel:  label,
+		Timestamp: time.Now(),
+		hub:       hub,
+		room:      notifications.NewRoom(),
+		quit:      make(chan bool),
+		stores:    stores,
+	}
+
+	s.SetMembers(members)
+	s.SetSettings(settings)
+	s.SetQueue(queue)
+
 	go s.room.OpenDoors()
-	log.Info("Created new JamSession for ", host.UserName)
+	go s.Conductor()
+	log.Info("Created new JamSession for ", host.GetInfo().UserName)
 	return s, nil
+}
+
+func Load(stores Stores, hub *hub.Hub, label string) (*JamSession, error) {
+	s := &JamSession{
+		JamLabel:  label,
+		Timestamp: time.Now(),
+		hub:       hub,
+		room:      notifications.NewRoom(),
+		quit:      make(chan bool),
+		stores:    stores,
+	}
+	go s.Conductor()
+	go s.room.OpenDoors()
+	log.Info("Loaded JamSession from store for", s.GetSettings().Name)
+	return s, nil
+}
+
+func (s *JamSession) GetQueue() *queue.Queue {
+	q, err := s.stores.Queues.Get(s.JamLabel)
+	if err != nil {
+		log.Warn(err)
+	}
+	return q
+}
+
+func (s *JamSession) SetQueue(queue *queue.Queue) {
+	err := s.stores.Queues.Save(queue, s.JamLabel)
+	if err != nil {
+		log.Warn(err)
+	}
+}
+
+func (s *JamSession) GetMembers() Members {
+	members, err := s.stores.Members.Get(s.JamLabel)
+	log.Info(members)
+	if err != nil {
+		log.Warn(err)
+	}
+	return *members
+}
+
+func (s *JamSession) SetMembers(members Members) {
+	err := s.stores.Members.Save(&members, s.JamLabel)
+	if err != nil {
+		log.Warn(err)
+	}
+}
+
+func (s *JamSession) GetSettings() *Settings {
+	settings, err := s.stores.Settings.Get(s.JamLabel)
+	if err != nil {
+		log.Warn(err)
+	}
+	return settings
+}
+
+func (s *JamSession) SetSettings(settings *Settings) {
+	log.Info(settings)
+	err := s.stores.Settings.Save(settings, s.JamLabel)
+	if err != nil {
+		log.Warn(err)
+	}
 }
 
 func (s *JamSession) Conductor() {
@@ -80,20 +163,21 @@ func (s *JamSession) Conductor() {
 		case <-ticker.C:
 
 			// Get the host user
-			host, err := s.members.Host().ToUser(s.users)
+			host, err := s.hub.GetUserByIdentifier(s.GetMembers().Host().Identifier)
 			if err != nil {
 				continue
 			}
 
 			// Go to all members joined by the JamSession
-			for _, member := range s.members {
+			for _, member := range s.GetMembers() {
 				// Get the user for the member
-				user, err := member.ToUser(s.users)
+				user, err := s.hub.GetUserByIdentifier(member.Identifier)
+				userInfo := user.GetInfo()
 				if err != nil {
 					continue
 				}
 				// Conductor operation is only relevant for spotify users
-				if user.UserType != users.UserTypeSpotify {
+				if userInfo.UserType != users.UserTypeSpotify {
 					continue
 				}
 				// If the intervalCount is reached, update the PlayerState for each spotify user
@@ -120,7 +204,9 @@ func (s *JamSession) Conductor() {
 					user.Active = false
 					user.CurrentSong = nil
 					if user.Identifier == host.Identifier {
-						s.SetActive(false)
+						settings := s.GetSettings()
+						settings.Active = false
+						s.SetSettings(settings)
 						s.SocketJamUpdate()
 					}
 				}
@@ -129,17 +215,17 @@ func (s *JamSession) Conductor() {
 			s.SocketPlaybackUpdate(host)
 
 			// Check if no start or end of song is near for the host
-			if s.active {
-				so, err := s.queue.GetNext()
+			if s.GetSettings().Active {
+				so, err := s.GetQueue().GetNext()
 				switch err {
 				case nil:
 					if (!host.GetPlayerState().Playing && host.GetPlayerState().Progress == 0) ||
 						(host.GetPlayerState().Item != nil && host.GetPlayerState().Progress > host.GetPlayerState().Item.Duration-1000) {
-						if err := s.Play(so.Song(), true); err != nil {
+						if err := s.Play(so.Track, true); err != nil {
 							log.Error(err)
 							continue
 						}
-						s.SetTimestamp(time.Now())
+						s.Timestamp = time.Now()
 					}
 				case queue.ErrQueueEmpty:
 
@@ -180,7 +266,7 @@ func (s *JamSession) Conductor() {
 	}
 }
 func (s *JamSession) Play(track *spotify.FullTrack, remove bool) error {
-	host, err := s.members.Host().ToUser(s.users)
+	host, err := s.hub.GetUserByIdentifier(s.GetMembers().Host().Identifier)
 	if err != nil {
 		return err
 	}
@@ -189,7 +275,7 @@ func (s *JamSession) Play(track *spotify.FullTrack, remove bool) error {
 		return err
 	}
 	if remove {
-		if err := s.queue.Delete(track.ID.String()); err != nil {
+		if err := s.GetQueue().Delete(track.ID.String()); err != nil {
 			return err
 		}
 	}
@@ -199,48 +285,7 @@ func (s *JamSession) Play(track *spotify.FullTrack, remove bool) error {
 	return nil
 }
 
-func (s *JamSession) JamLabel() string {
-	return s.jamLabel
-}
-
-func (s *JamSession) Members() Members {
-	return s.members
-}
-
-func (s *JamSession) Name() string {
-	return s.name
-}
-
-func (s *JamSession) Active() bool {
-	return s.active
-}
-
-func (s *JamSession) Password() string {
-	return s.password
-}
-
-func (s *JamSession) SetPassword(password string) {
-	s.password = password
-}
-
-func (s *JamSession) Timestamp() time.Time {
-	return s.lastTimestamp
-}
-
-func (s *JamSession) SetName(name string) {
-	s.name = name
-}
-
-func (s *JamSession) SetActive(active bool) {
-	s.active = active
-}
-
-func (s *JamSession) SetTimestamp(time time.Time) {
-	s.lastTimestamp = time
-}
-
 func (s *JamSession) Deconstruct() error {
-	s.SetActive(false)
 	s.room.CloseDoors()
 	s.quit <- true
 	return nil
@@ -253,11 +298,11 @@ func (s *JamSession) NotifyClients(msg *notifications.Message) {
 }
 
 func (s *JamSession) Queue() *queue.Queue {
-	return s.queue
+	return s.GetQueue()
 }
 
 func (s *JamSession) AddCollection(collectionType string, collectionID string) error {
-	host, err := s.members.Host().ToUser(s.users)
+	host, err := s.hub.GetUserByIdentifier(s.GetMembers().Host().Identifier)
 	if err != nil {
 		return err
 	}
@@ -274,7 +319,7 @@ func (s *JamSession) AddCollection(collectionType string, collectionID string) e
 			if err != nil {
 				return err
 			}
-			if err := s.queue.Vote(string(playlist.Tracks[i].Track.ID), queue.HostVoteIdentifier, track); err != nil {
+			if err := s.GetQueue().Vote(string(playlist.Tracks[i].Track.ID), queue.HostVoteIdentifier, track); err != nil {
 				return err
 			}
 		}
@@ -301,7 +346,7 @@ func (s *JamSession) AddCollection(collectionType string, collectionID string) e
 			if err != nil {
 				return err
 			}
-			if err := s.queue.Vote(string(tracks[i].ID), queue.HostVoteIdentifier, track); err != nil {
+			if err := s.GetQueue().Vote(string(tracks[i].ID), queue.HostVoteIdentifier, track); err != nil {
 				return err
 			}
 		}
@@ -314,7 +359,7 @@ func (s *JamSession) AddCollection(collectionType string, collectionID string) e
 }
 
 func (s *JamSession) Vote(songID string, voteID string) error {
-	host, err := s.members.Host().ToUser(s.users)
+	host, err := s.hub.GetUserByIdentifier(s.GetMembers().Host().Identifier)
 	if err != nil {
 		return err
 	}
@@ -323,7 +368,7 @@ func (s *JamSession) Vote(songID string, voteID string) error {
 		return err
 	}
 
-	if err := s.queue.Vote(string(track.ID), voteID, track); err != nil {
+	if err := s.GetQueue().Vote(string(track.ID), voteID, track); err != nil {
 		return err
 	}
 	s.SocketQueueUpdate()
@@ -331,7 +376,7 @@ func (s *JamSession) Vote(songID string, voteID string) error {
 }
 
 func (s *JamSession) Search(index string, searchType spotify.SearchType, options *spotify.Options) (interface{}, error) {
-	host, err := s.members.Host().ToUser(s.users)
+	host, err := s.hub.GetUserByIdentifier(s.GetMembers().Host().Identifier)
 	if err != nil {
 		return nil, err
 	}
@@ -347,7 +392,7 @@ func (s *JamSession) IntroduceClient(conn *websocket.Conn) {
 }
 
 func (s *JamSession) DeleteSong(songID string) error {
-	if err := s.queue.Delete(songID); err != nil {
+	if err := s.GetQueue().Delete(songID); err != nil {
 		return err
 	}
 	s.SocketQueueUpdate()
@@ -358,9 +403,9 @@ func (s *JamSession) SocketJamUpdate() {
 	s.NotifyClients(&notifications.Message{
 		Event: notifications.Jam,
 		Message: types.SocketJamMessage{
-			Label:  s.jamLabel,
-			Name:   s.name,
-			Active: s.active,
+			Label:  s.JamLabel,
+			Name:   s.GetSettings().Name,
+			Active: s.GetSettings().Active,
 		},
 	})
 }

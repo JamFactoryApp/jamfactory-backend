@@ -1,7 +1,8 @@
 package server
 
 import (
-	users2 "github.com/jamfactoryapp/jamfactory-backend/pkg/users"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/hub"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/users"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -41,7 +42,7 @@ func (s *Server) logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.users.Delete(identifier)
+	s.users.DeleteUser(identifier)
 
 	utils.EncodeJSONBody(w, types.GetAuthLogoutResponse{
 		Success: true,
@@ -62,23 +63,21 @@ func (s *Server) callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := s.users.Get(id)
+	user, err := s.users.GetUserByIdentifier(id)
 	if err != nil {
-		if errors.Is(err, users2.ErrUserNotFound) {
-			user = users2.New(id, username, users2.UserTypeSpotify, token, s.authenticator)
+		if errors.Is(err, hub.ErrUserNotFound) {
+			user = s.users.NewUser(id, username, users.UserTypeSpotify, token)
 		} else {
 			s.errInternalServerError(w, err, log.DebugLevel)
 			return
 		}
 	} else {
-		user.UserType = users2.UserTypeSpotify
-		user.SpotifyToken = token
+		userInfo := user.GetInfo()
+		userInfo.UserType = users.UserTypeSpotify
+		userInfo.SpotifyToken = token
+		user.SetInfo(userInfo)
 	}
 
-	if err := s.users.Save(user, user.Identifier); err != nil {
-		s.errInternalServerError(w, err, log.DebugLevel)
-		return
-	}
 	sessions.SetIdentifier(session, id)
 
 	if err := session.Save(r, w); err != nil {

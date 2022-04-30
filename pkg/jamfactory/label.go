@@ -14,7 +14,7 @@ func (s *JamFactory) CreateLabel(depth int) string {
 	}
 	label := string(labelSlice)
 
-	if jamSession, _ := s.store.Get(label); jamSession != nil {
+	if ok, _ := s.JamLabels.Has(label); ok {
 		return s.CreateLabel(depth + 1)
 	}
 	return label

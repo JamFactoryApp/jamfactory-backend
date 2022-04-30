@@ -5,10 +5,12 @@ import (
 	"encoding/gob"
 	"fmt"
 	"github.com/jamfactoryapp/jamfactory-backend/api/sessions"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/authenticator"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/config"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/hub"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/jamfactory"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/jamsession"
-	"github.com/jamfactoryapp/jamfactory-backend/pkg/store"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/queue"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/users"
 	"net/http"
 	"time"
@@ -26,7 +28,9 @@ func init() {
 	gob.Register(&spotify.SearchResult{})
 	gob.Register(users.UserType(""))
 	gob.Register(users.User{})
-	gob.Register(jamsession.JamSession{})
+	gob.Register(jamsession.Settings{})
+	gob.Register(jamsession.Members{})
+	gob.Register(queue.Queue{})
 }
 
 const (
@@ -39,16 +43,16 @@ type Server struct {
 	store         *sessions.Store
 	server        *http.Server
 	router        *mux.Router
-	users         store.Store[users.User]
+	users         *hub.Hub
 	cache         *cache.Cache
-	authenticator *users.Authenticator
+	authenticator *authenticator.Authenticator
 	jamFactory    *jamfactory.JamFactory
 	upgrader      websocket.Upgrader
 }
 
-func NewServer(pattern string, config *config.Config, sessionStore *sessions.Store, userStore store.Store[users.User], jamFactory *jamfactory.JamFactory) *Server {
+func NewServer(pattern string, config *config.Config, sessionStore *sessions.Store, users *hub.Hub, jamFactory *jamfactory.JamFactory, authenticator *authenticator.Authenticator) *Server {
 	// Create Authenticator
-	authenticator := users.NewAuthenticator(config.SpotifyRedirectURL, config.SpotifyID, config.SpotifySecret)
+
 	s := &Server{
 		server: &http.Server{
 			ReadTimeout:  readTimeout,
@@ -58,7 +62,7 @@ func NewServer(pattern string, config *config.Config, sessionStore *sessions.Sto
 		router:        mux.NewRouter(),
 		authenticator: authenticator,
 		store:         sessionStore,
-		users:         userStore,
+		users:         users,
 		jamFactory:    jamFactory,
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,

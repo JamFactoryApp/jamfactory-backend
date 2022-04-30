@@ -1,18 +1,10 @@
 package store
 
 import (
-	"bytes"
-	"encoding/gob"
-	"errors"
 	"github.com/gomodule/redigo/redis"
 	pkgredis "github.com/jamfactoryapp/jamfactory-backend/internal/redis"
 	log "github.com/sirupsen/logrus"
 	"strconv"
-)
-
-var (
-	ErrObjNotFound      = errors.New("store: obj not found")
-	ErrInterfaceConvert = errors.New("store: Failed to convert user from interface{} to []bytes")
 )
 
 type RedisStore[T any] struct {
@@ -28,14 +20,10 @@ func NewRedisStore[T any](pool *redis.Pool, key string) *RedisStore[T] {
 }
 
 func (s RedisStore[T]) Get(key string) (*T, error) {
-	obj, err := s.get(s.redisKey.Append(key).String())
-	return obj, err
-}
-
-func (s RedisStore[T]) get(key string) (*T, error) {
 	conn := s.pool.Get()
-	reply, err := conn.Do("GET", key)
-	var obj *T
+	reply, err := conn.Do("GET", s.redisKey.Append(key).String())
+	log.Trace("redis DO GET for: ", key, " with err: ", err)
+	obj := new(T)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +31,7 @@ func (s RedisStore[T]) get(key string) (*T, error) {
 		return nil, ErrObjNotFound
 	}
 	if data, ok := reply.([]byte); ok {
-		err = s.deserialize(data, obj)
+		err = deserialize(data, obj)
 	} else {
 		return nil, ErrInterfaceConvert
 	}
@@ -80,48 +68,30 @@ func (s RedisStore[T]) GetAll() ([]*T, error) {
 	jams := make([]*T, len(keys))
 	i := 0
 	for key, _ := range keys {
-		jam, err := s.get(key)
+		jam, err := s.Get(key)
 		if err != nil {
 			return nil, err
 		}
 		jams[i] = jam
 		i++
 	}
-	log.Info(jams)
-
 	return jams, nil
 }
 
 func (s RedisStore[T]) Save(obj *T, key string) error {
 	conn := s.pool.Get()
-	serialized, err := s.serialize(obj)
+	serialized, err := serialize(obj)
 	if err != nil {
 		return err
 	}
-	reply, err := conn.Do("SET", s.redisKey.Append(key), serialized)
-	log.Trace("redis reply (DO SET): ", reply, " with err: ", err)
+	_, err = conn.Do("SET", s.redisKey.Append(key), serialized)
+	log.Trace("redis DO SET for: ", key, " with err: ", err)
 	return err
 }
 
 func (s RedisStore[T]) Delete(key string) error {
 	conn := s.pool.Get()
 	_, err := conn.Do("DEL", s.redisKey.Append(key))
+	log.Trace("redis DO DEL for: ", key, " with err: ", err)
 	return err
-}
-
-func (s RedisStore[T]) serialize(obj *T) ([]byte, error) {
-	var buffer bytes.Buffer
-	encoder := gob.NewEncoder(&buffer)
-	err := encoder.Encode(obj)
-	if err != nil {
-		return nil, err
-	}
-
-	return buffer.Bytes(), nil
-}
-
-func (s RedisStore[T]) deserialize(data []byte, obj *T) error {
-	buffer := bytes.NewBuffer(data)
-	decoder := gob.NewDecoder(buffer)
-	return decoder.Decode(obj)
 }

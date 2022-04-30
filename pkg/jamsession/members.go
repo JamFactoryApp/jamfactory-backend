@@ -3,60 +3,54 @@ package jamsession
 import (
 	"errors"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/permissions"
-	"github.com/jamfactoryapp/jamfactory-backend/pkg/store"
-	"github.com/jamfactoryapp/jamfactory-backend/pkg/users"
 )
 
 type Member struct {
-	userIdentifier string
-	permissions    map[permissions.Permission]struct{}
+	Identifier  string
+	Permissions map[permissions.Permission]struct{}
 }
 
 func NewMember(userIdentifier string, p ...permissions.Permission) *Member {
 	m := &Member{
-		userIdentifier: userIdentifier,
-		permissions:    make(map[permissions.Permission]struct{}),
+		Identifier:  userIdentifier,
+		Permissions: make(map[permissions.Permission]struct{}),
 	}
 	m.AddPermissions(p...)
 	return m
 }
 
-func (m *Member) ToUser(users store.Store[users.User]) (*users.User, error) {
-	return users.Get(m.Identifier())
+func (m *Member) GetIdentifier() string {
+	return m.Identifier
 }
 
-func (m *Member) Identifier() string {
-	return m.userIdentifier
-}
-
-func (m *Member) Permissions() permissions.Permissions {
+func (m *Member) GetPermissions() permissions.Permissions {
 	p := make(permissions.Permissions, 0)
-	for perm := range m.permissions {
+	for perm := range m.Permissions {
 		p = append(p, perm)
 	}
 	return p
 }
 
 func (m *Member) SetPermissions(p ...permissions.Permission) {
-	m.permissions = make(map[permissions.Permission]struct{})
+	m.Permissions = make(map[permissions.Permission]struct{})
 	m.AddPermissions(p...)
 }
 
 func (m *Member) AddPermissions(p ...permissions.Permission) {
 	for _, toAdd := range p {
-		m.permissions[toAdd] = struct{}{}
+		m.Permissions[toAdd] = struct{}{}
 	}
 }
 
 func (m *Member) RemovePermissions(p ...permissions.Permission) {
 	for _, toRemove := range p {
-		delete(m.permissions, toRemove)
+		delete(m.Permissions, toRemove)
 	}
 }
 
 func (m *Member) HasPermissions(p ...permissions.Permission) bool {
 	for _, toCheck := range p {
-		if _, ok := m.permissions[toCheck]; !ok {
+		if _, ok := m.Permissions[toCheck]; !ok {
 			return false
 		}
 	}

@@ -2,7 +2,10 @@ package main
 
 import (
 	"crypto/tls"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/authenticator"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/hub"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/jamsession"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/queue"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/store"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/users"
 	"math/rand"
@@ -51,11 +54,17 @@ func main() {
 	}
 	log.Debug("Initialized connection to redis")
 
+	authenticator := authenticator.NewAuthenticator(conf.SpotifyRedirectURL, conf.SpotifyID, conf.SpotifySecret)
+
 	// Create redis stores
 	redisStore := sessions.NewRedisSessionStore(pool, path.Join(conf.DataDir, ".keypairs"), conf.CookieSameSite, conf.CookieSecure)
 	log.Debug("Initialized session store")
 
-	userStore := store.NewRedisStore[users.User](pool, "users")
+	userHubStores := hub.Stores{
+		Store:       store.NewRedisStore[users.UserInformation](pool, "user:info"),
+		Identifiers: store.NewRedisSet(pool, "users"),
+	}
+	userHub := hub.NewHub(authenticator, userHubStores)
 	log.Debug("Initialized user store")
 
 	// Create redis cache
@@ -63,13 +72,18 @@ func main() {
 	log.Debug("Initialized redis cache")
 
 	// Create JamFactory
-	jamStore := store.NewRedisStore[jamsession.JamSession](pool, "jam")
+	stores := jamfactory.Stores{
+		JamLabels: store.NewRedisSet(pool, "jamSessions"),
+		Settings:  store.NewRedisStore[jamsession.Settings](pool, "jamSession:settings"),
+		Queues:    store.NewRedisStore[queue.Queue](pool, "jamSession:queue"),
+		Members:   store.NewRedisStore[jamsession.Members](pool, "jamSession:members"),
+	}
 	log.Debug("Initialized JamFactory store")
-	spotifyJamFactory := jamfactory.New(jamStore, userStore, redisCache)
+	spotifyJamFactory := jamfactory.New(stores, userHub, redisCache)
 	log.Info("Initialized JamFactory")
 
 	// Create app server
-	appServer := server.NewServer("/", conf, redisStore, userStore, spotifyJamFactory).
+	appServer := server.NewServer("/", conf, redisStore, userHub, spotifyJamFactory, authenticator).
 		WithPort(conf.Port).
 		WithCache(redisCache)
 

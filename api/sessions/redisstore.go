@@ -138,16 +138,16 @@ func (s *Store) load(session *sessions.Session) (bool, error) {
 		return false, err
 	}
 	if reply == nil {
-		return false, errors.New("Store: session not found")
+		return false, errors.New("JamSessions: session not found")
 	}
 	if data, ok := reply.([]byte); ok {
 		err = s.deserialize(data, session)
 	} else {
-		err = errors.New("Store: Failed to convert session data from interface{} to []bytes")
+		err = errors.New("JamSessions: Failed to convert session data from interface{} to []bytes")
 	}
 
 	if reply, err = conn.Do("EXPIRE", s.redisKey.Append(session.ID), sessionMaxAge); err != nil {
-		log.Error("Store: Failed to update expiry")
+		log.Error("JamSessions: Failed to update expiry")
 	}
 
 	return true, err

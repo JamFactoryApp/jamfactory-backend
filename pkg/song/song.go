@@ -1,41 +1,31 @@
 package song
 
 import (
-	"sync"
 	"time"
 
 	"github.com/zmb3/spotify"
 )
 
 type Song struct {
-	sync.Mutex
-	id    string
-	track *spotify.FullTrack
-	votes map[string]bool
-	date  time.Time
+	ID    string
+	Track *spotify.FullTrack
+	Votes map[string]bool
+	Date  time.Time
 }
 
 func New(t *spotify.FullTrack) *Song {
 	return &Song{
-		track: t,
-		id:    string(t.ID),
-		votes: make(map[string]bool),
-		date:  time.Now(),
+		Track: t,
+		ID:    string(t.ID),
+		Votes: make(map[string]bool),
+		Date:  time.Now(),
 	}
 }
 
-func (s *Song) ID() string {
-	return s.id
-}
-
-func (s *Song) Song() *spotify.FullTrack {
-	return s.track
-}
-
-func (s *Song) Votes() []string {
+func (s *Song) GetVotes() []string {
 	var votes []string
 	i := 0
-	for v, voted := range s.votes {
+	for v, voted := range s.Votes {
 		if voted {
 			votes = append(votes, v)
 			i++
@@ -44,33 +34,19 @@ func (s *Song) Votes() []string {
 	return votes
 }
 
-func (s *Song) Date() time.Time {
-	return s.date
-}
-
-func (s *Song) SetDate(t time.Time) {
-	s.Lock()
-	defer s.Unlock()
-	s.date = t
-}
-
 func (s *Song) Vote(voteID string) bool {
-	s.Lock()
-	defer s.Unlock()
-
-	if _, exists := s.votes[voteID]; !exists {
+	if _, exists := s.Votes[voteID]; !exists {
 		// create new vote
-		s.votes[voteID] = true
+		s.Votes[voteID] = true
 	} else {
 		// flip vote state
-		s.votes[voteID] = !s.votes[voteID]
+		s.Votes[voteID] = !s.Votes[voteID]
 	}
-
 	// return new vote state
-	return s.votes[voteID]
+	return s.Votes[voteID]
 }
 
 func (s *Song) HasVote(voteID string) bool {
-	x, ok := s.votes[voteID]
+	x, ok := s.Votes[voteID]
 	return ok && x
 }

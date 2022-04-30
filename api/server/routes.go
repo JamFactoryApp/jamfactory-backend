@@ -29,7 +29,7 @@ const (
 	jamSessionMembers  = "/members"
 	jamSessionSearch   = "/search"
 
-	queue           = "/queue"
+	queuePath       = "/queue"
 	queueIndex      = ""
 	queueCollection = "/collection"
 	queueVote       = "/vote"
@@ -53,7 +53,7 @@ func (s *Server) initRoutes() {
 	authRouter := s.router.PathPrefix(api + auth).Subrouter()
 	userRouter := s.router.PathPrefix(api + user).Subrouter()
 	jamSessionRouter := s.router.PathPrefix(api + jamSession).Subrouter()
-	queueRouter := s.router.PathPrefix(api + queue).Subrouter()
+	queueRouter := s.router.PathPrefix(api + queuePath).Subrouter()
 	spotifyRouter := s.router.PathPrefix(api + spotifyIndex).Subrouter()
 	websocketRouter := s.router.PathPrefix(websocketPath).Subrouter()
 

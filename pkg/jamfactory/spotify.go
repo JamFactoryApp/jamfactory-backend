@@ -2,6 +2,8 @@ package jamfactory
 
 import (
 	"errors"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/hub"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/queue"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/store"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/users"
 	"strings"
@@ -17,11 +19,19 @@ import (
 	"github.com/zmb3/spotify"
 )
 
+type Stores struct {
+	JamLabels store.Set
+	Settings  store.Store[jamsession.Settings]
+	Members   store.Store[jamsession.Members]
+	Queues    store.Store[queue.Queue]
+}
+
 type JamFactory struct {
-	cache *cache.Cache
-	store store.Store[jamsession.JamSession]
-	users store.Store[users.User]
-	log   *log.Logger
+	JamSessions map[string]*jamsession.JamSession
+	hub         *hub.Hub
+	cache       *cache.Cache
+	log         *log.Logger
+	Stores
 }
 
 const (
@@ -29,12 +39,13 @@ const (
 	inactiveWarning = 1*time.Hour + 30*time.Minute
 )
 
-func New(store store.Store[jamsession.JamSession], users store.Store[users.User], ca *cache.Cache) *JamFactory {
+func New(stores Stores, hub *hub.Hub, ca *cache.Cache) *JamFactory {
 	jamFactory := &JamFactory{
-		cache: ca,
-		store: store,
-		users: users,
-		log:   logutils.NewDefault(),
+		JamSessions: make(map[string]*jamsession.JamSession),
+		cache:       ca,
+		Stores:      stores,
+		hub:         hub,
+		log:         logutils.NewDefault(),
 	}
 	go jamFactory.Housekeeper()
 	return jamFactory
@@ -45,25 +56,22 @@ func (s *JamFactory) Housekeeper() {
 	defer ticker.Stop()
 	for {
 		<-ticker.C
-		jamSessions, err := s.store.GetAll()
-		if err != nil {
-			log.Warn(err)
-		}
-		for _, jamSession := range jamSessions {
-			if time.Now().After(jamSession.Timestamp().Add(inactiveWarning)) {
+
+		for _, jamSession := range s.JamSessions {
+			if time.Now().After(jamSession.Timestamp.Add(inactiveWarning)) {
 				jamSession.NotifyClients(&notifications.Message{
 					Event:   notifications.Close,
 					Message: notifications.Warning,
 				})
 			}
 
-			if time.Now().After(jamSession.Timestamp().Add(inactiveTime)) {
-				log.Debug(jamSession.JamLabel(), ": inactive, closing")
+			if time.Now().After(jamSession.Timestamp.Add(inactiveTime)) {
+				log.Debug(jamSession.JamLabel, ": inactive, closing")
 				jamSession.NotifyClients(&notifications.Message{
 					Event:   notifications.Close,
 					Message: notifications.Inactive,
 				})
-				if err := s.DeleteJamSession(jamSession.JamLabel()); err != nil {
+				if err := s.DeleteJamSession(jamSession.JamLabel); err != nil {
 					s.log.Debug(err)
 				}
 			}
@@ -72,7 +80,7 @@ func (s *JamFactory) Housekeeper() {
 }
 
 func (s *JamFactory) DeleteJamSession(jamLabel string) error {
-	jamSession, err := s.store.Get(jamLabel)
+	jamSession, err := s.GetJamSessionByLabel(jamLabel)
 	if err != nil {
 		return apierrors.ErrJamSessionNotFound
 	}
@@ -80,29 +88,71 @@ func (s *JamFactory) DeleteJamSession(jamLabel string) error {
 	if err := jamSession.Deconstruct(); err != nil {
 		return err
 	}
-
-	if err := s.store.Delete(jamLabel); err != nil {
+	if err := s.Stores.Members.Delete(jamLabel); err != nil {
 		return err
 	}
+	if err := s.Stores.Settings.Delete(jamLabel); err != nil {
+		return err
+	}
+	if err := s.Stores.Queues.Delete(jamLabel); err != nil {
+		return err
+	}
+
+	delete(s.JamSessions, jamLabel)
 
 	return nil
 }
 
 func (s *JamFactory) GetJamSessionByLabel(jamLabel string) (*jamsession.JamSession, error) {
-	jamSession, err := s.store.Get(strings.ToUpper(jamLabel))
-	if err != nil {
-		return nil, apierrors.ErrJamSessionNotFound
+	// Check if local JamSession exists
+	jamSession, ok := s.JamSessions[jamLabel]
+	if ok {
+		return jamSession, nil
 	}
-	return jamSession, nil
+	log.Trace("JamSession not found local")
+
+	// Check if label exists in store
+	exists, err := s.JamLabels.Has(jamLabel)
+	if err != nil {
+		return nil, err
+	}
+
+	if exists {
+		log.Trace("JamSession found in store")
+		stores := jamsession.Stores{
+			Members:  s.Members,
+			Queues:   s.Queues,
+			Settings: s.Settings,
+		}
+		jamSession, err = jamsession.Load(stores, s.hub, jamLabel)
+		s.JamSessions[jamLabel] = jamSession
+		if err != nil {
+			return nil, err
+		}
+
+		return jamSession, nil
+	}
+	log.Trace("JamSession not found")
+	return nil, jamsession.ErrJamSessionMissing
+
 }
 
 func (s *JamFactory) GetJamSessionByUser(user *users.User) (*jamsession.JamSession, error) {
-	jamSessions, err := s.store.GetAll()
+	jamLabels, err := s.JamLabels.GetAll()
 	if err != nil {
 		log.Warn(err)
 	}
-	for _, jamSession := range jamSessions {
-		if _, err := jamSession.Members().Get(user.Identifier); err == nil {
+	log.Warn(jamLabels)
+	for _, jamLabel := range jamLabels {
+		log.Warn(jamLabel)
+		jamSession, err := s.GetJamSessionByLabel(jamLabel)
+		if err != nil {
+			log.Warn(err)
+			continue
+		}
+		members := jamSession.GetMembers()
+		log.Warn(members)
+		if _, err := members.Get(user.Identifier); err == nil {
 			return jamSession, nil
 		}
 	}
@@ -111,18 +161,27 @@ func (s *JamFactory) GetJamSessionByUser(user *users.User) (*jamsession.JamSessi
 
 func (s *JamFactory) NewJamSession(host *users.User) (*jamsession.JamSession, error) {
 	// Check if correct user type was passed
-	if host.UserType != users.UserTypeSpotify {
-		return nil, errors.New("Wrong userIdentifier Type for Spotify JamSession with UserType: " + string(host.UserType))
+	if host.GetInfo().UserType != users.UserTypeSpotify {
+		return nil, errors.New("Wrong userIdentifier Type for Spotify JamSession with UserType: " + string(host.GetInfo().UserType))
 	}
 
-	jamSession, err := jamsession.New(host, s.users, s.CreateLabel(0))
+	stores := jamsession.Stores{
+		Members:  s.Members,
+		Queues:   s.Queues,
+		Settings: s.Settings,
+	}
+
+	jamLabel := s.CreateLabel(0)
+
+	jamSession, err := jamsession.CreateNew(host, stores, s.hub, jamLabel)
 	if err != nil {
 		return nil, err
 	}
-	err = s.store.Save(jamSession, jamSession.JamLabel())
+	err = s.JamLabels.Add(jamLabel)
 	if err != nil {
 		return nil, err
 	}
+	s.JamSessions[jamLabel] = jamSession
 	return jamSession, nil
 }
 

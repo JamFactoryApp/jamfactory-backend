@@ -40,7 +40,7 @@ func (s *Server) exportQueue(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jamSession := s.CurrentJamSession(r)
-	host, err := jamSession.Members().Host().ToUser(s.users)
+	host, err := s.users.GetUserByIdentifier(jamSession.GetMembers().Host().Identifier)
 	if err != nil {
 		s.errInternalServerError(w, apierrors.ErrMissingMember, log.WarnLevel)
 		return
@@ -64,7 +64,7 @@ func (s *Server) exportQueue(w http.ResponseWriter, r *http.Request) {
 	for i := range tracks {
 		ids[i] = tracks[i].Song.ID
 	}
-	desc := jamSession.Name() + "  exported queue at " + time.Now().Format("02.01.2006, 15:01") + ". https://jamfactory.app"
+	desc := jamSession.GetSettings().Name + "  exported queue at " + time.Now().Format("02.01.2006, 15:01") + ". https://jamfactory.app"
 	err = host.CreatePlaylist(body.PlaylistName, desc, ids)
 	if err != nil {
 		s.errInternalServerError(w, err, log.DebugLevel)
