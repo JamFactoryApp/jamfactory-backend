@@ -20,19 +20,24 @@ func (s *Server) corsMiddleware(next http.Handler, allowedOrigin []*url.URL) htt
 		if origin := r.Header.Get("Origin"); origin != "" {
 			for i := range allowedOrigin {
 				if allowedOrigin[i].String() == origin {
-					log.Trace("Cors-Middleware Origin ", origin)
+					log.Info("Cors-Middleware Origin ", origin)
 					w.Header().Add("Access-Control-Allow-Origin", allowedOrigin[i].String())
 					w.Header().Add("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 					w.Header().Add("Access-Control-Allow-Methods", "GET, PUT, DELETE, OPTIONS")
 					w.Header().Add("Access-Control-Allow-Credentials", "true")
+					if r.Method == "OPTIONS" {
+						w.WriteHeader(http.StatusOK)
+						return
+					}
 					next.ServeHTTP(w, r)
 					return
 				}
 			}
 			log.Trace("Cors-Middleware Not-Allowed ", origin)
 		}
-		if r.Method == "OPTIONS" {
-			return
+		log.Trace("Cors-Middleware Not-Allowed ", r.Header.Get("Origin"))
+		w.WriteHeader(http.StatusUnauthorized)
+		return
 		}
 		next.ServeHTTP(w, r)
 	})
