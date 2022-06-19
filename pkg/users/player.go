@@ -39,11 +39,11 @@ func NewPlayer(authenticator *authenticator.Authenticator, token *oauth2.Token) 
 	}
 }
 
-func (p player) Client() *spotify.Client {
+func (p *player) Client() *spotify.Client {
 	return &p.client
 }
 
-func (p player) SetState(state bool) error {
+func (p *player) SetState(state bool) error {
 
 	playerState, err := p.Client().PlayerState()
 	if err != nil {
@@ -68,7 +68,7 @@ func (p player) SetState(state bool) error {
 	return nil
 }
 
-func (p player) Play(track *spotify.FullTrack) error {
+func (p *player) Play(track *spotify.FullTrack) error {
 	if !p.spotifyPlayer.Device.Active {
 		return ErrDeviceNotActive
 	}
@@ -87,7 +87,7 @@ func (p player) Play(track *spotify.FullTrack) error {
 	return nil
 }
 
-func (p player) SetDevice(id string) error {
+func (p *player) SetDevice(id string) error {
 	playerState, err := p.Client().PlayerState()
 	if err != nil {
 		return err
@@ -102,31 +102,31 @@ func (p player) SetDevice(id string) error {
 	return nil
 }
 
-func (p player) Devices() ([]spotify.PlayerDevice, error) {
+func (p *player) Devices() ([]spotify.PlayerDevice, error) {
 	return p.Client().PlayerDevices()
 }
 
-func (p player) GetPlayerState() *spotify.PlayerState {
+func (p *player) GetPlayerState() *spotify.PlayerState {
 	return p.spotifyPlayer
 }
 
-func (p player) SetPlayerState(state *spotify.PlayerState) {
+func (p *player) SetPlayerState(state *spotify.PlayerState) {
 	p.spotifyPlayer = state
 }
 
-func (p player) Playlists() (*spotify.SimplePlaylistPage, error) {
+func (p *player) Playlists() (*spotify.SimplePlaylistPage, error) {
 	return p.Client().CurrentUsersPlaylists()
 }
 
-func (p player) Search(index string, searchType spotify.SearchType, options *spotify.Options) (interface{}, error) {
+func (p *player) Search(index string, searchType spotify.SearchType, options *spotify.Options) (interface{}, error) {
 	return p.Client().SearchOpt(index, searchType, options)
 }
 
-func (p player) GetTrack(trackID string) (*spotify.FullTrack, error) {
+func (p *player) GetTrack(trackID string) (*spotify.FullTrack, error) {
 	return p.Client().GetTrack(spotify.ID(trackID))
 }
 
-func (p player) SetVolume(percent int) error {
+func (p *player) SetVolume(percent int) error {
 	err := p.Client().Volume(percent)
 	if err != nil {
 		return err
@@ -134,7 +134,7 @@ func (p player) SetVolume(percent int) error {
 	return nil
 }
 
-func (p player) CreatePlaylist(name string, desc string, ids []spotify.ID) error {
+func (p *player) CreatePlaylist(name string, desc string, ids []spotify.ID) error {
 	user, err := p.Client().CurrentUser()
 	if err != nil {
 		return err

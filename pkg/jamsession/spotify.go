@@ -117,7 +117,6 @@ func (s *JamSession) SetQueue(queue *queue.Queue) {
 
 func (s *JamSession) GetMembers() Members {
 	members, err := s.stores.Members.Get(s.JamLabel)
-	log.Info(members)
 	if err != nil {
 		log.Warn(err)
 	}
@@ -140,7 +139,6 @@ func (s *JamSession) GetSettings() *Settings {
 }
 
 func (s *JamSession) SetSettings(settings *Settings) {
-	log.Info(settings)
 	err := s.stores.Settings.Save(settings, s.JamLabel)
 	if err != nil {
 		log.Warn(err)

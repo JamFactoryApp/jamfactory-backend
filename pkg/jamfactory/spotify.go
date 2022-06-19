@@ -142,16 +142,13 @@ func (s *JamFactory) GetJamSessionByUser(user *users.User) (*jamsession.JamSessi
 	if err != nil {
 		log.Warn(err)
 	}
-	log.Warn(jamLabels)
 	for _, jamLabel := range jamLabels {
-		log.Warn(jamLabel)
 		jamSession, err := s.GetJamSessionByLabel(jamLabel)
 		if err != nil {
 			log.Warn(err)
 			continue
 		}
 		members := jamSession.GetMembers()
-		log.Warn(members)
 		if _, err := members.Get(user.Identifier); err == nil {
 			return jamSession, nil
 		}

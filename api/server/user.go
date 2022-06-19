@@ -81,6 +81,7 @@ func (s *Server) setUser(w http.ResponseWriter, r *http.Request) {
 func (s *Server) deleteUser(w http.ResponseWriter, r *http.Request) {
 	user := s.CurrentUser(r)
 	s.users.DeleteUser(user.Identifier)
+	// TODO: Make sure that user is not used anywhere
 	utils.EncodeJSONBody(w, types.DeleteUserResponse{
 		Success: true,
 	})

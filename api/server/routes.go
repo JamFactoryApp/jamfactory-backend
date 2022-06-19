@@ -47,7 +47,6 @@ const (
 )
 
 func (s *Server) initRoutes() {
-
 	chain := alice.New(s.sessionMiddleware, s.userMiddleware)
 
 	authRouter := s.router.PathPrefix(api + auth).Subrouter()
@@ -70,11 +69,11 @@ func (s *Server) registerAuthRoutes(r *mux.Router, chain alice.Chain) {
 	r.Methods("GET").Path(authCallback).Handler(
 		chain.Append().ThenFunc(s.callback))
 
-	// GET: /api/v1/auth/callback
+	// GET: /api/v1/auth/login
 	r.Methods("GET").Path(authLogin).Handler(
 		chain.Append().ThenFunc(s.login))
 
-	// GET: /api/v1/auth/callback
+	// GET: /api/v1/auth/logout
 	r.Methods("GET").Path(authLogout).Handler(
 		chain.Append().ThenFunc(s.logout))
 }
