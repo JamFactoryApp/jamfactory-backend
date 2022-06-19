@@ -220,7 +220,7 @@ func (s *JamSession) Conductor() {
 			s.SocketPlaybackUpdate(host)
 
 			// Check if no start or end of song is near for the host
-			if settings.Active {
+			if settings.Active && host.Synchronized {
 				so, err := currentQueue.GetNext()
 				switch err {
 				case nil:
