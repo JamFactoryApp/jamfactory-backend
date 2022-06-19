@@ -31,20 +31,22 @@ type User struct {
 	player
 }
 
-func New(identifier string, username string, usertype UserType, store store.Store[UserInformation], token *oauth2.Token, auth *authenticator.Authenticator) *User {
+func New(identifier string, username string, usertype UserType, store store.Store[UserInformation], token *oauth2.Token, auth *authenticator.Authenticator) (*User, error) {
 	info := &UserInformation{
 		UserType:     usertype,
 		UserName:     username,
 		SpotifyToken: token,
 	}
 
-	store.Save(info, identifier)
+	if err := store.Save(info, identifier); err != nil {
+		return nil, err
+	}
 
 	return &User{
 		Identifier: identifier,
 		userInfo:   store,
 		player:     NewPlayer(auth, token),
-	}
+	}, nil
 }
 
 func NewEmpty() *User {
@@ -54,24 +56,22 @@ func NewEmpty() *User {
 	}
 }
 
-func (u *User) GetInfo() *UserInformation {
+func (u *User) GetInfo() (*UserInformation, error) {
 	if u.Identifier == "" {
 		return &UserInformation{
 			UserType: UserTypeEmpty,
 			UserName: "",
-		}
+		}, nil
 	} else {
-		info, _ := u.userInfo.Get(u.Identifier)
-		return info
+		return u.userInfo.Get(u.Identifier)
 	}
 }
 
-func (u *User) SetInfo(info *UserInformation) {
+func (u *User) SetInfo(info *UserInformation) error {
 	if u.Identifier == "" {
-		return
+		return nil
 	} else {
-		u.userInfo.Save(info, u.Identifier)
-		return
+		return u.userInfo.Save(info, u.Identifier)
 	}
 }
 

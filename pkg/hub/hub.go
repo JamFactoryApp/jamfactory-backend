@@ -33,11 +33,17 @@ func NewHub(authenticator *authenticator.Authenticator, stores Stores) *Hub {
 	return hub
 }
 
-func (h *Hub) NewUser(id string, username string, userType users.UserType, token *oauth2.Token) *users.User {
-	user := users.New(id, username, userType, h.Store, token, h.Authenticator)
-	h.Identifiers.Add(id)
+func (h *Hub) NewUser(id string, username string, userType users.UserType, token *oauth2.Token) (*users.User, error) {
+	user, err := users.New(id, username, userType, h.Store, token, h.Authenticator)
+	if err != nil {
+		return nil, err
+	}
+	err = h.Identifiers.Add(id)
+	if err != nil {
+		return nil, err
+	}
 	h.users[id] = user
-	return user
+	return user, nil
 }
 
 func (h *Hub) GetUserByIdentifier(identifier string) (*users.User, error) {

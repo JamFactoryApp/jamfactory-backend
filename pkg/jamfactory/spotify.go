@@ -148,7 +148,10 @@ func (s *JamFactory) GetJamSessionByUser(user *users.User) (*jamsession.JamSessi
 			log.Warn(err)
 			continue
 		}
-		members := jamSession.GetMembers()
+		members, err := jamSession.GetMembers()
+		if err != nil {
+			return nil, err
+		}
 		if _, err := members.Get(user.Identifier); err == nil {
 			return jamSession, nil
 		}
@@ -158,8 +161,12 @@ func (s *JamFactory) GetJamSessionByUser(user *users.User) (*jamsession.JamSessi
 
 func (s *JamFactory) NewJamSession(host *users.User) (*jamsession.JamSession, error) {
 	// Check if correct user type was passed
-	if host.GetInfo().UserType != users.UserTypeSpotify {
-		return nil, errors.New("Wrong userIdentifier Type for Spotify JamSession with UserType: " + string(host.GetInfo().UserType))
+	userInfo, err := host.GetInfo()
+	if err != nil {
+		return nil, err
+	}
+	if userInfo.UserType != users.UserTypeSpotify {
+		return nil, errors.New("Wrong userIdentifier Type for Spotify JamSession with UserType: " + string(userInfo.UserType))
 	}
 
 	stores := jamsession.Stores{

@@ -24,7 +24,11 @@ func (s *Server) userMiddleware(next http.Handler) http.Handler {
 
 func (s *Server) getUser(w http.ResponseWriter, r *http.Request) {
 	user := s.CurrentUser(r)
-	userInfo := user.GetInfo()
+	userInfo, err := user.GetInfo()
+	if err != nil {
+		s.errInternalServerError(w, err, log.DebugLevel)
+		return
+	}
 	var jamLabel string
 	if jamSession, err := s.jamFactory.GetJamSessionByUser(user); err != nil {
 		jamLabel = ""
@@ -53,7 +57,11 @@ func (s *Server) setUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user := s.CurrentUser(r)
-	userInfo := user.GetInfo()
+	userInfo, err := user.GetInfo()
+	if err != nil {
+		s.errInternalServerError(w, err, log.DebugLevel)
+		return
+	}
 	userInfo.UserName = body.DisplayName
 	user.SetInfo(userInfo)
 
@@ -89,7 +97,11 @@ func (s *Server) deleteUser(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) getUserPlayback(w http.ResponseWriter, r *http.Request) {
 	user := s.CurrentUser(r)
-	userInfo := user.GetInfo()
+	userInfo, err := user.GetInfo()
+	if err != nil {
+		s.errInternalServerError(w, err, log.DebugLevel)
+		return
+	}
 	// Getting the playback only makes sense for Spotify Users
 	if !(userInfo.UserType == users.UserTypeSpotify) {
 		s.errUnauthorized(w, apierrors.ErrUserTypeInvalid, log.TraceLevel)
@@ -110,7 +122,11 @@ func (s *Server) setUserPlayback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := s.CurrentUser(r)
-	userInfo := user.GetInfo()
+	userInfo, err := user.GetInfo()
+	if err != nil {
+		s.errInternalServerError(w, err, log.DebugLevel)
+		return
+	}
 	// Setting the playback only makes sense for Spotify Users
 	if !(userInfo.UserType == users.UserTypeSpotify) {
 		s.errUnauthorized(w, apierrors.ErrUserTypeInvalid, log.TraceLevel)

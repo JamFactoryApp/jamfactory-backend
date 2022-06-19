@@ -29,6 +29,7 @@ func main() {
 
 	log.SetLevel(log.TraceLevel)
 	log.SetOutput(os.Stdout)
+	log.SetReportCaller(true)
 	log.SetFormatter(&log.TextFormatter{
 		ForceColors:   true,
 		FullTimestamp: false,

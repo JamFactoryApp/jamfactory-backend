@@ -15,8 +15,13 @@ import (
 
 func (s *Server) getQueue(w http.ResponseWriter, r *http.Request) {
 	jamSession := s.CurrentJamSession(r)
+	queue, err := jamSession.GetQueue()
+	if err != nil {
+		s.errInternalServerError(w, err, log.WarnLevel)
+		return
+	}
 	voteID := s.CurrentVoteID(r)
-	tracks := jamSession.Queue().For(voteID)
+	tracks := queue.For(voteID)
 
 	utils.EncodeJSONBody(w, types.GetQueueResponse{
 		Tracks: tracks,
@@ -25,8 +30,13 @@ func (s *Server) getQueue(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) getQueueHistory(w http.ResponseWriter, r *http.Request) {
 	jamSession := s.CurrentJamSession(r)
+	queue, err := jamSession.GetQueue()
+	if err != nil {
+		s.errInternalServerError(w, err, log.WarnLevel)
+		return
+	}
 	voteID := s.CurrentVoteID(r)
-	history := jamSession.Queue().GetHistory(voteID)
+	history := queue.GetHistory(voteID)
 
 	utils.EncodeJSONBody(w, types.GetQueueHistoryResponse{
 		History: history,
@@ -40,7 +50,22 @@ func (s *Server) exportQueue(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jamSession := s.CurrentJamSession(r)
-	host, err := s.users.GetUserByIdentifier(jamSession.GetMembers().Host().Identifier)
+	queue, err := jamSession.GetQueue()
+	if err != nil {
+		s.errInternalServerError(w, err, log.WarnLevel)
+		return
+	}
+	members, err := jamSession.GetMembers()
+	if err != nil {
+		s.errInternalServerError(w, err, log.WarnLevel)
+		return
+	}
+	settings, err := jamSession.GetSettings()
+	if err != nil {
+		s.errInternalServerError(w, err, log.WarnLevel)
+		return
+	}
+	host, err := s.users.GetUserByIdentifier(members.Host().Identifier)
 	if err != nil {
 		s.errInternalServerError(w, apierrors.ErrMissingMember, log.WarnLevel)
 		return
@@ -49,11 +74,11 @@ func (s *Server) exportQueue(w http.ResponseWriter, r *http.Request) {
 	voteID := s.CurrentVoteID(r)
 	tracks := make([]types.Song, 0)
 	if body.IncludeHistory {
-		tracks = append(tracks, jamSession.Queue().GetHistory(voteID)...)
+		tracks = append(tracks, queue.GetHistory(voteID)...)
 	}
 
 	if body.IncludeQueue {
-		tracks = append(tracks, jamSession.Queue().For(voteID)...)
+		tracks = append(tracks, queue.For(voteID)...)
 	}
 	if len(tracks) == 0 {
 		s.errBadRequest(w, errors.New("No songs to export"), log.DebugLevel)
@@ -64,7 +89,7 @@ func (s *Server) exportQueue(w http.ResponseWriter, r *http.Request) {
 	for i := range tracks {
 		ids[i] = tracks[i].Song.ID
 	}
-	desc := jamSession.GetSettings().Name + "  exported queue at " + time.Now().Format("02.01.2006, 15:01") + ". https://jamfactory.app"
+	desc := settings.Name + "  exported queue at " + time.Now().Format("02.01.2006, 15:01") + ". https://jamfactory.app"
 	err = host.CreatePlaylist(body.PlaylistName, desc, ids)
 	if err != nil {
 		s.errInternalServerError(w, err, log.DebugLevel)
@@ -83,15 +108,18 @@ func (s *Server) addCollection(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jamSession := s.CurrentJamSession(r)
-
 	err := jamSession.AddCollection(body.CollectionType, body.CollectionID)
 	if err != nil {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return
 	}
-
+	queue, err := jamSession.GetQueue()
+	if err != nil {
+		s.errInternalServerError(w, err, log.WarnLevel)
+		return
+	}
 	voteID := s.CurrentVoteID(r)
-	tracks := jamSession.Queue().For(voteID)
+	tracks := queue.For(voteID)
 
 	utils.EncodeJSONBody(w, types.PutQueuePlaylistsResponse{
 		Tracks: tracks,
@@ -111,8 +139,13 @@ func (s *Server) vote(w http.ResponseWriter, r *http.Request) {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return
 	}
+	queue, err := jamSession.GetQueue()
+	if err != nil {
+		s.errInternalServerError(w, err, log.WarnLevel)
+		return
+	}
 
-	tracks := jamSession.Queue().For(voteID)
+	tracks := queue.For(voteID)
 
 	utils.EncodeJSONBody(w, types.PutQueueVoteResponse{
 		Tracks: tracks,
@@ -126,6 +159,11 @@ func (s *Server) deleteSong(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jamSession := s.CurrentJamSession(r)
+	queue, err := jamSession.GetQueue()
+	if err != nil {
+		s.errInternalServerError(w, err, log.WarnLevel)
+		return
+	}
 	voteID := s.CurrentVoteID(r)
 
 	if err := jamSession.DeleteSong(body.TrackID); err != nil {
@@ -133,7 +171,7 @@ func (s *Server) deleteSong(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tracks := jamSession.Queue().For(voteID)
+	tracks := queue.For(voteID)
 
 	utils.EncodeJSONBody(w, types.DeleteQueueSongResponse{
 		Tracks: tracks,

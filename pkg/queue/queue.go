@@ -119,13 +119,13 @@ func (q *Queue) Advance() error {
 	return nil
 }
 
-func (q *Queue) Delete(songID string) error {
+func (q *Queue) Delete(songID string) {
 	if !q.containsSong(songID) {
-		return ErrSongNotFound
+		return
 	}
 	index := q.indexOf(songID)
 	q.Songs = append(q.Songs[:index], q.Songs[index+1:]...)
-	return nil
+	return
 }
 
 func (q *Queue) add(s interface{}) (*song.Song, error) {
@@ -155,7 +155,7 @@ func (q *Queue) indexOf(songID string) int {
 func (q *Queue) removeEmptySongs() {
 	for _, s := range q.Songs {
 		if len(s.GetVotes()) == 0 {
-			_ = q.Delete(s.ID)
+			q.Delete(s.ID)
 		}
 	}
 }

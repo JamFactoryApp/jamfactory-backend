@@ -66,16 +66,28 @@ func (s *Server) callback(w http.ResponseWriter, r *http.Request) {
 	user, err := s.users.GetUserByIdentifier(id)
 	if err != nil {
 		if errors.Is(err, hub.ErrUserNotFound) {
-			user = s.users.NewUser(id, username, users.UserTypeSpotify, token)
+			user, err = s.users.NewUser(id, username, users.UserTypeSpotify, token)
+			if err != nil {
+				s.errInternalServerError(w, err, log.DebugLevel)
+				return
+			}
 		} else {
 			s.errInternalServerError(w, err, log.DebugLevel)
 			return
 		}
 	} else {
-		userInfo := user.GetInfo()
+		userInfo, err := user.GetInfo()
+		if err != nil {
+			s.errInternalServerError(w, err, log.DebugLevel)
+			return
+		}
 		userInfo.UserType = users.UserTypeSpotify
 		userInfo.SpotifyToken = token
-		user.SetInfo(userInfo)
+		if err := user.SetInfo(userInfo); err != nil {
+			s.errInternalServerError(w, err, log.DebugLevel)
+			return
+		}
+
 	}
 
 	sessions.SetIdentifier(session, id)
