@@ -12,6 +12,7 @@ import (
 )
 
 type Config struct {
+	Development        bool
 	UseHttps           bool
 	GenCerts           bool
 	DNSNames           []string
@@ -35,6 +36,7 @@ func New() *Config {
 	clientAddress, _ := url.Parse("http://localhost:4200")
 	clientAddresses := []*url.URL{clientAddress}
 	c := &Config{
+		Development:     false,
 		UseHttps:        false,
 		GenCerts:        false,
 		CertFile:        "./data/cert.pem",
@@ -56,6 +58,21 @@ func New() *Config {
 		log.SetLevel(logLevelVal)
 	} else {
 		log.Debug("Failed to parse JAM_LOG_LEVEL. Using ", log.GetLevel())
+	}
+
+	// Set Development mode
+	useDevelopmentModeVal := os.Getenv("JAM_DEVELOPMENT")
+	if useDevelopmentModeVal != "" {
+		useDevelopment, err := strconv.ParseBool(useDevelopmentModeVal)
+		if err != nil {
+			log.Fatal("Failed to parse JAM_DEVELOPMENT: ", err)
+		}
+		c.Development = useDevelopment
+	} else {
+		log.Debug("JAM_DEVELOPMENT is empty. Using ", c.Development)
+	}
+	if c.Development {
+		log.Warn("JAM FACTORY IS RUNNING IN DEVELOPMENT MODE!")
 	}
 
 	// Set c.DataDir

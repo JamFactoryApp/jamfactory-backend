@@ -40,6 +40,7 @@ const (
 )
 
 type Server struct {
+	config        *config.Config
 	store         *sessions.Store
 	server        *http.Server
 	router        *mux.Router
@@ -54,6 +55,7 @@ func NewServer(pattern string, config *config.Config, sessionStore *sessions.Sto
 	// Create Authenticator
 
 	s := &Server{
+		config: config,
 		server: &http.Server{
 			ReadTimeout:  readTimeout,
 			WriteTimeout: writeTimeout,
@@ -76,7 +78,7 @@ func NewServer(pattern string, config *config.Config, sessionStore *sessions.Sto
 	}
 
 	s.initRoutes()
-	http.Handle(pattern, s.corsMiddleware(s.router, config.ClientAddresses))
+	http.Handle(pattern, s.corsMiddleware(s.router))
 
 	return s
 }
