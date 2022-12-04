@@ -155,8 +155,12 @@ func (s *Server) setJamSession(w http.ResponseWriter, r *http.Request) {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return
 	}
-
-	host, err := s.users.GetUserByIdentifier(members.Host().Identifier)
+	hostMember, err := members.Host()
+	if err != nil {
+		s.errInternalServerError(w, err, log.DebugLevel)
+		return
+	}
+	host, err := s.users.GetUserByIdentifier(hostMember.Identifier)
 	if err != nil {
 		s.errInternalServerError(w, apierrors.ErrMissingMember, log.WarnLevel)
 		return
@@ -216,7 +220,12 @@ func (s *Server) getPlayback(w http.ResponseWriter, r *http.Request) {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return
 	}
-	host, err := s.users.GetUserByIdentifier(members.Host().Identifier)
+	hostMember, err := members.Host()
+	if err != nil {
+		s.errInternalServerError(w, err, log.DebugLevel)
+		return
+	}
+	host, err := s.users.GetUserByIdentifier(hostMember.Identifier)
 	if err != nil {
 		s.errInternalServerError(w, apierrors.ErrMissingMember, log.WarnLevel)
 		return
@@ -241,7 +250,12 @@ func (s *Server) setPlayback(w http.ResponseWriter, r *http.Request) {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return
 	}
-	host, err := s.users.GetUserByIdentifier(members.Host().Identifier)
+	hostMember, err := members.Host()
+	if err != nil {
+		s.errInternalServerError(w, err, log.DebugLevel)
+		return
+	}
+	host, err := s.users.GetUserByIdentifier(hostMember.Identifier)
 	if err != nil {
 		s.errInternalServerError(w, apierrors.ErrMissingMember, log.WarnLevel)
 		return
@@ -290,7 +304,12 @@ func (s *Server) playSong(w http.ResponseWriter, r *http.Request) {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return
 	}
-	host, err := s.users.GetUserByIdentifier(members.Host().Identifier)
+	hostMember, err := members.Host()
+	if err != nil {
+		s.errInternalServerError(w, err, log.DebugLevel)
+		return
+	}
+	host, err := s.users.GetUserByIdentifier(hostMember.Identifier)
 	track, err := host.GetTrack(body.TrackID)
 	if err != nil {
 		s.errInternalServerError(w, err, log.DebugLevel)
@@ -414,16 +433,16 @@ func (s *Server) leaveJamSession(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		isHost := member.HasPermissions(permissions.Host)
+
 		if isHost {
-			if members.Remove(user.Identifier) {
-				jamSession.NotifyClients(&notifications.Message{
-					Event:   notifications.Close,
-					Message: notifications.HostLeft,
-				})
-				if err := s.jamFactory.DeleteJamSession(jamSession.JamLabel); err != nil {
-					s.errInternalServerError(w, err, log.DebugLevel)
-					return
-				}
+			members.Remove(user.Identifier)
+			jamSession.NotifyClients(&notifications.Message{
+				Event:   notifications.Close,
+				Message: notifications.HostLeft,
+			})
+			if err := s.jamFactory.DeleteJamSession(jamSession.JamLabel); err != nil {
+				s.errInternalServerError(w, err, log.DebugLevel)
+				return
 			}
 		} else {
 			members.Remove(user.Identifier)

@@ -65,7 +65,12 @@ func (s *Server) exportQueue(w http.ResponseWriter, r *http.Request) {
 		s.errInternalServerError(w, err, log.WarnLevel)
 		return
 	}
-	host, err := s.users.GetUserByIdentifier(members.Host().Identifier)
+	hostMember, err := members.Host()
+	if err != nil {
+		s.errInternalServerError(w, err, log.DebugLevel)
+		return
+	}
+	host, err := s.users.GetUserByIdentifier(hostMember.Identifier)
 	if err != nil {
 		s.errInternalServerError(w, apierrors.ErrMissingMember, log.WarnLevel)
 		return

@@ -59,13 +59,13 @@ func (m *Member) HasPermissions(p ...permissions.Permission) bool {
 
 type Members map[string]*Member
 
-func (m Members) Host() *Member {
+func (m Members) Host() (*Member, error) {
 	for _, member := range m {
 		if member.HasPermissions(permissions.Host) {
-			return member
+			return member, nil
 		}
 	}
-	panic(errors.New("no host found"))
+	return nil, errors.New("no host found")
 }
 
 func (m Members) Get(identifier string) (*Member, error) {

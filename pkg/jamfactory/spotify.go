@@ -97,6 +97,9 @@ func (s *JamFactory) DeleteJamSession(jamLabel string) error {
 	if err := s.Stores.Queues.Delete(jamLabel); err != nil {
 		return err
 	}
+	if err := s.Stores.JamLabels.Delete(jamLabel); err != nil {
+		return err
+	}
 
 	delete(s.JamSessions, jamLabel)
 

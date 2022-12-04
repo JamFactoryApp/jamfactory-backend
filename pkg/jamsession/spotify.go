@@ -161,7 +161,11 @@ func (s *JamSession) Conductor() {
 				log.Warn(err)
 			}
 			// Get the host user
-			host, err := s.hub.GetUserByIdentifier(members.Host().Identifier)
+			hostMember, err := members.Host()
+			if err != nil {
+				continue
+			}
+			host, err := s.hub.GetUserByIdentifier(hostMember.Identifier)
 			if err != nil {
 				continue
 			}
@@ -276,7 +280,11 @@ func (s *JamSession) Play(track *spotify.FullTrack, remove bool) error {
 	if err != nil {
 		return err
 	}
-	host, err := s.hub.GetUserByIdentifier(members.Host().Identifier)
+	hostMember, err := members.Host()
+	if err != nil {
+		return err
+	}
+	host, err := s.hub.GetUserByIdentifier(hostMember.Identifier)
 	if err != nil {
 		return err
 	}
@@ -314,7 +322,11 @@ func (s *JamSession) AddCollection(collectionType string, collectionID string) e
 	if err != nil {
 		return err
 	}
-	host, err := s.hub.GetUserByIdentifier(members.Host().Identifier)
+	hostMember, err := members.Host()
+	if err != nil {
+		return err
+	}
+	host, err := s.hub.GetUserByIdentifier(hostMember.Identifier)
 	if err != nil {
 		return err
 	}
@@ -380,7 +392,11 @@ func (s *JamSession) Vote(songID string, voteID string) error {
 	if err != nil {
 		return err
 	}
-	host, err := s.hub.GetUserByIdentifier(members.Host().Identifier)
+	hostMember, err := members.Host()
+	if err != nil {
+		return err
+	}
+	host, err := s.hub.GetUserByIdentifier(hostMember.Identifier)
 	if err != nil {
 		return err
 	}
@@ -405,7 +421,11 @@ func (s *JamSession) Search(index string, searchType spotify.SearchType, options
 	if err != nil {
 		return nil, err
 	}
-	host, err := s.hub.GetUserByIdentifier(members.Host().Identifier)
+	hostMember, err := members.Host()
+	if err != nil {
+		return nil, err
+	}
+	host, err := s.hub.GetUserByIdentifier(hostMember.Identifier)
 	if err != nil {
 		return nil, err
 	}
