@@ -1,26 +1,36 @@
 package server
 
 import (
-	"github.com/jamfactoryapp/jamfactory-backend/pkg/permissions"
-	"net/http"
-	"net/url"
-
 	apierrors "github.com/jamfactoryapp/jamfactory-backend/api/errors"
 	"github.com/jamfactoryapp/jamfactory-backend/api/sessions"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/jamsession"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/permissions"
 	log "github.com/sirupsen/logrus"
+	"net/http"
 )
 
 const (
 	sessionCookieKey = "user-session"
 )
 
-func (s *Server) corsMiddleware(next http.Handler, allowedOrigin []*url.URL) http.Handler {
+func (s *Server) corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if s.config.Development {
+			w.Header().Add("Access-Control-Allow-Origin", s.config.ClientAddresses[0].String())
+			w.Header().Add("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
+			w.Header().Add("Access-Control-Allow-Methods", "GET, PUT, DELETE, OPTIONS")
+			w.Header().Add("Access-Control-Allow-Credentials", "true")
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+			next.ServeHTTP(w, r)
+			return
+		}
 		if origin := r.Header.Get("Origin"); origin != "" {
-			for i := range allowedOrigin {
-				if allowedOrigin[i].String() == origin {
-					w.Header().Add("Access-Control-Allow-Origin", allowedOrigin[i].String())
+			for i := range s.config.ClientAddresses {
+				if s.config.ClientAddresses[i].String() == origin {
+					w.Header().Add("Access-Control-Allow-Origin", s.config.ClientAddresses[i].String())
 					w.Header().Add("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 					w.Header().Add("Access-Control-Allow-Methods", "GET, PUT, DELETE, OPTIONS")
 					w.Header().Add("Access-Control-Allow-Credentials", "true")
