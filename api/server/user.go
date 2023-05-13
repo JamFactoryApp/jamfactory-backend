@@ -45,6 +45,7 @@ func (s *Server) getUser(w http.ResponseWriter, r *http.Request) {
 		Identifier:        user.Identifier,
 		DisplayName:       userInfo.UserName,
 		UserType:          string(userInfo.UserType),
+		StartListen:       userInfo.UserStartListening,
 		JoinedLabel:       jamLabel,
 		SpotifyAuthorized: spotifyAuthorized,
 	})
@@ -63,6 +64,7 @@ func (s *Server) setUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userInfo.UserName = body.DisplayName
+	userInfo.UserStartListening = body.StartListen
 	user.SetInfo(userInfo)
 
 	var jamLabel string
@@ -82,6 +84,7 @@ func (s *Server) setUser(w http.ResponseWriter, r *http.Request) {
 		DisplayName:       userInfo.UserName,
 		UserType:          string(userInfo.UserType),
 		JoinedLabel:       jamLabel,
+		StartListen:       userInfo.UserStartListening,
 		SpotifyAuthorized: spotifyAuthorized,
 	})
 }

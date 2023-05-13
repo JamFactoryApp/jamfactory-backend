@@ -221,6 +221,7 @@ func (s *JamSession) Conductor() {
 						s.SocketJamUpdate()
 					}
 				}
+
 			}
 
 			s.SocketPlaybackUpdate(host)
@@ -232,10 +233,34 @@ func (s *JamSession) Conductor() {
 				case nil:
 					if (!host.GetPlayerState().Playing && host.GetPlayerState().Progress == 0) ||
 						(host.GetPlayerState().Item != nil && host.GetPlayerState().Progress > host.GetPlayerState().Item.Duration-1000) {
-						if err := s.Play(context.Background(), so.Track, true); err != nil {
-							log.Error(err)
-							continue
+
+						for _, member := range *members {
+							// Get the user for the member
+							user, err := s.hub.GetUserByIdentifier(context.Background(), member.Identifier)
+							if err != nil {
+								log.Warn(err)
+								continue
+							}
+							userInfo, err := user.GetInfo()
+							if err != nil {
+								log.Warn(err)
+								continue
+							}
+							// Conductor operation is only relevant for spotify users
+							if userInfo.UserType != users.UserTypeSpotify {
+								continue
+							}
+
+							if member.HasPermissions(permissions.Host) || (member.HasPermissions(permissions.Listen) && userInfo.UserStartListening) {
+								if err := user.Play(context.Background(), so.Track); err != nil {
+									log.Error(err)
+									continue
+								}
+							}
 						}
+
+						currentQueue.Delete(so.ID)
+						err = s.SetQueue(currentQueue)
 						s.Timestamp = time.Now()
 					}
 				case queue.ErrQueueEmpty:

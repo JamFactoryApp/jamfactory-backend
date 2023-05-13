@@ -71,6 +71,7 @@ type PutJamJoinRequest JoinRequest
 
 type UserRequest struct {
 	DisplayName string `json:"display_name"`
+	StartListen bool   `json:"start_listen"`
 }
 
 type PutUserRequest UserRequest

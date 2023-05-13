@@ -20,9 +20,10 @@ const (
 )
 
 type UserInformation struct {
-	SpotifyToken *oauth2.Token
-	UserType     UserType
-	UserName     string
+	SpotifyToken       *oauth2.Token
+	UserType           UserType
+	UserName           string
+	UserStartListening bool
 }
 
 type User struct {
@@ -33,9 +34,10 @@ type User struct {
 
 func New(ctx context.Context, identifier string, username string, usertype UserType, store store.Store[UserInformation], token *oauth2.Token, auth *authenticator.Authenticator) (*User, error) {
 	info := &UserInformation{
-		UserType:     usertype,
-		UserName:     username,
-		SpotifyToken: token,
+		UserType:           usertype,
+		UserName:           username,
+		SpotifyToken:       token,
+		UserStartListening: false,
 	}
 
 	if err := store.Save(info, identifier); err != nil {
@@ -59,8 +61,9 @@ func NewEmpty() *User {
 func (u *User) GetInfo() (*UserInformation, error) {
 	if u.Identifier == "" {
 		return &UserInformation{
-			UserType: UserTypeEmpty,
-			UserName: "",
+			UserType:           UserTypeEmpty,
+			UserName:           "",
+			UserStartListening: false,
 		}, nil
 	} else {
 		return u.userInfo.Get(u.Identifier)

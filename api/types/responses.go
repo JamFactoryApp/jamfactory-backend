@@ -114,6 +114,7 @@ type UserResponse struct {
 	UserType          string `json:"type"`
 	JoinedLabel       string `json:"joined_label"`
 	SpotifyAuthorized bool   `json:"spotify_authorized"`
+	StartListen       bool   `json:"start_listen"`
 }
 
 type GetUserResponse UserResponse
