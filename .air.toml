@@ -2,8 +2,8 @@ root = "."
 tmp_dir = "tmp"
 
 [build]
-cmd = "go build -o ./tmp/main ./cmd/jamfactory/main.go"
-bin = "tmp/main"
+cmd = "go build -o ./tmp/main.exe ./cmd/jamfactory/main.go"
+bin = "tmp/main.exe"
 include_ext = ["go", "tpl", "tmpl", "html"]
 exclude_dir = ["assets"]
 include_dir = []

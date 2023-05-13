@@ -23,15 +23,15 @@ const (
 	defaultTTL       = 60 * 60 * 24 // Cache entries should update every day
 )
 
-type RedisCache struct {
+type Cache struct {
 	sync.Mutex
 	pool      *redis.Pool
 	keyPrefix pkgredis.Key
 	ttl       int
 }
 
-func NewRedis(pool *redis.Pool) *RedisCache {
-	redisCache := &RedisCache{
+func NewRedis(pool *redis.Pool) *Cache {
+	redisCache := &Cache{
 		pool:      pool,
 		keyPrefix: pkgredis.Key{}.Append(defaultKeyPrefix),
 		ttl:       defaultTTL,
@@ -40,7 +40,7 @@ func NewRedis(pool *redis.Pool) *RedisCache {
 	return redisCache
 }
 
-func (c *RedisCache) Query(key pkgredis.Key, index string, source SourceFunc) (interface{}, error) {
+func (c *Cache) Query(key pkgredis.Key, index string, source SourceFunc) (interface{}, error) {
 	c.Lock()
 	defer c.Unlock()
 
@@ -81,7 +81,7 @@ func (c *RedisCache) Query(key pkgredis.Key, index string, source SourceFunc) (i
 	return data, nil
 }
 
-func (c *RedisCache) serialize(data *interface{}) ([]byte, error) {
+func (c *Cache) serialize(data *interface{}) ([]byte, error) {
 	var buffer bytes.Buffer
 	encoder := gob.NewEncoder(&buffer)
 	err := encoder.Encode(data)
@@ -92,7 +92,7 @@ func (c *RedisCache) serialize(data *interface{}) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func (c *RedisCache) deserialize(serializeddata []byte, data *interface{}) error {
+func (c *Cache) deserialize(serializeddata []byte, data *interface{}) error {
 	buffer := bytes.NewBuffer(serializeddata)
 	decoder := gob.NewDecoder(buffer)
 	return decoder.Decode(&data)

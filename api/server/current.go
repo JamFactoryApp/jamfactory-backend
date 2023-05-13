@@ -1,12 +1,12 @@
 package server
 
 import (
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/users"
 	"net/http"
 	"time"
 
 	"github.com/gorilla/sessions"
 	pkgsessions "github.com/jamfactoryapp/jamfactory-backend/api/sessions"
-	"github.com/jamfactoryapp/jamfactory-backend/api/users"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/jamsession"
 )
 
@@ -28,13 +28,13 @@ func (s *Server) CurrentUser(r *http.Request) *users.User {
 	return user
 }
 
-func (s *Server) CurrentJamSession(r *http.Request) jamsession.JamSession {
+func (s *Server) CurrentJamSession(r *http.Request) *jamsession.JamSession {
 	jamSession, err := jamsession.FromContext(r.Context())
 	if err != nil {
 		// Panic because JamSession middleware is missing
 		panic(err)
 	}
-	jamSession.SetTimestamp(time.Now())
+	jamSession.Timestamp = time.Now()
 	return jamSession
 }
 

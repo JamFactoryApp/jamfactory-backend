@@ -1,38 +1,51 @@
 package server
 
 import (
-	"net/http"
-	"net/url"
-
 	apierrors "github.com/jamfactoryapp/jamfactory-backend/api/errors"
 	"github.com/jamfactoryapp/jamfactory-backend/api/sessions"
-	"github.com/jamfactoryapp/jamfactory-backend/api/types"
-	"github.com/jamfactoryapp/jamfactory-backend/api/users"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/jamsession"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/permissions"
 	log "github.com/sirupsen/logrus"
+	"net/http"
 )
 
 const (
 	sessionCookieKey = "user-session"
 )
 
-func (s *Server) corsMiddleware(next http.Handler, allowedOrigin []*url.URL) http.Handler {
+func (s *Server) corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if s.config.Development {
+			w.Header().Add("Access-Control-Allow-Origin", s.config.ClientAddresses[0].String())
+			w.Header().Add("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
+			w.Header().Add("Access-Control-Allow-Methods", "GET, PUT, DELETE, OPTIONS")
+			w.Header().Add("Access-Control-Allow-Credentials", "true")
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+			next.ServeHTTP(w, r)
+			return
+		}
 		if origin := r.Header.Get("Origin"); origin != "" {
-			for i := range allowedOrigin {
-				log.Trace("Cors-Middleware Origin ", origin)
-				if allowedOrigin[i].String() == origin {
-					w.Header().Add("Access-Control-Allow-Origin", allowedOrigin[i].String())
+			for i := range s.config.ClientAddresses {
+				if s.config.ClientAddresses[i].String() == origin {
+					w.Header().Add("Access-Control-Allow-Origin", s.config.ClientAddresses[i].String())
 					w.Header().Add("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 					w.Header().Add("Access-Control-Allow-Methods", "GET, PUT, DELETE, OPTIONS")
 					w.Header().Add("Access-Control-Allow-Credentials", "true")
+					if r.Method == "OPTIONS" {
+						w.WriteHeader(http.StatusOK)
+						return
+					}
+					next.ServeHTTP(w, r)
+					return
 				}
 			}
 		}
-		if r.Method == "OPTIONS" {
-			return
-		}
-		next.ServeHTTP(w, r)
+		log.Trace("Cors-Middleware Not-Allowed ")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
 	})
 }
 
@@ -52,20 +65,6 @@ func (s *Server) sessionMiddleware(next http.Handler) http.Handler {
 		}
 
 		ctx := sessions.NewContext(r.Context(), session)
-		r = r.WithContext(ctx)
-		next.ServeHTTP(w, r)
-	})
-}
-
-func (s *Server) userMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		identifier := s.CurrentIdentifier(r)
-		user, err := s.users.Get(identifier)
-		if err != nil {
-			user = users.NewEmpty()
-		}
-		ctx := users.NewContext(r.Context(), user)
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})
@@ -92,8 +91,13 @@ func (s *Server) hostRequired(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := s.CurrentUser(r)
 		jamSession := s.CurrentJamSession(r)
-		member, err := jamSession.Members().Get(user.Identifier)
-		if err != nil || !member.HasPermissions([]types.Permission{types.RightHost}) {
+		members, err := jamSession.GetMembers()
+		if err != nil {
+			s.errInternalServerError(w, err, log.DebugLevel)
+			return
+		}
+		member, err := members.Get(user.Identifier)
+		if err != nil || !member.HasPermissions(permissions.Host) {
 			s.errUnauthorized(w, apierrors.ErrUserTypeInvalid, log.DebugLevel)
 			return
 		}

@@ -2,6 +2,12 @@ package main
 
 import (
 	"crypto/tls"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/authenticator"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/hub"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/jamsession"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/queue"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/store"
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/users"
 	"math/rand"
 	"os"
 	"path"
@@ -10,7 +16,6 @@ import (
 	"github.com/jamfactoryapp/jamfactory-backend/api/sessions"
 
 	"github.com/jamfactoryapp/jamfactory-backend/api/server"
-	"github.com/jamfactoryapp/jamfactory-backend/api/users"
 	pkgredis "github.com/jamfactoryapp/jamfactory-backend/internal/redis"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/cache"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/config"
@@ -24,6 +29,7 @@ func main() {
 
 	log.SetLevel(log.TraceLevel)
 	log.SetOutput(os.Stdout)
+	log.SetReportCaller(true)
 	log.SetFormatter(&log.TextFormatter{
 		ForceColors:   true,
 		FullTimestamp: false,
@@ -49,21 +55,36 @@ func main() {
 	}
 	log.Debug("Initialized connection to redis")
 
+	authenticator := authenticator.NewAuthenticator(conf.SpotifyRedirectURL, conf.SpotifyID, conf.SpotifySecret)
+
 	// Create redis stores
 	redisStore := sessions.NewRedisSessionStore(pool, path.Join(conf.DataDir, ".keypairs"), conf.CookieSameSite, conf.CookieSecure)
-	userStore := users.NewRedisUserStore(pool)
-	log.Debug("Initialized redis stores")
+	log.Debug("Initialized session store")
+
+	userHubStores := hub.Stores{
+		Store:       store.NewRedisStore[users.UserInformation](pool, "user:info"),
+		Identifiers: store.NewRedisSet(pool, "users"),
+	}
+	userHub := hub.NewHub(authenticator, userHubStores)
+	log.Debug("Initialized user store")
 
 	// Create redis cache
 	redisCache := cache.NewRedis(pool)
 	log.Debug("Initialized redis cache")
 
 	// Create JamFactory
-	spotifyJamFactory := jamfactory.NewSpotify(redisCache, conf.SpotifyRedirectURL, conf.SpotifyID, conf.SpotifySecret, conf.ClientAddresses)
-	log.Debug("Initialized JamFactory")
+	stores := jamfactory.Stores{
+		JamLabels: store.NewRedisSet(pool, "jamSessions"),
+		Settings:  store.NewRedisStore[jamsession.Settings](pool, "jamSession:settings"),
+		Queues:    store.NewRedisStore[queue.Queue](pool, "jamSession:queue"),
+		Members:   store.NewRedisStore[jamsession.Members](pool, "jamSession:members"),
+	}
+	log.Debug("Initialized JamFactory store")
+	spotifyJamFactory := jamfactory.New(stores, userHub, redisCache)
+	log.Info("Initialized JamFactory")
 
 	// Create app server
-	appServer := server.NewServer("/", redisStore, userStore, spotifyJamFactory).
+	appServer := server.NewServer("/", conf, redisStore, userHub, spotifyJamFactory, authenticator).
 		WithPort(conf.Port).
 		WithCache(redisCache)
 

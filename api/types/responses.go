@@ -1,6 +1,7 @@
 package types
 
 import (
+	"github.com/jamfactoryapp/jamfactory-backend/pkg/permissions"
 	"github.com/zmb3/spotify"
 )
 
@@ -14,9 +15,9 @@ type JamResponse struct {
 }
 
 type JamMember struct {
-	DisplayName string       `json:"display_name"`
-	Identifier  string       `json:"identifier"`
-	Permission  []Permission `json:"permissions"`
+	DisplayName string                  `json:"display_name,omitempty"`
+	Identifier  string                  `json:"identifier"`
+	Permissions permissions.Permissions `json:"permissions"`
 }
 
 type JamMemberResponse struct {
@@ -58,7 +59,7 @@ type GetAuthLogoutResponse SuccessResponse
 type GetJamResponse JamResponse
 type PutJamResponse JamResponse
 
-type GetJamPlaybackResponse PlaybackBody
+type GetPlaybackResponse PlaybackBody
 type PutJamPlaybackResponse PlaybackBody
 
 type GetJamMembersResponse JamMemberResponse

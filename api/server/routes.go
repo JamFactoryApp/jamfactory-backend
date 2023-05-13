@@ -1,106 +1,204 @@
 package server
 
 import (
-	"net/http"
-
 	"github.com/gorilla/mux"
+	"github.com/justinas/alice"
 )
 
 const (
-	apiPath = "/api/v1"
+	api = "/api/v1"
 
-	authPath         = "/auth"
-	authCallbackPath = "/callback"
-	authLoginPath    = "/login"
-	authLogoutPath   = "/logout"
+	auth         = "/auth"
+	authCallback = "/callback"
+	authLogin    = "/login"
+	authLogout   = "/logout"
 
-	mePath      = "/me"
-	meIndexPath = ""
+	user          = "/me"
+	userIndex     = ""
+	userPlayback  = "/playback"
+	userDevices   = "/devices"
+	userPlaylists = "/playlists"
 
-	jamSessionPath         = "/jam"
-	jamSessionIndexPath    = ""
-	jamSessionCreatePath   = "/create"
-	jamSessionJoinPath     = "/join"
-	jamSessionLeavePath    = "/leave"
-	jamSessionPlayPath     = "/play"
-	jamSessionPlaybackPath = "/playback"
-	jamSessionMembersPath  = "/members"
+	jamSession         = "/jam"
+	jamSessionIndex    = ""
+	jamSessionCreate   = "/create"
+	jamSessionJoin     = "/join"
+	jamSessionLeave    = "/leave"
+	jamSessionPlay     = "/play"
+	jamSessionPlayback = "/playback"
+	jamSessionMembers  = "/members"
+	jamSessionSearch   = "/search"
 
-	queuePath           = "/queue"
-	queueIndexPath      = ""
-	queueCollectionPath = "/collection"
-	queueVotePath       = "/vote"
-	queueDeletePath     = "/delete"
-	queueHistoryPath    = "/history"
-	queueExportPath     = "/export"
+	queuePath       = "/queue"
+	queueIndex      = ""
+	queueCollection = "/collection"
+	queueVote       = "/vote"
+	queueDelete     = "/delete"
+	queueHistory    = "/history"
+	queueExport     = "/export"
 
-	spotifyPath         = "/spotify"
-	spotifyDevicesPath  = "/devices"
-	spotifyPlaylistPath = "/playlists"
-	spotifySearchPath   = "/search"
+	spotifyIndex    = "/spotify"
+	spotifyDevices  = "/devices"
+	spotifyPlaylist = "/playlists"
+	spotifySearch   = "/search"
 
-	websocketPath = "/ws"
+	websocketPath  = "/ws"
+	websocketIndex = ""
 )
 
 func (s *Server) initRoutes() {
-	s.router.Use(s.sessionMiddleware)
-	s.router.Use(s.userMiddleware)
+	chain := alice.New(s.sessionMiddleware, s.userMiddleware)
 
-	authRouter := s.router.PathPrefix(apiPath + authPath).Subrouter()
-	meRouter := s.router.PathPrefix(apiPath + mePath).Subrouter()
-	jamSessionRouter := s.router.PathPrefix(apiPath + jamSessionPath).Subrouter()
-	queueRouter := s.router.PathPrefix(apiPath + queuePath).Subrouter()
-	spotifyRouter := s.router.PathPrefix(apiPath + spotifyPath).Subrouter()
+	authRouter := s.router.PathPrefix(api + auth).Subrouter()
+	userRouter := s.router.PathPrefix(api + user).Subrouter()
+	jamSessionRouter := s.router.PathPrefix(api + jamSession).Subrouter()
+	queueRouter := s.router.PathPrefix(api + queuePath).Subrouter()
+	spotifyRouter := s.router.PathPrefix(api + spotifyIndex).Subrouter()
 	websocketRouter := s.router.PathPrefix(websocketPath).Subrouter()
 
-	s.registerAuthRoutes(authRouter)
-	s.registerMeRoutes(meRouter)
-	s.registerQueueRoutes(queueRouter)
-	s.registerJamSessionRoutes(jamSessionRouter)
-	s.registerSpotifyRoutes(spotifyRouter)
-	s.registerWebsocketRoutes(websocketRouter)
+	s.registerAuthRoutes(authRouter, chain)
+	s.registerUserRoutes(userRouter, chain)
+	s.registerQueueRoutes(queueRouter, chain)
+	s.registerJamSessionRoutes(jamSessionRouter, chain)
+	s.registerSpotifyRoutes(spotifyRouter, chain)
+	s.registerWebsocketRoutes(websocketRouter, chain)
 }
 
-func (s *Server) registerAuthRoutes(r *mux.Router) {
-	r.HandleFunc(authCallbackPath, s.callback).Methods("GET")
-	r.HandleFunc(authLoginPath, s.login).Methods("GET")
-	r.HandleFunc(authLogoutPath, s.logout).Methods("GET")
+func (s *Server) registerAuthRoutes(r *mux.Router, chain alice.Chain) {
+	// GET: /api/v1/auth/callback
+	r.Methods("GET").Path(authCallback).Handler(
+		chain.Append().ThenFunc(s.callback))
+
+	// GET: /api/v1/auth/login
+	r.Methods("GET").Path(authLogin).Handler(
+		chain.Append().ThenFunc(s.login))
+
+	// GET: /api/v1/auth/logout
+	r.Methods("GET").Path(authLogout).Handler(
+		chain.Append().ThenFunc(s.logout))
 }
 
-func (s *Server) registerMeRoutes(r *mux.Router) {
-	r.HandleFunc(meIndexPath, s.getUser).Methods("GET")
-	r.HandleFunc(meIndexPath, s.setUser).Methods("PUT")
-	r.HandleFunc(meIndexPath, s.deleteUser).Methods("DELETE")
+func (s *Server) registerUserRoutes(r *mux.Router, chain alice.Chain) {
+	// GET: /api/v1/me
+	r.Methods("GET").Path(userIndex).Handler(
+		chain.Append().ThenFunc(s.getUser))
+
+	// PUT: /api/v1/me
+	r.Methods("PUT").Path(userIndex).Handler(
+		chain.Append().ThenFunc(s.setUser))
+
+	// DELETE: /api/v1/me
+	r.Methods("DELETE").Path(userIndex).Handler(
+		chain.Append().ThenFunc(s.deleteUser))
+
+	// GET: /api/v1/me/playback
+	r.Methods("GET").Path(userPlayback).Handler(
+		chain.Append().ThenFunc(s.getUserPlayback))
+
+	// PUT: /api/v1/me/playback
+	r.Methods("PUT").Path(userPlayback).Handler(
+		chain.Append().ThenFunc(s.setUserPlayback))
+
+	// GET: /api/v1/me/devices
+	r.Methods("GET").Path(userDevices).Handler(
+		chain.Append(s.jamSessionRequired, s.hostRequired).ThenFunc(s.getUserDevices))
+
+	// GET: /api/v1/me/playlists
+	r.Methods("GET").Path(userPlaylists).Handler(
+		chain.Append(s.jamSessionRequired, s.hostRequired).ThenFunc(s.getUserPlaylists))
 }
 
-func (s *Server) registerJamSessionRoutes(r *mux.Router) {
-	r.Handle(jamSessionCreatePath, s.nonMemberRequired(http.HandlerFunc(s.createJamSession))).Methods("GET")
-	r.Handle(jamSessionJoinPath, s.nonMemberRequired(http.HandlerFunc(s.joinJamSession))).Methods("PUT")
-	r.Handle(jamSessionLeavePath, http.HandlerFunc(s.leaveJamSession)).Methods("GET")
-	r.Handle(jamSessionPlayPath, s.jamSessionRequired(s.hostRequired(http.HandlerFunc(s.playSong)))).Methods("PUT")
-	r.Handle(jamSessionIndexPath, s.jamSessionRequired(http.HandlerFunc(s.getJamSession))).Methods("GET")
-	r.Handle(jamSessionIndexPath, s.jamSessionRequired(s.hostRequired(http.HandlerFunc(s.setJamSession)))).Methods("PUT")
-	r.Handle(jamSessionPlaybackPath, s.jamSessionRequired(http.HandlerFunc(s.getPlayback))).Methods("GET")
-	r.Handle(jamSessionPlaybackPath, s.jamSessionRequired(s.hostRequired(http.HandlerFunc(s.setPlayback)))).Methods("PUT")
-	r.Handle(jamSessionMembersPath, s.jamSessionRequired(http.HandlerFunc(s.getMembers))).Methods("GET")
-	r.Handle(jamSessionMembersPath, s.jamSessionRequired(s.hostRequired(http.HandlerFunc(s.setMembers)))).Methods("PUT")
+func (s *Server) registerJamSessionRoutes(r *mux.Router, chain alice.Chain) {
+	// GET: /api/v1/jam/create
+	r.Methods("GET").Path(jamSessionCreate).Handler(
+		chain.Append(s.nonMemberRequired).ThenFunc(s.createJamSession))
+
+	// PUT: /api/v1/jam/join
+	r.Methods("PUT").Path(jamSessionJoin).Handler(
+		chain.Append(s.nonMemberRequired).ThenFunc(s.joinJamSession))
+
+	// GET: /api/v1/jam/leave
+	r.Methods("GET").Path(jamSessionLeave).Handler(
+		chain.Append().ThenFunc(s.leaveJamSession))
+
+	// PUT: /api/v1/jam/play
+	r.Methods("PUT").Path(jamSessionPlay).Handler(
+		chain.Append(s.jamSessionRequired, s.hostRequired).ThenFunc(s.playSong))
+
+	// GET: /api/v1/jam/
+	r.Methods("GET").Path(jamSessionIndex).Handler(
+		chain.Append(s.jamSessionRequired).ThenFunc(s.getJamSession))
+
+	// PUT: /api/v1/jam/
+	r.Methods("PUT").Path(jamSessionIndex).Handler(
+		chain.Append(s.jamSessionRequired, s.hostRequired).ThenFunc(s.setJamSession))
+
+	// PUT: /api/v1/jam/search
+	r.Methods("PUT").Path(jamSessionSearch).Handler(
+		chain.Append(s.jamSessionRequired).ThenFunc(s.search))
+
+	// GET: /api/v1/jam/playback
+	r.Methods("GET").Path(jamSessionPlayback).Handler(
+		chain.Append(s.jamSessionRequired).ThenFunc(s.getPlayback))
+
+	// PUT: /api/v1/jam/playback
+	r.Methods("PUT").Path(jamSessionPlayback).Handler(
+		chain.Append(s.jamSessionRequired, s.hostRequired).ThenFunc(s.setPlayback))
+
+	// GET: /api/v1/jam/members
+	r.Methods("GET").Path(jamSessionMembers).Handler(
+		chain.Append(s.jamSessionRequired).ThenFunc(s.getMembers))
+
+	// PUT: /api/v1/jam/members
+	r.Methods("PUT").Path(jamSessionMembers).Handler(
+		chain.Append(s.jamSessionRequired, s.hostRequired).ThenFunc(s.setMembers))
 }
 
-func (s *Server) registerQueueRoutes(r *mux.Router) {
-	r.Handle(queueIndexPath, s.jamSessionRequired(http.HandlerFunc(s.getQueue))).Methods("GET")
-	r.Handle(queueCollectionPath, s.jamSessionRequired(s.hostRequired(http.HandlerFunc(s.addCollection)))).Methods("PUT")
-	r.Handle(queueVotePath, s.jamSessionRequired(http.HandlerFunc(s.vote))).Methods("PUT")
-	r.Handle(queueDeletePath, s.jamSessionRequired(s.hostRequired(http.HandlerFunc(s.deleteSong)))).Methods("DELETE")
-	r.Handle(queueHistoryPath, s.jamSessionRequired(http.HandlerFunc(s.getQueueHistory))).Methods("GET")
-	r.Handle(queueExportPath, s.jamSessionRequired(s.hostRequired(http.HandlerFunc(s.exportQueue)))).Methods("PUT")
+func (s *Server) registerQueueRoutes(r *mux.Router, chain alice.Chain) {
+	// GET: /api/v1/queue/
+	r.Methods("GET").Path(queueIndex).Handler(
+		chain.Append(s.jamSessionRequired).ThenFunc(s.getQueue))
+
+	// PUT: /api/v1/queue/collection
+	r.Methods("PUT").Path(queueCollection).Handler(
+		chain.Append(s.jamSessionRequired, s.hostRequired).ThenFunc(s.addCollection))
+
+	// PUT: /api/v1/queue/vote
+	r.Methods("PUT").Path(queueVote).Handler(
+		chain.Append(s.jamSessionRequired).ThenFunc(s.vote))
+
+	// DELETE: /api/v1/queue/delete
+	r.Methods("DELETE").Path(queueDelete).Handler(
+		chain.Append(s.jamSessionRequired, s.hostRequired).ThenFunc(s.deleteSong))
+
+	// GET: /api/v1/queue/history
+	r.Methods("GET").Path(queueHistory).Handler(
+		chain.Append(s.jamSessionRequired).ThenFunc(s.getQueueHistory))
+
+	// PUT: /api/v1/queue/export
+	r.Methods("PUT").Path(queueExport).Handler(
+		chain.Append(s.jamSessionRequired, s.hostRequired).ThenFunc(s.exportQueue))
 }
 
-func (s *Server) registerSpotifyRoutes(r *mux.Router) {
-	r.Handle(spotifyDevicesPath, s.jamSessionRequired(s.hostRequired(http.HandlerFunc(s.devices)))).Methods("GET")
-	r.Handle(spotifyPlaylistPath, s.jamSessionRequired(s.hostRequired(http.HandlerFunc(s.playlist)))).Methods("GET")
-	r.Handle(spotifySearchPath, s.jamSessionRequired(http.HandlerFunc(s.search))).Methods("PUT")
+func (s *Server) registerSpotifyRoutes(r *mux.Router, chain alice.Chain) {
+	// TODO: Deprecate endpoint in favour of /api/v1/user/devices
+	// GET: /api/v1/spotify/devices
+	r.Methods("GET").Path(spotifyDevices).Handler(
+		chain.Append(s.jamSessionRequired, s.hostRequired).ThenFunc(s.getUserDevices))
+
+	// TODO: Deprecate endpoint in favour of /api/v1/user/playlists
+	// GET: /api/v1/spotify/playlists
+	r.Methods("GET").Path(spotifyPlaylist).Handler(
+		chain.Append(s.jamSessionRequired, s.hostRequired).ThenFunc(s.getUserPlaylists))
+
+	// TODO: Deprecate endpoint in favour of /api/v1/jam/search
+	// PUT: /api/v1/spotify/search
+	r.Methods("PUT").Path(spotifySearch).Handler(
+		chain.Append(s.jamSessionRequired).ThenFunc(s.search))
 }
 
-func (s *Server) registerWebsocketRoutes(r *mux.Router) {
-	r.Handle("", s.jamSessionRequired(http.HandlerFunc(s.websocketHandler))).Methods("GET")
+func (s *Server) registerWebsocketRoutes(r *mux.Router, chain alice.Chain) {
+	// GET /ws
+	r.Methods("GET").Path(websocketIndex).Handler(
+		chain.Append(s.jamSessionRequired).ThenFunc(s.websocketHandler))
 }

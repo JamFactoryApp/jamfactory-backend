@@ -29,7 +29,7 @@ const (
 	minCookieKeyPairsCount     = 4
 )
 
-type RedisSessionStore struct {
+type Store struct {
 	sync.Mutex
 	pool          *redis.Pool
 	redisKey      pkgredis.Key
@@ -39,8 +39,8 @@ type RedisSessionStore struct {
 	keyPairsFile  string
 }
 
-func NewRedisSessionStore(pool *redis.Pool, keyPairsFile string, sameSite http.SameSite, secure bool) *RedisSessionStore {
-	redisStore := &RedisSessionStore{
+func NewRedisSessionStore(pool *redis.Pool, keyPairsFile string, sameSite http.SameSite, secure bool) *Store {
+	redisStore := &Store{
 		pool:     pool,
 		redisKey: pkgredis.Key{}.Append(defaultRedisSessionKey),
 		options: &sessions.Options{
@@ -58,11 +58,11 @@ func NewRedisSessionStore(pool *redis.Pool, keyPairsFile string, sameSite http.S
 	return redisStore
 }
 
-func (s *RedisSessionStore) Get(r *http.Request, name string) (*sessions.Session, error) {
+func (s *Store) Get(r *http.Request, name string) (*sessions.Session, error) {
 	return sessions.GetRegistry(r).Get(s, name)
 }
 
-func (s *RedisSessionStore) New(r *http.Request, name string) (*sessions.Session, error) {
+func (s *Store) New(r *http.Request, name string) (*sessions.Session, error) {
 	session := sessions.NewSession(s, name)
 	opts := *s.options
 	session.Options = &opts
@@ -80,7 +80,7 @@ func (s *RedisSessionStore) New(r *http.Request, name string) (*sessions.Session
 	return session, err
 }
 
-func (s *RedisSessionStore) Save(_ *http.Request, w http.ResponseWriter, session *sessions.Session) error {
+func (s *Store) Save(_ *http.Request, w http.ResponseWriter, session *sessions.Session) error {
 	if session.Options.MaxAge <= 0 {
 		if err := s.delete(session); err != nil {
 			return err
@@ -107,7 +107,7 @@ func (s *RedisSessionStore) Save(_ *http.Request, w http.ResponseWriter, session
 	return nil
 }
 
-func (s *RedisSessionStore) MaxAge(age int) {
+func (s *Store) MaxAge(age int) {
 	s.options.MaxAge = age
 
 	for _, codec := range s.codecs {
@@ -117,7 +117,7 @@ func (s *RedisSessionStore) MaxAge(age int) {
 	}
 }
 
-func (s *RedisSessionStore) LoadCookieKeyPairs() {
+func (s *Store) LoadCookieKeyPairs() {
 	var keyPairs [][]byte
 	if utils.FileExists(s.keyPairsFile) {
 		keyPairs = s.readCookieKeyPairs()
@@ -128,7 +128,7 @@ func (s *RedisSessionStore) LoadCookieKeyPairs() {
 	s.codecs = securecookie.CodecsFromPairs(keyPairs...)
 }
 
-func (s *RedisSessionStore) load(session *sessions.Session) (bool, error) {
+func (s *Store) load(session *sessions.Session) (bool, error) {
 	s.Lock()
 	defer s.Unlock()
 
@@ -138,22 +138,22 @@ func (s *RedisSessionStore) load(session *sessions.Session) (bool, error) {
 		return false, err
 	}
 	if reply == nil {
-		return false, errors.New("RedisSessionStore: session not found")
+		return false, errors.New("JamSessions: session not found")
 	}
 	if data, ok := reply.([]byte); ok {
 		err = s.deserialize(data, session)
 	} else {
-		err = errors.New("RedisSessionStore: Failed to convert session data from interface{} to []bytes")
+		err = errors.New("JamSessions: Failed to convert session data from interface{} to []bytes")
 	}
 
 	if reply, err = conn.Do("EXPIRE", s.redisKey.Append(session.ID), sessionMaxAge); err != nil {
-		log.Error("RedisSessionStore: Failed to update expiry")
+		log.Error("JamSessions: Failed to update expiry")
 	}
 
 	return true, err
 }
 
-func (s *RedisSessionStore) save(session *sessions.Session) error {
+func (s *Store) save(session *sessions.Session) error {
 	conn := s.pool.Get()
 	serialized, err := s.serialize(session)
 	if err != nil {
@@ -164,13 +164,13 @@ func (s *RedisSessionStore) save(session *sessions.Session) error {
 	return err
 }
 
-func (s *RedisSessionStore) delete(session *sessions.Session) error {
+func (s *Store) delete(session *sessions.Session) error {
 	conn := s.pool.Get()
 	_, err := conn.Do("DEL", s.redisKey.Append(session.ID))
 	return err
 }
 
-func (s *RedisSessionStore) readCookieKeyPairs() [][]byte {
+func (s *Store) readCookieKeyPairs() [][]byte {
 	file, err := os.Open(s.keyPairsFile)
 	if err != nil {
 		log.Fatal(err)
@@ -198,7 +198,7 @@ func (s *RedisSessionStore) readCookieKeyPairs() [][]byte {
 	return keyPairs
 }
 
-func (s *RedisSessionStore) writeCookieKeyPairs(keyPairs [][]byte) {
+func (s *Store) writeCookieKeyPairs(keyPairs [][]byte) {
 	file, err := os.Create(s.keyPairsFile)
 	if err != nil {
 		log.Fatal(err)
@@ -218,7 +218,7 @@ func (s *RedisSessionStore) writeCookieKeyPairs(keyPairs [][]byte) {
 	}
 }
 
-func (s *RedisSessionStore) generateCookieKeyPairs() [][]byte {
+func (s *Store) generateCookieKeyPairs() [][]byte {
 	var count int
 	var keyPairs [][]byte
 
@@ -236,7 +236,7 @@ func (s *RedisSessionStore) generateCookieKeyPairs() [][]byte {
 	return keyPairs
 }
 
-func (s *RedisSessionStore) serialize(session *sessions.Session) ([]byte, error) {
+func (s *Store) serialize(session *sessions.Session) ([]byte, error) {
 	var buffer bytes.Buffer
 	encoder := gob.NewEncoder(&buffer)
 	err := encoder.Encode(session.Values)
@@ -247,12 +247,12 @@ func (s *RedisSessionStore) serialize(session *sessions.Session) ([]byte, error)
 	return buffer.Bytes(), nil
 }
 
-func (s *RedisSessionStore) deserialize(data []byte, session *sessions.Session) error {
+func (s *Store) deserialize(data []byte, session *sessions.Session) error {
 	buffer := bytes.NewBuffer(data)
 	decoder := gob.NewDecoder(buffer)
 	return decoder.Decode(&session.Values)
 }
 
-func (s *RedisSessionStore) generateID() string {
+func (s *Store) generateID() string {
 	return strings.TrimRight(base32.StdEncoding.EncodeToString(securecookie.GenerateRandomKey(32)), "=")
 }

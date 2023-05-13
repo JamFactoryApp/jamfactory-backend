@@ -6,20 +6,47 @@ import (
 	"github.com/zmb3/spotify"
 )
 
-// Song holds metadata for a song that can be played in a JamSession
-type Song interface {
-	// ID returns a unique id for this song
-	ID() string
-	// Song returns an object containing data specific to the music streaming provider
-	Song() *spotify.FullTrack
-	// Votes returns all votes that have been cast on this song
-	Votes() []string
-	// Vote toggles a vote on this song
-	Vote(voteID string) bool
-	// Date returns the time this song was first voted on
-	Date() time.Time
-	// SetDate updates this Song's Date
-	SetDate(t time.Time)
-	// HasVote returns whether a given voteID has voted on this Song
-	HasVote(voteID string) bool
+type Song struct {
+	ID    string
+	Track *spotify.FullTrack
+	Votes map[string]bool
+	Date  time.Time
+}
+
+func New(t *spotify.FullTrack) *Song {
+	return &Song{
+		Track: t,
+		ID:    string(t.ID),
+		Votes: make(map[string]bool),
+		Date:  time.Now(),
+	}
+}
+
+func (s *Song) GetVotes() []string {
+	var votes []string
+	i := 0
+	for v, voted := range s.Votes {
+		if voted {
+			votes = append(votes, v)
+			i++
+		}
+	}
+	return votes
+}
+
+func (s *Song) Vote(voteID string) bool {
+	if _, exists := s.Votes[voteID]; !exists {
+		// create new vote
+		s.Votes[voteID] = true
+	} else {
+		// flip vote state
+		s.Votes[voteID] = !s.Votes[voteID]
+	}
+	// return new vote state
+	return s.Votes[voteID]
+}
+
+func (s *Song) HasVote(voteID string) bool {
+	x, ok := s.Votes[voteID]
+	return ok && x
 }
