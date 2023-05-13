@@ -1,13 +1,15 @@
 package jamfactory
 
 import (
+	"context"
 	"errors"
+	"strings"
+	"time"
+
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/hub"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/queue"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/store"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/users"
-	"strings"
-	"time"
 
 	apierrors "github.com/jamfactoryapp/jamfactory-backend/api/errors"
 	"github.com/jamfactoryapp/jamfactory-backend/internal/logutils"
@@ -16,7 +18,7 @@ import (
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/jamsession"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/notifications"
 	log "github.com/sirupsen/logrus"
-	"github.com/zmb3/spotify"
+	"github.com/zmb3/spotify/v2"
 )
 
 type Stores struct {
@@ -192,10 +194,10 @@ func (s *JamFactory) NewJamSession(host *users.User) (*jamsession.JamSession, er
 	return jamSession, nil
 }
 
-func (s *JamFactory) Search(jamSession *jamsession.JamSession, searchType string, text string) (interface{}, error) {
+func (s *JamFactory) Search(ctx context.Context, jamSession *jamsession.JamSession, searchType string, text string) (interface{}, error) {
 	country := spotify.CountryGermany
-	opts := spotify.Options{
-		Country: &country,
+	opts := []spotify.RequestOption{
+		spotify.Country(country),
 	}
 
 	var spotifySearchType spotify.SearchType
@@ -217,7 +219,7 @@ func (s *JamFactory) Search(jamSession *jamsession.JamSession, searchType string
 
 	searchString := []string{text, "*"}
 	entry, err := s.cache.Query(key, strings.Join(searchString, ""), func(index string) (interface{}, error) {
-		return jamSession.Search(index, spotifySearchType, &opts)
+		return jamSession.Search(ctx, index, spotifySearchType, opts...)
 	})
 
 	if err != nil {

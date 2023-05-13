@@ -10,7 +10,7 @@ import (
 	"github.com/jamfactoryapp/jamfactory-backend/api/types"
 	"github.com/jamfactoryapp/jamfactory-backend/api/utils"
 	log "github.com/sirupsen/logrus"
-	"github.com/zmb3/spotify"
+	"github.com/zmb3/spotify/v2"
 )
 
 func (s *Server) getQueue(w http.ResponseWriter, r *http.Request) {
@@ -70,7 +70,7 @@ func (s *Server) exportQueue(w http.ResponseWriter, r *http.Request) {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return
 	}
-	host, err := s.users.GetUserByIdentifier(hostMember.Identifier)
+	host, err := s.users.GetUserByIdentifier(r.Context(), hostMember.Identifier)
 	if err != nil {
 		s.errInternalServerError(w, apierrors.ErrMissingMember, log.WarnLevel)
 		return
@@ -95,7 +95,7 @@ func (s *Server) exportQueue(w http.ResponseWriter, r *http.Request) {
 		ids[i] = tracks[i].Song.ID
 	}
 	desc := settings.Name + "  exported queue at " + time.Now().Format("02.01.2006, 15:01") + ". https://jamfactory.app"
-	err = host.CreatePlaylist(body.PlaylistName, desc, ids)
+	err = host.CreatePlaylist(r.Context(), body.PlaylistName, desc, ids)
 	if err != nil {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return
@@ -113,7 +113,7 @@ func (s *Server) addCollection(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jamSession := s.CurrentJamSession(r)
-	err := jamSession.AddCollection(body.CollectionType, body.CollectionID)
+	err := jamSession.AddCollection(r.Context(), body.CollectionType, body.CollectionID)
 	if err != nil {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return
@@ -140,7 +140,7 @@ func (s *Server) vote(w http.ResponseWriter, r *http.Request) {
 	jamSession := s.CurrentJamSession(r)
 	voteID := s.CurrentVoteID(r)
 
-	if err := jamSession.Vote(body.TrackID, voteID); err != nil {
+	if err := jamSession.Vote(r.Context(), body.TrackID, voteID); err != nil {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return
 	}

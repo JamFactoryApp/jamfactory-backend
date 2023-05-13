@@ -25,7 +25,7 @@ import (
 )
 
 func main() {
-	rand.Seed(time.Now().UnixNano())
+	rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	log.SetLevel(log.TraceLevel)
 	log.SetOutput(os.Stdout)
@@ -95,8 +95,7 @@ func main() {
 		}
 
 		appServer = appServer.WithTLS(&tls.Config{
-			MinVersion:               tls.VersionTLS13,
-			PreferServerCipherSuites: true,
+			MinVersion: tls.VersionTLS13,
 		})
 		log.Infof("HTTPS server is listening on :%d\n", conf.Port)
 		if err := appServer.RunTLS(conf.CertFile, conf.KeyFile); err != nil {

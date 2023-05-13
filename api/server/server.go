@@ -19,7 +19,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/cache"
 	log "github.com/sirupsen/logrus"
-	"github.com/zmb3/spotify"
+	"github.com/zmb3/spotify/v2"
 	"golang.org/x/oauth2"
 )
 
@@ -34,9 +34,9 @@ func init() {
 }
 
 const (
-	readTimeout  = time.Second
-	writeTimeout = 5 * time.Second
-	idleTimeout  = time.Second
+	readTimeout  = 60 * time.Second
+	writeTimeout = 60 * time.Second
+	idleTimeout  = 60 * time.Second
 )
 
 type Server struct {

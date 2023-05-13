@@ -1,7 +1,9 @@
 package hub
 
 import (
+	"context"
 	"errors"
+
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/authenticator"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/store"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/users"
@@ -33,8 +35,8 @@ func NewHub(authenticator *authenticator.Authenticator, stores Stores) *Hub {
 	return hub
 }
 
-func (h *Hub) NewUser(id string, username string, userType users.UserType, token *oauth2.Token) (*users.User, error) {
-	user, err := users.New(id, username, userType, h.Store, token, h.Authenticator)
+func (h *Hub) NewUser(ctx context.Context, id string, username string, userType users.UserType, token *oauth2.Token) (*users.User, error) {
+	user, err := users.New(ctx, id, username, userType, h.Store, token, h.Authenticator)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +48,7 @@ func (h *Hub) NewUser(id string, username string, userType users.UserType, token
 	return user, nil
 }
 
-func (h *Hub) GetUserByIdentifier(identifier string) (*users.User, error) {
+func (h *Hub) GetUserByIdentifier(ctx context.Context, identifier string) (*users.User, error) {
 	// Check if local user exists
 	user, ok := h.users[identifier]
 	if ok {
@@ -62,7 +64,7 @@ func (h *Hub) GetUserByIdentifier(identifier string) (*users.User, error) {
 
 	if exists {
 		log.Trace("User found in store")
-		user = users.Load(identifier, h.Store, h.Authenticator)
+		user = users.Load(ctx, identifier, h.Store, h.Authenticator)
 		h.users[identifier] = user
 		if err != nil {
 			return nil, err
@@ -75,8 +77,8 @@ func (h *Hub) GetUserByIdentifier(identifier string) (*users.User, error) {
 
 }
 
-func (h *Hub) DeleteUser(identifier string) {
-	_, err := h.GetUserByIdentifier(identifier)
+func (h *Hub) DeleteUser(ctx context.Context, identifier string) {
+	_, err := h.GetUserByIdentifier(ctx, identifier)
 	if err != nil {
 
 	}

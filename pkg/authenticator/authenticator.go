@@ -3,38 +3,39 @@ package authenticator
 import (
 	"crypto/sha1"
 	"encoding/hex"
-	"github.com/zmb3/spotify"
-	"golang.org/x/oauth2"
 	"net/http"
+
+	"github.com/zmb3/spotify/v2"
+	spotifyauth "github.com/zmb3/spotify/v2/auth"
+	"golang.org/x/oauth2"
 )
 
 type Authenticator struct {
-	spotify.Authenticator
+	*spotifyauth.Authenticator
 }
 
 func NewAuthenticator(redirectURL string, clientID string, secretKey string) *Authenticator {
 	var scopes = []string{
-		spotify.ScopeUserReadPrivate,
-		spotify.ScopeUserReadEmail,
-		spotify.ScopeUserModifyPlaybackState,
-		spotify.ScopeUserReadPlaybackState,
-		spotify.ScopePlaylistModifyPrivate,
-		spotify.ScopeImageUpload,
+		spotifyauth.ScopeUserReadPrivate,
+		spotifyauth.ScopeUserReadEmail,
+		spotifyauth.ScopeUserModifyPlaybackState,
+		spotifyauth.ScopeUserReadPlaybackState,
+		spotifyauth.ScopePlaylistModifyPrivate,
+		spotifyauth.ScopeImageUpload,
 	}
-	a := spotify.NewAuthenticator(redirectURL, scopes...)
-	a.SetAuthInfo(clientID, secretKey)
+	a := spotifyauth.New(spotifyauth.WithClientID(clientID), spotifyauth.WithClientSecret(secretKey), spotifyauth.WithRedirectURL(redirectURL), spotifyauth.WithScopes(scopes...))
 	return &Authenticator{
 		a,
 	}
 }
 
 func (a *Authenticator) Authenticate(state string, r *http.Request) (*oauth2.Token, string, string, error) {
-	token, err := a.Token(state, r)
+	token, err := a.Token(r.Context(), state, r)
 	if err != nil {
 		return nil, "", "", err
 	}
-	client := a.NewClient(token)
-	user, err := client.CurrentUser()
+	client := spotify.New(a.Client(r.Context(), token))
+	user, err := client.CurrentUser(r.Context())
 	if err != nil {
 		return nil, "", "", err
 	}
