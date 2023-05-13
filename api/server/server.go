@@ -34,9 +34,9 @@ func init() {
 }
 
 const (
-	readTimeout  = 60 * time.Second
-	writeTimeout = 60 * time.Second
-	idleTimeout  = 60 * time.Second
+	readTimeout  = time.Second
+	writeTimeout = 5 * time.Second
+	idleTimeout  = time.Second
 )
 
 type Server struct {
