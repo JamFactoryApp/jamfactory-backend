@@ -1,11 +1,12 @@
 package users
 
 import (
+	"context"
 	"errors"
 	"github.com/jamfactoryapp/jamfactory-backend/internal/utils"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/authenticator"
 	log "github.com/sirupsen/logrus"
-	"github.com/zmb3/spotify"
+	"github.com/zmb3/spotify/v2"
 	"golang.org/x/oauth2"
 	"os"
 )
@@ -19,13 +20,13 @@ type player struct {
 	Synchronized  bool
 	SyncCount     int
 	Active        bool
-	client        spotify.Client
+	client        *spotify.Client
 	spotifyPlayer *spotify.PlayerState
 }
 
-func NewPlayer(authenticator *authenticator.Authenticator, token *oauth2.Token) player {
-	client := authenticator.NewClient(token)
-	playerState, err := client.PlayerState()
+func NewPlayer(ctx context.Context, authenticator *authenticator.Authenticator, token *oauth2.Token) player {
+	client := spotify.New(authenticator.Client(ctx, token))
+	playerState, err := client.PlayerState(ctx)
 	if err != nil {
 		log.Warn(err)
 	}
@@ -40,12 +41,11 @@ func NewPlayer(authenticator *authenticator.Authenticator, token *oauth2.Token) 
 }
 
 func (p *player) Client() *spotify.Client {
-	return &p.client
+	return p.client
 }
 
-func (p *player) SetState(state bool) error {
-
-	playerState, err := p.Client().PlayerState()
+func (p *player) SetState(ctx context.Context, state bool) error {
+	playerState, err := p.Client().PlayerState(ctx)
 	if err != nil {
 		return err
 	}
@@ -55,9 +55,9 @@ func (p *player) SetState(state bool) error {
 	}
 
 	if state {
-		err = p.Client().Play()
+		err = p.Client().Play(ctx)
 	} else {
-		err = p.Client().Pause()
+		err = p.Client().Pause(ctx)
 	}
 
 	if err != nil {
@@ -68,7 +68,7 @@ func (p *player) SetState(state bool) error {
 	return nil
 }
 
-func (p *player) Play(track *spotify.FullTrack) error {
+func (p *player) Play(ctx context.Context, track *spotify.FullTrack) error {
 	if !p.spotifyPlayer.Device.Active {
 		return ErrDeviceNotActive
 	}
@@ -78,7 +78,7 @@ func (p *player) Play(track *spotify.FullTrack) error {
 	}
 
 	p.Synchronized = false
-	err := p.Client().PlayOpt(&playOptions)
+	err := p.Client().PlayOpt(ctx, &playOptions)
 	if err != nil {
 		return err
 	}
@@ -87,14 +87,14 @@ func (p *player) Play(track *spotify.FullTrack) error {
 	return nil
 }
 
-func (p *player) SetDevice(id string) error {
-	playerState, err := p.Client().PlayerState()
+func (p *player) SetDevice(ctx context.Context, id string) error {
+	playerState, err := p.Client().PlayerState(ctx)
 	if err != nil {
 		return err
 	}
 	deviceID := spotify.ID(id)
 	if deviceID != playerState.Device.ID {
-		err := p.Client().TransferPlayback(deviceID, p.Active)
+		err := p.Client().TransferPlayback(ctx, deviceID, p.Active)
 		if err != nil {
 			return err
 		}
@@ -102,8 +102,8 @@ func (p *player) SetDevice(id string) error {
 	return nil
 }
 
-func (p *player) Devices() ([]spotify.PlayerDevice, error) {
-	return p.Client().PlayerDevices()
+func (p *player) Devices(ctx context.Context) ([]spotify.PlayerDevice, error) {
+	return p.Client().PlayerDevices(ctx)
 }
 
 func (p *player) GetPlayerState() *spotify.PlayerState {
@@ -114,32 +114,32 @@ func (p *player) SetPlayerState(state *spotify.PlayerState) {
 	p.spotifyPlayer = state
 }
 
-func (p *player) Playlists() (*spotify.SimplePlaylistPage, error) {
-	return p.Client().CurrentUsersPlaylists()
+func (p *player) Playlists(ctx context.Context) (*spotify.SimplePlaylistPage, error) {
+	return p.Client().CurrentUsersPlaylists(ctx)
 }
 
-func (p *player) Search(index string, searchType spotify.SearchType, options *spotify.Options) (interface{}, error) {
-	return p.Client().SearchOpt(index, searchType, options)
+func (p *player) Search(ctx context.Context, index string, searchType spotify.SearchType, options ...spotify.RequestOption) (interface{}, error) {
+	return p.Client().Search(ctx, index, searchType, options...)
 }
 
-func (p *player) GetTrack(trackID string) (*spotify.FullTrack, error) {
-	return p.Client().GetTrack(spotify.ID(trackID))
+func (p *player) GetTrack(ctx context.Context, trackID string) (*spotify.FullTrack, error) {
+	return p.Client().GetTrack(ctx, spotify.ID(trackID))
 }
 
-func (p *player) SetVolume(percent int) error {
-	err := p.Client().Volume(percent)
+func (p *player) SetVolume(ctx context.Context, percent int) error {
+	err := p.Client().Volume(ctx, percent)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (p *player) CreatePlaylist(name string, desc string, ids []spotify.ID) error {
-	user, err := p.Client().CurrentUser()
+func (p *player) CreatePlaylist(ctx context.Context, name string, desc string, ids []spotify.ID) error {
+	user, err := p.Client().CurrentUser(ctx)
 	if err != nil {
 		return err
 	}
-	playlist, err := p.Client().CreatePlaylistForUser(user.ID, name, desc, false)
+	playlist, err := p.Client().CreatePlaylistForUser(ctx, user.ID, name, desc, false, false)
 	if err != nil {
 		return err
 	}
@@ -149,7 +149,7 @@ func (p *player) CreatePlaylist(name string, desc string, ids []spotify.ID) erro
 		if err != nil {
 			return err
 		}
-		err = p.Client().SetPlaylistImage(playlist.ID, file)
+		err = p.Client().SetPlaylistImage(ctx, playlist.ID, file)
 		if err != nil {
 			return err
 		}
@@ -157,7 +157,7 @@ func (p *player) CreatePlaylist(name string, desc string, ids []spotify.ID) erro
 
 	idChunks := utils.SplitsIds(ids, 100)
 	for i := range idChunks {
-		_, err := p.Client().AddTracksToPlaylist(playlist.ID, idChunks[i]...)
+		_, err := p.Client().AddTracksToPlaylist(ctx, playlist.ID, idChunks[i]...)
 		if err != nil {
 			return err
 		}

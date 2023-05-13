@@ -1,13 +1,15 @@
 package server
 
 import (
+	"context"
 	"crypto/sha1"
 	"encoding/base32"
 	"encoding/hex"
+	"net/http"
+
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/permissions"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/users"
-	"github.com/zmb3/spotify"
-	"net/http"
+	"github.com/zmb3/spotify/v2"
 
 	apierrors "github.com/jamfactoryapp/jamfactory-backend/api/errors"
 	"github.com/jamfactoryapp/jamfactory-backend/api/sessions"
@@ -18,10 +20,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (s *Server) getMemberResponse(members jamsession.Members) types.GetJamMembersResponse {
+func (s *Server) getMemberResponse(ctx context.Context, members jamsession.Members) types.GetJamMembersResponse {
 	memberResponse := make([]types.JamMember, 0)
 	for _, member := range members {
-		user, err := s.users.GetUserByIdentifier(member.GetIdentifier())
+		user, err := s.users.GetUserByIdentifier(ctx, member.GetIdentifier())
 		if err != nil {
 			log.Warn("User for identifier not found", member.GetIdentifier())
 			continue
@@ -47,7 +49,7 @@ func (s *Server) getMembers(w http.ResponseWriter, r *http.Request) {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return
 	}
-	utils.EncodeJSONBody(w, s.getMemberResponse(*members))
+	utils.EncodeJSONBody(w, s.getMemberResponse(r.Context(), *members))
 }
 
 func (s *Server) setMembers(w http.ResponseWriter, r *http.Request) {
@@ -112,10 +114,10 @@ func (s *Server) setMembers(w http.ResponseWriter, r *http.Request) {
 
 	jamSession.NotifyClients(&notifications.Message{
 		Event:   notifications.Members,
-		Message: s.getMemberResponse(*members),
+		Message: s.getMemberResponse(r.Context(), *members),
 	})
 
-	utils.EncodeJSONBody(w, s.getMemberResponse(*members))
+	utils.EncodeJSONBody(w, s.getMemberResponse(r.Context(), *members))
 }
 
 func (s *Server) getJamSession(w http.ResponseWriter, r *http.Request) {
@@ -160,7 +162,7 @@ func (s *Server) setJamSession(w http.ResponseWriter, r *http.Request) {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return
 	}
-	host, err := s.users.GetUserByIdentifier(hostMember.Identifier)
+	host, err := s.users.GetUserByIdentifier(r.Context(), hostMember.Identifier)
 	if err != nil {
 		s.errInternalServerError(w, apierrors.ErrMissingMember, log.WarnLevel)
 		return
@@ -179,7 +181,7 @@ func (s *Server) setJamSession(w http.ResponseWriter, r *http.Request) {
 			}
 
 			// TODO: jamSession.Play or user.Play ???
-			jamSession.Play(song.Track, true)
+			jamSession.Play(r.Context(), song.Track, true)
 			jamSession.SocketQueueUpdate()
 		}
 		settings.Active = body.Active.Value
@@ -225,7 +227,7 @@ func (s *Server) getPlayback(w http.ResponseWriter, r *http.Request) {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return
 	}
-	host, err := s.users.GetUserByIdentifier(hostMember.Identifier)
+	host, err := s.users.GetUserByIdentifier(r.Context(), hostMember.Identifier)
 	if err != nil {
 		s.errInternalServerError(w, apierrors.ErrMissingMember, log.WarnLevel)
 		return
@@ -255,14 +257,14 @@ func (s *Server) setPlayback(w http.ResponseWriter, r *http.Request) {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return
 	}
-	host, err := s.users.GetUserByIdentifier(hostMember.Identifier)
+	host, err := s.users.GetUserByIdentifier(r.Context(), hostMember.Identifier)
 	if err != nil {
 		s.errInternalServerError(w, apierrors.ErrMissingMember, log.WarnLevel)
 		return
 	}
 
 	if body.Playing.Set && body.Playing.Valid {
-		if err := host.SetState(body.Playing.Value); err != nil {
+		if err := host.SetState(r.Context(), body.Playing.Value); err != nil {
 			s.errInternalServerError(w, err, log.DebugLevel)
 			return
 		}
@@ -272,14 +274,14 @@ func (s *Server) setPlayback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if body.Volume.Set && body.Volume.Valid {
-		if err := host.SetVolume(body.Volume.Value); err != nil {
+		if err := host.SetVolume(r.Context(), body.Volume.Value); err != nil {
 			s.errInternalServerError(w, err, log.DebugLevel)
 			return
 		}
 	}
 
 	if body.DeviceID.Set && body.DeviceID.Valid {
-		if err := host.SetDevice(body.DeviceID.Value); err != nil {
+		if err := host.SetDevice(r.Context(), body.DeviceID.Value); err != nil {
 			s.errInternalServerError(w, err, log.DebugLevel)
 			return
 		}
@@ -309,14 +311,14 @@ func (s *Server) playSong(w http.ResponseWriter, r *http.Request) {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return
 	}
-	host, err := s.users.GetUserByIdentifier(hostMember.Identifier)
-	track, err := host.GetTrack(body.TrackID)
+	host, err := s.users.GetUserByIdentifier(r.Context(), hostMember.Identifier)
+	track, err := host.GetTrack(r.Context(), body.TrackID)
 	if err != nil {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return
 	}
 
-	if err := jamSession.Play(track, body.Remove); err != nil {
+	if err := jamSession.Play(r.Context(), track, body.Remove); err != nil {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return
 	}
@@ -381,13 +383,13 @@ func (s *Server) joinJamSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//Check if a user for the request already exits
-	user, err := s.users.GetUserByIdentifier(s.CurrentIdentifier(r))
+	user, err := s.users.GetUserByIdentifier(r.Context(), s.CurrentIdentifier(r))
 	if err != nil {
 		// Create guest user from session
 		hash := sha1.Sum([]byte(session.ID))
 		identifier := hex.EncodeToString(hash[:])
 		username := "Guest " + string([]rune(base32.StdEncoding.EncodeToString(hash[:]))[0:5])
-		user, err = s.users.NewUser(identifier, username, users.UserTypeSession, nil)
+		user, err = s.users.NewUser(r.Context(), identifier, username, users.UserTypeSession, nil)
 		if err != nil {
 			s.errInternalServerError(w, err, log.DebugLevel)
 			return
@@ -410,7 +412,7 @@ func (s *Server) joinJamSession(w http.ResponseWriter, r *http.Request) {
 
 	jamSession.NotifyClients(&notifications.Message{
 		Event:   notifications.Members,
-		Message: s.getMemberResponse(*members),
+		Message: s.getMemberResponse(r.Context(), *members),
 	})
 
 	utils.EncodeJSONBody(w, types.PutJamJoinResponse{
@@ -448,7 +450,7 @@ func (s *Server) leaveJamSession(w http.ResponseWriter, r *http.Request) {
 			members.Remove(user.Identifier)
 			jamSession.NotifyClients(&notifications.Message{
 				Event:   notifications.Members,
-				Message: s.getMemberResponse(*members),
+				Message: s.getMemberResponse(r.Context(), *members),
 			})
 		}
 		if err := jamSession.SetMembers(members); err != nil {
@@ -470,7 +472,7 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 
 	jamSession := s.CurrentJamSession(r)
 
-	entry, err := s.jamFactory.Search(jamSession, body.SearchType, body.SearchText)
+	entry, err := s.jamFactory.Search(r.Context(), jamSession, body.SearchType, body.SearchText)
 	if err != nil {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return

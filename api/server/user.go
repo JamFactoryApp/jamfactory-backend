@@ -12,7 +12,7 @@ import (
 func (s *Server) userMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		identifier := s.CurrentIdentifier(r)
-		user, err := s.users.GetUserByIdentifier(identifier)
+		user, err := s.users.GetUserByIdentifier(r.Context(), identifier)
 		if err != nil {
 			user = users.NewEmpty()
 		}
@@ -88,7 +88,7 @@ func (s *Server) setUser(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) deleteUser(w http.ResponseWriter, r *http.Request) {
 	user := s.CurrentUser(r)
-	s.users.DeleteUser(user.Identifier)
+	s.users.DeleteUser(r.Context(), user.Identifier)
 	// TODO: Make sure that user is not used anywhere
 	utils.EncodeJSONBody(w, types.DeleteUserResponse{
 		Success: true,
@@ -134,7 +134,7 @@ func (s *Server) setUserPlayback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if body.Playing.Set && body.Playing.Valid {
-		if err := user.SetState(body.Playing.Value); err != nil {
+		if err := user.SetState(r.Context(), body.Playing.Value); err != nil {
 			s.errInternalServerError(w, err, log.DebugLevel)
 			return
 		}
@@ -144,14 +144,14 @@ func (s *Server) setUserPlayback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if body.Volume.Set && body.Volume.Valid {
-		if err := user.SetVolume(body.Volume.Value); err != nil {
+		if err := user.SetVolume(r.Context(), body.Volume.Value); err != nil {
 			s.errInternalServerError(w, err, log.DebugLevel)
 			return
 		}
 	}
 
 	if body.DeviceID.Set && body.DeviceID.Valid {
-		if err := user.SetDevice(body.DeviceID.Value); err != nil {
+		if err := user.SetDevice(r.Context(), body.DeviceID.Value); err != nil {
 			s.errInternalServerError(w, err, log.DebugLevel)
 			return
 		}
@@ -166,7 +166,7 @@ func (s *Server) setUserPlayback(w http.ResponseWriter, r *http.Request) {
 func (s *Server) getUserPlaylists(w http.ResponseWriter, r *http.Request) {
 	user := s.CurrentUser(r)
 
-	playlists, err := user.Playlists()
+	playlists, err := user.Playlists(r.Context())
 	if err != nil {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return
@@ -180,7 +180,7 @@ func (s *Server) getUserPlaylists(w http.ResponseWriter, r *http.Request) {
 func (s *Server) getUserDevices(w http.ResponseWriter, r *http.Request) {
 	user := s.CurrentUser(r)
 
-	devices, err := user.Devices()
+	devices, err := user.Devices(r.Context())
 	if err != nil {
 		s.errInternalServerError(w, err, log.DebugLevel)
 		return

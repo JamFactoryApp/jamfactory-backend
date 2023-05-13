@@ -2,7 +2,7 @@ package types
 
 import (
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/permissions"
-	"github.com/zmb3/spotify"
+	"github.com/zmb3/spotify/v2"
 )
 
 // ---------------------------------------------------------------------------------------------------------------------

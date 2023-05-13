@@ -1,20 +1,22 @@
 package jamsession
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/hub"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/permissions"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/store"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/users"
-	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/jamfactoryapp/jamfactory-backend/api/types"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/notifications"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/queue"
 	log "github.com/sirupsen/logrus"
-	"github.com/zmb3/spotify"
+	"github.com/zmb3/spotify/v2"
 )
 
 const (
@@ -165,7 +167,7 @@ func (s *JamSession) Conductor() {
 			if err != nil {
 				continue
 			}
-			host, err := s.hub.GetUserByIdentifier(hostMember.Identifier)
+			host, err := s.hub.GetUserByIdentifier(context.Background(), hostMember.Identifier)
 			if err != nil {
 				continue
 			}
@@ -173,7 +175,7 @@ func (s *JamSession) Conductor() {
 			// Go to all members joined by the JamSession
 			for _, member := range *members {
 				// Get the user for the member
-				user, err := s.hub.GetUserByIdentifier(member.Identifier)
+				user, err := s.hub.GetUserByIdentifier(context.Background(), member.Identifier)
 				if err != nil {
 					log.Warn(err)
 					continue
@@ -190,7 +192,7 @@ func (s *JamSession) Conductor() {
 				// If the intervalCount is reached, update the PlayerState for each spotify user
 				if intervalCount >= updateInterval {
 
-					playerState, err := user.Client().PlayerState()
+					playerState, err := user.Client().PlayerState(context.Background())
 					if err != nil {
 						continue
 					}
@@ -230,7 +232,7 @@ func (s *JamSession) Conductor() {
 				case nil:
 					if (!host.GetPlayerState().Playing && host.GetPlayerState().Progress == 0) ||
 						(host.GetPlayerState().Item != nil && host.GetPlayerState().Progress > host.GetPlayerState().Item.Duration-1000) {
-						if err := s.Play(so.Track, true); err != nil {
+						if err := s.Play(context.Background(), so.Track, true); err != nil {
 							log.Error(err)
 							continue
 						}
@@ -240,8 +242,6 @@ func (s *JamSession) Conductor() {
 
 				default:
 					log.Error(err)
-					break
-
 				}
 			}
 
@@ -274,7 +274,7 @@ func (s *JamSession) Conductor() {
 		}
 	}
 }
-func (s *JamSession) Play(track *spotify.FullTrack, remove bool) error {
+func (s *JamSession) Play(ctx context.Context, track *spotify.FullTrack, remove bool) error {
 	members, err := s.GetMembers()
 	currentQueue, err := s.GetQueue()
 	if err != nil {
@@ -284,11 +284,11 @@ func (s *JamSession) Play(track *spotify.FullTrack, remove bool) error {
 	if err != nil {
 		return err
 	}
-	host, err := s.hub.GetUserByIdentifier(hostMember.Identifier)
+	host, err := s.hub.GetUserByIdentifier(ctx, hostMember.Identifier)
 	if err != nil {
 		return err
 	}
-	err = host.Play(track)
+	err = host.Play(ctx, track)
 	if err != nil {
 		return err
 	}
@@ -316,7 +316,7 @@ func (s *JamSession) NotifyClients(msg *notifications.Message) {
 	}
 }
 
-func (s *JamSession) AddCollection(collectionType string, collectionID string) error {
+func (s *JamSession) AddCollection(ctx context.Context, collectionType string, collectionID string) error {
 	members, err := s.GetMembers()
 	currentQueue, err := s.GetQueue()
 	if err != nil {
@@ -326,30 +326,29 @@ func (s *JamSession) AddCollection(collectionType string, collectionID string) e
 	if err != nil {
 		return err
 	}
-	host, err := s.hub.GetUserByIdentifier(hostMember.Identifier)
+	host, err := s.hub.GetUserByIdentifier(ctx, hostMember.Identifier)
 	if err != nil {
 		return err
 	}
 	switch collectionType {
 	case "playlist":
-		playlist, err := host.Client().GetPlaylistTracks(spotify.ID(collectionID))
-
+		playlist, err := host.Client().GetPlaylistItems(ctx, spotify.ID(collectionID))
 		if err != nil {
 			return ErrCouldNotGetPlaylistTracks
 		}
 
-		for i := 0; i < len(playlist.Tracks); i++ {
-			track, err := host.GetTrack(string(playlist.Tracks[i].Track.ID))
-			if err != nil {
-				return err
+		for _, item := range playlist.Items {
+			if item.Track.Track == nil {
+				log.Printf("%+v", item)
+				continue
 			}
-			if err := currentQueue.Vote(string(playlist.Tracks[i].Track.ID), queue.HostVoteIdentifier, track); err != nil {
+			if err := currentQueue.Vote(string(item.Track.Track.ID), queue.HostVoteIdentifier, item.Track.Track); err != nil {
 				return err
 			}
 		}
 
 	case "album":
-		album, err := host.Client().GetAlbumTracks(spotify.ID(collectionID))
+		album, err := host.Client().GetAlbumTracks(ctx, spotify.ID(collectionID))
 
 		if err != nil {
 			return ErrCouldNotGetAlbum
@@ -360,13 +359,13 @@ func (s *JamSession) AddCollection(collectionType string, collectionID string) e
 			ids[i] = album.Tracks[i].ID
 		}
 
-		tracks, err := host.Client().GetTracks(ids...)
+		tracks, err := host.Client().GetTracks(ctx, ids)
 		if err != nil {
 			return ErrCouldNotGetAlbumTracks
 		}
 
 		for i := 0; i < len(tracks); i++ {
-			track, err := host.GetTrack(string(tracks[i].ID))
+			track, err := host.GetTrack(ctx, string(tracks[i].ID))
 			if err != nil {
 				return err
 			}
@@ -386,7 +385,7 @@ func (s *JamSession) AddCollection(collectionType string, collectionID string) e
 	return nil
 }
 
-func (s *JamSession) Vote(songID string, voteID string) error {
+func (s *JamSession) Vote(ctx context.Context, songID string, voteID string) error {
 	members, err := s.GetMembers()
 	currentQueue, err := s.GetQueue()
 	if err != nil {
@@ -396,11 +395,11 @@ func (s *JamSession) Vote(songID string, voteID string) error {
 	if err != nil {
 		return err
 	}
-	host, err := s.hub.GetUserByIdentifier(hostMember.Identifier)
+	host, err := s.hub.GetUserByIdentifier(ctx, hostMember.Identifier)
 	if err != nil {
 		return err
 	}
-	track, err := host.GetTrack(songID)
+	track, err := host.GetTrack(ctx, songID)
 	if err != nil {
 		return err
 	}
@@ -416,7 +415,7 @@ func (s *JamSession) Vote(songID string, voteID string) error {
 	return nil
 }
 
-func (s *JamSession) Search(index string, searchType spotify.SearchType, options *spotify.Options) (interface{}, error) {
+func (s *JamSession) Search(ctx context.Context, index string, searchType spotify.SearchType, options ...spotify.RequestOption) (interface{}, error) {
 	members, err := s.GetMembers()
 	if err != nil {
 		return nil, err
@@ -425,11 +424,11 @@ func (s *JamSession) Search(index string, searchType spotify.SearchType, options
 	if err != nil {
 		return nil, err
 	}
-	host, err := s.hub.GetUserByIdentifier(hostMember.Identifier)
+	host, err := s.hub.GetUserByIdentifier(ctx, hostMember.Identifier)
 	if err != nil {
 		return nil, err
 	}
-	return host.Search(index, searchType, options)
+	return host.Search(ctx, index, searchType, options...)
 }
 
 func (s *JamSession) IntroduceClient(conn *websocket.Conn) {

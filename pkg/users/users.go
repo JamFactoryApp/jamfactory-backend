@@ -31,7 +31,7 @@ type User struct {
 	player
 }
 
-func New(identifier string, username string, usertype UserType, store store.Store[UserInformation], token *oauth2.Token, auth *authenticator.Authenticator) (*User, error) {
+func New(ctx context.Context, identifier string, username string, usertype UserType, store store.Store[UserInformation], token *oauth2.Token, auth *authenticator.Authenticator) (*User, error) {
 	info := &UserInformation{
 		UserType:     usertype,
 		UserName:     username,
@@ -45,7 +45,7 @@ func New(identifier string, username string, usertype UserType, store store.Stor
 	return &User{
 		Identifier: identifier,
 		userInfo:   store,
-		player:     NewPlayer(auth, token),
+		player:     NewPlayer(ctx, auth, token),
 	}, nil
 }
 
@@ -75,12 +75,12 @@ func (u *User) SetInfo(info *UserInformation) error {
 	}
 }
 
-func Load(identifier string, store store.Store[UserInformation], authenticator *authenticator.Authenticator) *User {
+func Load(ctx context.Context, identifier string, store store.Store[UserInformation], authenticator *authenticator.Authenticator) *User {
 	info, _ := store.Get(identifier)
 	return &User{
 		Identifier: identifier,
 		userInfo:   store,
-		player:     NewPlayer(authenticator, info.SpotifyToken),
+		player:     NewPlayer(ctx, authenticator, info.SpotifyToken),
 	}
 }
 

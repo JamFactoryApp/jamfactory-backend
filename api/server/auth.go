@@ -42,7 +42,7 @@ func (s *Server) logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.users.DeleteUser(identifier)
+	s.users.DeleteUser(r.Context(), identifier)
 
 	utils.EncodeJSONBody(w, types.GetAuthLogoutResponse{
 		Success: true,
@@ -63,10 +63,10 @@ func (s *Server) callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := s.users.GetUserByIdentifier(id)
+	user, err := s.users.GetUserByIdentifier(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, hub.ErrUserNotFound) {
-			user, err = s.users.NewUser(id, username, users.UserTypeSpotify, token)
+			user, err = s.users.NewUser(r.Context(), id, username, users.UserTypeSpotify, token)
 			if err != nil {
 				s.errInternalServerError(w, err, log.DebugLevel)
 				return

@@ -19,7 +19,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/jamfactoryapp/jamfactory-backend/pkg/cache"
 	log "github.com/sirupsen/logrus"
-	"github.com/zmb3/spotify"
+	"github.com/zmb3/spotify/v2"
 	"golang.org/x/oauth2"
 )
 

@@ -3,7 +3,7 @@ package song
 import (
 	"time"
 
-	"github.com/zmb3/spotify"
+	"github.com/zmb3/spotify/v2"
 )
 
 type Song struct {

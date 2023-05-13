@@ -67,7 +67,7 @@ func (s RedisStore[T]) GetAll() ([]*T, error) {
 	}
 	jams := make([]*T, len(keys))
 	i := 0
-	for key, _ := range keys {
+	for key := range keys {
 		jam, err := s.Get(key)
 		if err != nil {
 			return nil, err
